@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<pipeline>
+
+	<register>
+		<load name="ssiwebsocket" />		
+		<load name="ssistimuli" />		
+	</register>	
+
+	<thread create="ClockEventSender" clock="100000" empty="false" sname="audio" ename="active" string="002_NegativeActive.html">
+	</thread>
+	
+	<object create="EventMonitor:monitor">
+		<listen address="@" span="20000" />
+	</object>
+	
+	<object create="Stimuli" sname="stimuli" ename="url" 
+		folder="stimuli/de/velten/PositiveActive;stimuli/de/velten/PositivePassive;/home/simon/stimuli/de/velten/Neutral;stimuli/de/velten/NegativePassive;stimuli/de/velten/NegativeActive" 
+		annoPath="../../data/labor/stimuli"
+		labelFromFile="true"
+		randomize="true">
+		<listen address="active@audio" />
+	</object>
+	
+	<object create="websocket" http_root="website" sname="audio" ename="active" >
+		<listen address="url@stimuli" />
+	</object>
+
+
+		
+	<!-- decoration -->
+	<object create="Decorator" icon="true" title="Pipeline">
+		<area pos="0,0,400,600">console</area>
+		<area pos="400,0,400,600">plot*</area>
+		<area pos="800,0,400,600">monitor*</area>
+	</object>
+
+</pipeline>

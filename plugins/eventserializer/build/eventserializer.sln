@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{8627DA10-B8B1-4648-83B5-C3F6AF16E6C2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dlls", "dlls", "{7E2B631D-0334-422B-83C3-4093B38D8145}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "eventserializer", "dlls\eventserializer.vcxproj", "{D2055D3C-7F3B-4351-A674-B9C8DC15140A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{61B74D1D-B0F8-4303-9456-72039138A472}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Debug|Win32.Build.0 = Debug|Win32
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Debug|x64.ActiveCfg = Debug|x64
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Debug|x64.Build.0 = Debug|x64
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Release|Win32.ActiveCfg = Release|Win32
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Release|Win32.Build.0 = Release|Win32
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Release|x64.ActiveCfg = Release|x64
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A}.Release|x64.Build.0 = Release|x64
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Debug|Win32.ActiveCfg = Debug|Win32
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Debug|Win32.Build.0 = Debug|Win32
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Debug|x64.ActiveCfg = Debug|x64
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Debug|x64.Build.0 = Debug|x64
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Release|Win32.ActiveCfg = Release|Win32
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Release|Win32.Build.0 = Release|Win32
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Release|x64.ActiveCfg = Release|x64
+		{61B74D1D-B0F8-4303-9456-72039138A472}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{61B74D1D-B0F8-4303-9456-72039138A472} = {8627DA10-B8B1-4648-83B5-C3F6AF16E6C2}
+		{D2055D3C-7F3B-4351-A674-B9C8DC15140A} = {7E2B631D-0334-422B-83C3-4093B38D8145}
+	EndGlobalSection
+EndGlobal
