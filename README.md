@@ -1,14 +1,19 @@
 ![Logo](/logo/mobileSSI.png)
 # mobileSSI
-mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http://openssi.net/) to Linux and Android devices. It is written in C++ and runs as native code on Android.
+mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http://openssi.net/) to Linux and Android devices. Like SSI, mobileSSI is written in C++. Windows-platform dependend code was replaced by crossplatform compatible code.
 
 ## Features
 * same features as the SSI framework (Windows platform dependend plugins can't be included)
 * Android / Android-wear support:
   * background service (allowing to run even during standby)
-  * plugin to access Android sensors
-  * native code (ndk)
-  * can be used in combination with [ssj](https://github.com/hcmlab/ssj) pipelines (Java)
+  * plugins to access Android sensors / audio device
+  * uses native code (ndk)
+  * can be used in combination with [ssj](https://github.com/hcmlab/ssj) pipelines for example to access additional sensors and use additional Java code
+
+## Integrated crossplatform libraries used by plugins
+* [mongoose](https://github.com/cesanta/mongoose)
+* [gloox](https://camaya.net/gloox/)
+* ...
 
 ## About
 The mobileSSI framework is beeing developed at the Lab for Human Centered Multimedia of the University of Augsburg.
