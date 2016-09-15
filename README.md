@@ -16,6 +16,7 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
 | -------| ---------|
 | [mongoose](https://github.com/cesanta/mongoose)  | mqtt, websocket |
 | [gloox](https://camaya.net/gloox/)  | xmpp |
+| ... | ... |
 
 
 ## About
