@@ -1,3 +1,4 @@
+![Logo](/logo/mobileSSI.png)
 # mobileSSI
 mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http://openssi.net/) to Linux and Android devices. It is written in C++ and runs as native code on Android.
 
