@@ -11,8 +11,8 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
   * can be used in combination with [ssj](https://github.com/hcmlab/ssj) pipelines for example to access additional sensors and to  use additional Java code
 
 ## Integrated crossplatform libraries used by plugins
-* [mongoose](https://github.com/cesanta/mongoose)
-* [gloox](https://camaya.net/gloox/)
+* websocket: [mongoose](https://github.com/cesanta/mongoose)
+* xmpp: [gloox](https://camaya.net/gloox/)
 * ...
 
 ## About
