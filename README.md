@@ -10,14 +10,8 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
   * uses native code (ndk)
   * can be used in combination with [ssj](https://github.com/hcmlab/ssj) pipelines for example to access additional sensors and to  use additional Java code
 
-## Integrated crossplatform libraries used by plugins
-
-| library | plugin |
-| -------| ---------|
-| [mongoose](https://github.com/cesanta/mongoose)  | mqtt, websocket |
-| [gloox](https://camaya.net/gloox/)  | xmpp |
-| ... | ... |
-
+## Documentation
+Please see our Github Wiki to get started with mobileSSI.
 
 ## About
 The mobileSSI framework is beeing developed at the Lab for Human Centered Multimedia of the University of Augsburg.
