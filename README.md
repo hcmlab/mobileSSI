@@ -14,7 +14,7 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
 Please see our Github Wiki to get started with mobileSSI.
 
 ## About
-The mobileSSI framework is beeing developed at the Lab for Human Centered Multimedia of the University of Augsburg.
+The mobileSSI framework is beeing developed at the Lab for [Human Centered Multimedia](http://www.hcm-lab.de/) of the University of Augsburg.
 
 ## License
 This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or any later version.
