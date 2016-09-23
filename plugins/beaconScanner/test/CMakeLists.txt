@@ -38,7 +38,7 @@ include_directories (
 	../../../core/include/ioput/socket
 	../../../core/include/ioput
 	
-        ../../../libs/shared/serial/include
+        ../../../libs/build/serial/include
 	../../../plugins/
          ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS}
 )

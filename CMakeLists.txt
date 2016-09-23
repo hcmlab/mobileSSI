@@ -110,6 +110,6 @@ add_subdirectory(core)
 add_subdirectory(libs)
 add_subdirectory(plugins)
 
-#IF(IS_DIRECTORY programms)
+IF(IS_DIRECTORY programms)
         add_subdirectory(programms)
-#ENDIF(IS_DIRECTORY programms)
+ENDIF(IS_DIRECTORY programms)
