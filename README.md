@@ -17,6 +17,10 @@ Please see our Github Wiki to get started with mobileSSI.
 The mobileSSI framework is beeing developed at the [Lab for Human Centered Multimedia](http://www.hcm-lab.de/) of the University of Augsburg.
 
 ## License
-This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or any later version.
-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+	Core libraries are released under LGPL (see LICENSE in core folder).
+	
+	By default plugins are released under GPL, but invidual licences 
+	may apply (see LICENSE file in plugin folder).
+	
+	For 3rd party dependencies see the README file and additional
+	license files.
