@@ -36,11 +36,9 @@
 #include <unistd.h>
 #include "zip.h"
 #include <thread>
-#include <stdio.h>;
-#include <time.h>;
+#include <stdio.h>
+#include <time.h>
 #include <dirent.h>
-
-#include "unikumFeatures.h"
 
 using namespace ssi;
 
