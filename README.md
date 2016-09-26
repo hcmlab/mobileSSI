@@ -11,7 +11,7 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
   * can be used in combination with [ssj](https://github.com/hcmlab/ssj) pipelines for example to access additional sensors and to  use additional Java code
 
 ## Documentation
-Please see our Github Wiki to get started with mobileSSI.
+Please see our [Github Wiki](https://github.com/hcmlab/mobileSSI/wiki) to get started with mobileSSI.
 
 ## About
 The mobileSSI framework is beeing developed at the [Lab for Human Centered Multimedia](http://www.hcm-lab.de/) of the University of Augsburg.
