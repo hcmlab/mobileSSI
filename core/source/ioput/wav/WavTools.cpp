@@ -298,7 +298,7 @@ ssi_byte_t *WavTools::WriteWavMemory(ssi_stream_t &stream, ssi_size_t &n_bytes) 
 
 	if (!(stream.type == SSI_FLOAT || stream.type == SSI_SHORT)) {
 		ssi_wrn("stream type '%s' not supported", SSI_TYPE_NAMES[stream.type]);
-		return false;
+		return NULL;
 	}
 
 	WAVEFORMATEX format = CreateFormat(stream);
@@ -319,7 +319,7 @@ ssi_byte_t *WavTools::WriteWavChunkMemory(ssi_stream_t &stream, ssi_size_t &n_by
 
 	if (!(stream.type == SSI_FLOAT || stream.type == SSI_SHORT)) {
 		ssi_wrn("stream type '%s' not supported", SSI_TYPE_NAMES[stream.type]);
-		return false;
+		return NULL;
 	}
 
 	WAVEFORMATEX format = CreateFormat(stream);
