@@ -76,7 +76,7 @@ if(ANDROID)
 SET(SSI_PLATFORM Android)
 #set compiler and linker flags
 #for android 4 and later use -fPIE position independent executeable
-SET(SSI_CFLAG " -ggdb -std=c++11 -fPIE -DHEADLESS")
+SET(SSI_CFLAG " -ggdb -std=c++11 -fPIE -fexceptions -DHEADLESS")
 SET(SSI_LD_FLAG "-pie")
 # none for Android
 SET(SSI_GUI none)

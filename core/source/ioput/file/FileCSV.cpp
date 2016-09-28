@@ -199,7 +199,7 @@ ssi_char_t *FileCSV::nextLine(ssi_char_t *str, ssi_char_t **line, ssi_size_t &n_
 		return 0;
 	}
 
-	if (ptr == '\0') {
+	if (*ptr == '\0') {
 		return 0;
 	}
 

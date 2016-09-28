@@ -354,8 +354,8 @@ __android_log_print(ANDROID_LOG_INFO, APPNAME, "#########5.1#######");
 	}
 	xmlpipe->SetRegisterDllFptr (Factory::RegisterDLL);
         __android_log_print(ANDROID_LOG_INFO, APPNAME, "#########5.5#######");
-        __android_log_print(ANDROID_LOG_INFO, APPNAME, pipepath);
-        __android_log_print(ANDROID_LOG_INFO, APPNAME, filepath);
+        __android_log_print(ANDROID_LOG_INFO, APPNAME, "%s", pipepath);
+        __android_log_print(ANDROID_LOG_INFO, APPNAME, "%s", filepath);
         __android_log_print(ANDROID_LOG_INFO, APPNAME, "#########5.6#######");
 	bool result = false;
 	if (configpaths) {

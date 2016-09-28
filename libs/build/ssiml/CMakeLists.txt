@@ -90,7 +90,7 @@ IF(MINGW)
   	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ggdb" )
   ELSEIF(UNIX)
 
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ggdb -fPIC" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSI_CFLAG} -std=c++11 -ggdb -fPIC" )
 
 ELSE(MINGW)
 

@@ -507,7 +507,7 @@ bool OptionList::FromString (const ssi_char_t *str, ssi_option_t &option) {
 
 		++token_end;
 
-		if ((token_end == '\0' && i != option.num) || (i == option.num && token_end != '\0'))  {
+		if ((*token_end == '\0' && i != option.num) || (i == option.num && *token_end != '\0'))  {
 			ssi_wrn ("number of tokens does not match");
 			return false;
 		}

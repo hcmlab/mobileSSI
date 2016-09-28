@@ -104,8 +104,8 @@ set(SRC_FILES ${COMMON_SRC_FILES} )
 #find_library(OPENSSI_CORE_LIBRARY NAMES openssi-core HINTS ../../cmake-core/corelib/Debug/ ../../cmake-core/corelib/Release/)
 
 IF(UNIX)
-  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -ggdb  -fPIC" )
-  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11 -ggdb  -fPIC" )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  ${SSI_CFLAG} -std=c++11 -ggdb  -fPIC" )
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb  -fPIC" )
 ENDIF(UNIX)
 
 add_library(emovoice STATIC ${SRC_FILES} )

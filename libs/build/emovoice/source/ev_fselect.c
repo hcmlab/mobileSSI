@@ -200,7 +200,7 @@ int FloatSearch(int n, int d, int delta, int r, TSubset *bset, int detail, int n
   
   if(detail&STANDARD) {
   	printf("started on "); 
-  	printf(ctime(&tbegin));}
+  	printf("%s",ctime(&tbegin));}
   stopfloat=0;
   
 //  hcreate(100000); //initialize hash table for set->result mapping
