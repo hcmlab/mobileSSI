@@ -8,20 +8,9 @@
 	<thread create="ClockEventSender" clock="1000">
 	</thread>
 	
-	<object create="EventMonitor:monitor">
-		<listen address="@" span="20000" />
-	</object>
-	
 	<object create="websocket" http_root="website" >
 		<listen address="@" />
 	</object>
 
-		
-	<!-- decoration -->
-	<object create="Decorator" icon="true" title="Pipeline">
-		<area pos="0,0,400,600">console</area>
-		<area pos="400,0,400,600">plot*</area>
-		<area pos="800,0,400,600">monitor*</area>
-	</object>
 
 </pipeline>
