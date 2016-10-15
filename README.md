@@ -9,7 +9,7 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
 * Android / Android-wear support:
   * background service (allowing to run even during standby)
   * plugins to access Android sensors / audio device
-  * native code (ndk) is used that provides better performance than interpreted Java code; native code also makes it possible to use hardware acceleration like ARM's [NEON](https://www.arm.com/products/processors/technologies/neon.php);
+  * native code (ndk) is used that provides better performance than interpreted Java code; native code also makes it possible to use hardware acceleration like ARM's [NEON](https://www.arm.com/products/processors/technologies/neon.php)
   * can be used in combination with [ssj](https://github.com/hcmlab/ssj) pipelines for example to access additional sensors and to  use additional Java code
 
 ## Documentation
