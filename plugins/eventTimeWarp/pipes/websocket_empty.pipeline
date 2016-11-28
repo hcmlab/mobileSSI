@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<pipeline>
+
+	<register>
+		<load name="ssiioput"/>
+		<load name="ssieventTimeWarp" />		
+	</register>	
+
+	<thread create="ClockEventSender" clock="1000">
+	</thread>
+	
+	<object create="EventTimeWarp" address="event@warp">
+		<listen address="tick@clock" />
+	</object>
+	
+	<object create="FileEventWriter" path="button">
+		<listen address="@"/>
+	</object>
+
+
+
+</pipeline>
