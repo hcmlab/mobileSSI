@@ -197,13 +197,13 @@ void SocketEventReader::run () {
 			if (_elistener) {
 				_event_string.time = _frame->GetElapsedTimeMs ();
 				_event_string.dur = 0;
-				if (has_null_byte) {
+                if (has_null_byte) {
 					ssi_event_adjust(_event_string, ssi_strlen(_buffer) + 1);
 					strcpy(_event_string.ptr, _buffer);					
 				} else {
-					ssi_event_adjust(_event_string, result + 1);
-					memcpy(_event_string.ptr, _buffer, result * sizeof(ssi_byte_t));
-					_event_string.ptr[result] = '\0';
+                    ssi_event_adjust(_event_string, result + 1);
+                    memcpy(_event_string.ptr, _buffer, result * sizeof(ssi_byte_t));
+                    _event_string.ptr[result] = '\0';
 				}				
 				_elistener->update (_event_string);
 			}	

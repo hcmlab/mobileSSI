@@ -235,13 +235,13 @@ bool VectorFusionGravity::update (IEvents &events, ssi_size_t n_new_events, ssi_
 	events.reset ();//! (because of printing of board)
 	for(ssi_size_t i = 0; i < n_new_events; i++){
 		e = events.next ();
-		transformEventToVector(e);
+        transformEventToVector(e);
 		e = 0;
 	}
 		
 	//update (decay) vectors
 	for(ssi_size_t i = 0; i < VectorList.size(); i++){
-		VectorList[i]->update(_framework_time, _baseline);
+        VectorList[i]->update(_framework_time, _baseline);
 	}
 
 	//combine event vectors to fusion vector
@@ -465,14 +465,14 @@ bool VectorFusionGravity::transformEventToVector(ssi_event_t *Event){
 			if(mFound){
 			
 				ssi_real_t mWeight = _modality_map[0][ea.getAddress()].weight;
-				ssi_real_t mSpeed = _modality_map[0][ea.getAddress()].speed;
+                ssi_real_t mSpeed = _modality_map[0][ea.getAddress()].speed;
 
 				ssi_size_t time = Event->time;
 				EVector *v = new EVector( dim, mWeight, mSpeed, _decay_type, _gradient, time, true);
-				ssi_event_map_t *tuples = ssi_pcast (ssi_event_map_t, Event->ptr);
+                ssi_event_map_t *tuples = ssi_pcast (ssi_event_map_t, Event->ptr);
 				v->set_values(dim, tuples);
 				tuples = 0;
-				VectorList.push_back(v);
+                VectorList.push_back(v);
 				return true;
 
 			}else{
@@ -511,7 +511,7 @@ bool VectorFusionGravity::combineVectors(ssi_real_t fusion_speed, ssi_real_t del
 	ssi_size_t *indices = new ssi_size_t[n_vectors];
 	ssi_real_t sum_of_weights = 0.0f;
 	ssi_real_t baselinenorm = 0.0f;
-	
+
 	for(ssi_size_t i = 0; i < _dim; i++){
 		baselinenorm += pow(_baseline[i], 2.0f);
 	}
@@ -519,10 +519,10 @@ bool VectorFusionGravity::combineVectors(ssi_real_t fusion_speed, ssi_real_t del
 	_baseline_norm = baselinenorm;
 	
 	//find contributing values and calculate sum of weights for mass center calculation
-	for(ssi_size_t i = 0; i < n_vectors; i++){
+    for(ssi_size_t i = 0; i < n_vectors; i++){
 		if(VectorList[i]->get_weight() > threshold){
 			indices[i] = 1;
-			sum_of_weights += VectorList[i]->get_weight();
+            sum_of_weights += VectorList[i]->get_weight();
 		}else{
 			indices[i] = 0;
 		}

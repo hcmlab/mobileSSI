@@ -21,7 +21,11 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.res.Resources;  
 import android.content.res.*;
+/*
+ * 
 
+ * 
+ */
 public class SensorCollectorService extends Service{
 	private NotificationManager mNM;
 	//private int NOTIFICATION_ID = R.string.local_service_started;
@@ -32,7 +36,7 @@ public class SensorCollectorService extends Service{
 	public static Handler 		mSensorCollectorServiceHandler 			= null;
 	//used for keep track on Android running status
 	public static Boolean 		mIsServiceRunning 			= false;
-	
+	 private static Context context;
 	
 	 PowerManager.WakeLock wl;	//prevent CPU going to sleep
 	 
@@ -69,6 +73,7 @@ public class SensorCollectorService extends Service{
 		wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SensorCollectorService");
 		wl.acquire();
 		
+		SensorCollectorService.context = getApplicationContext();
 		Toast.makeText(this, "SensorCollectorService Created overwrite: "+ Boolean.toString(overwriteFiles) , Toast.LENGTH_LONG).show();
 		Log.d(TAG, "onCreate");
 		
@@ -106,16 +111,28 @@ public class SensorCollectorService extends Service{
 
 		mIsServiceRunning = true; // set service running status = true
 
-		Toast.makeText(this, "Congrats! My Service Started", Toast.LENGTH_LONG).show();
+		
 		// We need to return if we want to handle this service explicitly. 
 
 		//JNI
 		//startSensorLoop();
+		
+		while(!initC());
+		Toast.makeText(this, "Congrats! My Service Started", Toast.LENGTH_LONG).show();
 
 		
 		
 		return START_STICKY;
 	}
+	
+	public void sendBroadcast(String str) {  
+		
+        Intent intent = new Intent("com.example.MyEvent");  
+        intent.putExtra("SSIString", str);  
+        sendBroadcast(intent);  
+        Log.d(TAG, "ssiString: "+ str);
+
+    } 
 
 	@Override
 	public void onDestroy() {
@@ -331,13 +348,26 @@ public class SensorCollectorService extends Service{
 	
 	
 	//JNI
-	
-
+	public static Context getAppContext() {
+        return SensorCollectorService.context;
+    }
+    
+	public static void sendByteBroadcast(byte[] bytes)
+	{
+			String str = new String(bytes);
+			Intent intent = new Intent("com.example.MyEvent");  
+			intent.putExtra("SSIString", str);  
+			SensorCollectorService.getAppContext().sendBroadcast(intent);
+			Log.d(TAG, "ssiString: "+ str);
+			
+			
+	}
 
     
     public native void addEvent(String in_eventSender, String in_eventName, String in_eventText);
     public native void startSSI(String path, AssetManager am, boolean extractFiles);
     public native void stopSSI();
+    public native boolean initC();
     static{
 		try
 		{

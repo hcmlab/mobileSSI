@@ -39,6 +39,11 @@ include_directories(include
 					../../core/include
 					../
 
+                                        /usr/lib/jvm/java-8-openjdk/include
+                                        /usr/lib/jvm/java-8-openjdk/include/linux
+                                        /usr/lib/jvm/java-8-openjdk-amd64/include
+                                        /usr/lib/jvm/java-8-openjdk-amd64/include/linux
+
                      ${ANDROID_SYSTEM_INCLUDE_DIRS}
                     ${ANDROID_NDK}/sources/android/native_app_glue/
 )

@@ -24,7 +24,7 @@ project(openssi-plugins)
 
 
 option(OPENSSI_BUILD_MOUSE "Build mouse plugin" ON)
-option(OPENSSI_BUILD_BEACON_SCANNER "Build beacon scanner plugin" ON)
+option(OPENSSI_BUILD_BEACON_SCANNER "Build beacon scanner plugin" OFF)
 option(OPENSSI_BUILD_FFMPEG "Build ffmpeg plugin" ON)
 option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" ON)
 option(OPENSSI_BUILD_MQTT "Build mqtt plugin" OFF)
@@ -36,10 +36,13 @@ option(OPENSSI_BUILD_SIGNAL "Build signal plugin" ON)
 option(OPENSSI_BUILD_MODEL "Build model plugin" ON)
 option(OPENSSI_BUILD_AUDIO "Build audio plugin" ON)
 option(OPENSSI_BUILD_XMPP "Build xmpp plugin" OFF)
-option(OPENSSI_BUILD_PYTHON "Build python plugin" ON)
+option(OPENSSI_BUILD_PYTHON "Build python plugin" OFF)
 option(OPENSSI_BUILD_SSJSENSOR "Build ssjSensor plugin" ON)
 option(OPENSSI_BUILD_SHORE "Build shore plugin" OFF)
 option(OPENSSI_BUILD_FUSION "Build fusion plugin" OFF)
+option(OPENSSI_BUILD_CONTINUOUSSYNC "Build coninuous sync plugin" OFF)
+option(OPENSSI_BUILD_LIBLINEAR "Build liblinear plugin" OFF)
+option(OPENSSI_BUILD_FASTDTW "Build fastDTW plugin" ON)
 
 
 include_directories()
@@ -56,14 +59,15 @@ add_dependencies(ssiframe ssi )
 add_subdirectory(ioput)
 add_dependencies(ssiioput ssi )
 
+add_subdirectory(androidJavaSensors)
+add_dependencies(ssiandroidjavasensors ssiframe ssi )
+
 if(ANDROID)
 
 
 add_subdirectory(androidSensors)
 add_dependencies(ssiandroidsensors ssiframe ssi )
 
-add_subdirectory(androidJavaSensors)
-add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
 else(ANDROID)
 
@@ -120,6 +124,12 @@ if(OPENSSI_BUILD_STIMULI)
 endif(OPENSSI_BUILD_STIMULI)
 
 
+if(OPENSSI_BUILD_FASTDTW)
+	add_subdirectory(fastDTW)
+	add_dependencies(ssifastDTW ssi )
+endif(OPENSSI_BUILD_FASTDTW)
+
+
 if(OPENSSI_BUILD_OPENSMILE)
 	add_subdirectory(opensmile)
 	add_dependencies(ssiopensmile ssi )
@@ -165,6 +175,16 @@ if(OPENSSI_BUILD_XMPP)
 	add_dependencies(ssixmpp ssi )
 endif(OPENSSI_BUILD_XMPP)
 
+
+if(OPENSSI_BUILD_CONTINUOUSSYNC)
+        add_subdirectory(continuousSync)
+        add_dependencies(ssicontinuoussync ssi )
+endif(OPENSSI_BUILD_CONTINUOUSSYNC)
+
+if(OPENSSI_BUILD_LIBLINEAR)
+        add_subdirectory(liblinear)
+        add_dependencies(ssiliblinear ssi )
+endif(OPENSSI_BUILD_LIBLINEAR)
 
 
 IF(SSI_GUI STREQUAL "SDL")

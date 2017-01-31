@@ -30,6 +30,7 @@
 #ifndef INCLUDED_OSCTYPES_H
 #define INCLUDED_OSCTYPES_H
 
+#include <stdint.h>
 
 namespace ssi {
 
@@ -42,8 +43,8 @@ typedef unsigned __int64 osc_uint64;
 
 #else
 
-typedef long long osc_int64;
-typedef unsigned long long osc_uint64;
+typedef int64_t osc_int64;
+typedef uint64_t osc_uint64;
 
 #endif
 
@@ -51,13 +52,13 @@ typedef unsigned long long osc_uint64;
 
 #ifdef x86_64
 
-typedef signed int osc_int32;
-typedef unsigned int osc_uint32;
+typedef int32_t osc_int32;
+typedef uint32_t osc_uint32;
 
 #else
 
-typedef signed long osc_int32;
-typedef unsigned long osc_uint32;
+typedef int32_t osc_int32;
+typedef uint32_t osc_uint32;
 
 #endif
 

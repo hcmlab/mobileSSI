@@ -31,15 +31,29 @@
 #include "base/Factory.h"
 #include <sstream>
 #include "string.h"
-#include <android/log.h>
+//#include <android/log.h>
 
 extern "C"
 {
-	
-        jint JNI_OnLoad(JavaVM* aVm, void* aReserved)
-        {
-                return JNI_VERSION_1_6;
-        }
+
+bool checkExc(JNIEnv* env) {
+ if(env->ExceptionCheck()) {
+  env->ExceptionDescribe(); // writes to logcat
+  env->ExceptionClear();
+  return true;
+ }
+ ssi_wrn("jni exception occured");
+ return false;
+}
+
+
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *pjvm, void *reserved) {
+
+
+    return JNI_VERSION_1_6;
+}
+
+
 	
 	void Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_addEvent
 													(JNIEnv* env,
@@ -53,7 +67,7 @@ extern "C"
 			const char *eventName = env->GetStringUTFChars(in_eventName, 0);
 			const char *eventText = env->GetStringUTFChars(in_eventText, 0);
 
-                if(!ssi::Factory::isFactoryNull())
+                //if(!ssi::Factory::isFactoryNull())
 		
                 { bool framework_running=false;
                     ssi::ITheFramework *frame = ssi::Factory::GetFramework ();
@@ -70,8 +84,7 @@ extern "C"
 
 			ssi::AndroidJavaSensors* ajavaSensors= ssi::AndroidJavaSensors::getAndroidJavaSensorsFromJava();
 			
-			ssi_print("called j sensor graffl\n");
-			__android_log_print(ANDROID_LOG_INFO, "SSI", "|||||or must i w3arn %s %s %s",eventSender , eventName, eventText);
+
 			
 			if(ajavaSensors)
 			{
@@ -89,12 +102,120 @@ extern "C"
 			env->ReleaseStringUTFChars(in_eventText, eventText);
 	}
 
+
+    jboolean Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_initC(JNIEnv* env,
+                                                                     jobject thiz)
+    {
+
+
+         bool framework_running=false;
+            ssi::ITheFramework *frame = ssi::Factory::GetFramework ();
+
+            if(frame)
+            {
+                if(frame->GetElapsedTimeMs())
+                    framework_running=true;
+            }
+
+            if(framework_running)
+            {
+
+                JavaVM* jvm;
+                env->GetJavaVM(&jvm);
+
+
+                auto randomClass = env->FindClass("de/hcmlab/ssi/android_xmlpipe/SensorCollectorService");
+                auto SensorCollectorServiceClass= reinterpret_cast<jclass>( env->NewGlobalRef(randomClass));
+                jmethodID sendByteMethod = env->GetStaticMethodID( SensorCollectorServiceClass, "sendByteBroadcast", "([B)V");
+                ssi::AndroidJavaSensors::setJMembers(jvm, SensorCollectorServiceClass, sendByteMethod);
+                ssi_wrn("SET JAVA OBJ");
+                return JNI_TRUE;
+
+
+
+            }
+
+
+
+        ssi_wrn("FAILED SET JAVA OBJ");
+        return JNI_FALSE;
+    }
+
+    jboolean jni_attach_thread(JNIEnv** env, JavaVM* jVM)
+    {
+        if (jVM->GetEnv( (void**) env, JNI_VERSION_1_4) != JNI_OK)
+        {
+           ssi_wrn ("android_java_callback: attaching current thread");
+            jVM->AttachCurrentThread( (void**) env, NULL);
+
+            if (jVM->GetEnv( (void**) env, JNI_VERSION_1_4) != JNI_OK)
+            {
+                ssi_wrn(  "android_java_callback: failed to obtain current JNI environment");
+            }
+
+            return JNI_TRUE;
+        }
+
+        return JNI_FALSE;
+    }
+
+    void jni_detach_thread(JavaVM* jVM)
+    {
+        jVM->DetachCurrentThread();
+    }
+
+
 } //extern c
 
 namespace ssi
 {
 	//initialize
 	AndroidJavaSensors* AndroidJavaSensors::androidJavaSensorsInstance=NULL;
+
+    void AndroidJavaSensors::stringToJava(std::string str)
+    {
+        int byteCount=str.length();
+
+       JNIEnv *env2;
+       jboolean attached= jni_attach_thread(&env2, androidJavaSensorsInstance->jvm);
+        if(attached == JNI_TRUE)
+        {
+
+
+
+            const jbyte* pNativeMessage = reinterpret_cast<const jbyte*>(str.c_str());
+            jbyteArray bytes = env2->NewByteArray(byteCount);
+            if(bytes){
+
+
+                env2->SetByteArrayRegion(bytes, 0, byteCount, pNativeMessage);
+
+
+                jclass cls=(jclass)androidJavaSensorsInstance->sensorCollectorServiceClass;
+                jmethodID mid=androidJavaSensorsInstance->sendByteMethod;
+
+                if(cls){
+
+
+                    if(mid)
+                    {
+
+                      env2->CallStaticVoidMethod(cls, mid, bytes);
+
+
+                    }
+
+                }
+
+            }
+
+            //env->CallObjectMethod( javaObject, mid);
+            //env2->ReleaseByteArrayElements(bytes, rawjBytes, 0);
+            jni_detach_thread(jvm);
+
+        }
+
+    }
 	
 	
 	void AndroidJavaSensors::addJavaEvent(const char* sender, const char* name, const char* text)
@@ -117,19 +238,20 @@ namespace ssi
 
 		_event_batt.time=frame->GetElapsedTimeMs();
 
-		ssi_print("ow ow\n");
-		__android_log_print(ANDROID_LOG_INFO, "SSI", ">>>>>>>>>>>>>>> or must i2 warn%s", ptr);
+
 		
 		if (_elistener)
 		{
-			__android_log_print(ANDROID_LOG_INFO, "SSI","}}}}}}}}}}}}}}LISTENER WE hAVe####\n");
+
 				_elistener->update(_event_batt);
 				
 		}
 
-	//delete[] eventStr;
+    //delete[] eventStr;stringToJava
 	
 	}
+
+
 	
 	bool AndroidJavaSensors::setEventListener(IEventListener *listener) {
 		_elistener = listener;
@@ -146,7 +268,7 @@ namespace ssi
 
 
 			_event_batt.sender_id = sender_id;
-			_event_batt.event_id = Factory::AddString("battery");
+            _event_batt.event_id = Factory::AddString("battery");
 
 			if (_event_batt.event_id == SSI_FACTORY_STRINGS_INVALID_ID)
 				return false;
@@ -170,8 +292,8 @@ namespace ssi
 	AndroidJavaSensors::AndroidJavaSensors(const char* file)
 	                : _file(0)
         {
-		ssi_print("#### ey ey\n");
-		__android_log_print(ANDROID_LOG_INFO, "SSI", "####or museyt i warn");
+
+
 
 		if (file) {
 			if (!OptionList::LoadXML(file, _options)) {
@@ -187,6 +309,157 @@ namespace ssi
 			}
 		
 	}
+
+
+        void AndroidJavaSensors::listen_enter() {
+
+
+        }
+
+        bool AndroidJavaSensors::update(IEvents &events, ssi_size_t n_new_events, ssi_size_t time_ms) {
+
+
+                for (int i = 0; i < n_new_events; i++) {
+                        ssi_event_t *e = events.next();
+
+
+                    bool sendEvent = false;
+
+                    //filter out own messages?
+                    if (e->sender_id == _event.sender_id)
+                    {
+                            //if (!_options.send_own_events)
+                                    sendEvent = false;
+                           // else
+                             //       sendEvent = true;
+                    }
+                    else
+                    {
+                            sendEvent = true;
+                    }
+
+
+
+                    if (sendEvent) {
+                            rapidjson::StringBuffer s;
+                            rapidjson::Writer<rapidjson::StringBuffer> writer(s);
+
+                            writer.StartObject();
+
+
+                            writer.String("type");
+                            writer.String(SSI_ETYPE_NAMES[e->type]);
+
+                            writer.String("sender");
+                            writer.String(Factory::GetString(e->sender_id));
+
+                            writer.String("name");
+                            writer.String(Factory::GetString(e->event_id));
+
+                            writer.String("time");
+                            writer.Int(e->time);
+
+                            writer.String("dur");
+                            writer.Int(e->dur);
+
+                            writer.String("tot");
+                            writer.Int(e->tot);
+
+                            writer.String("state");
+                            writer.String(SSI_ESTATE_NAMES[e->state]);
+
+                            writer.String("glue");
+                            writer.Int(e->glue_id);
+
+                            writer.String("prob");
+                            writer.Double(e->prob);
+
+
+                            writer.String("value");
+
+                            if (e->type == SSI_ETYPE_STRING)
+                            {
+                                    writer.String(e->ptr);
+                            }
+                            else if (e->type == SSI_ETYPE_TUPLE)
+                            {
+                                    writer.StartArray();
+
+                                    ssi_real_t *floatptr = ssi_pcast(ssi_real_t, e->ptr);
+
+                                    for (int i = 0; i < e->tot / sizeof(ssi_real_t); i++)
+                                            writer.Double(floatptr[i]);
+
+                                    writer.EndArray();
+                            }
+                            else if (e->type == SSI_ETYPE_EMPTY)
+                            {
+                                    writer.Null();
+                            }
+                            else if (e->type == SSI_ETYPE_MAP)
+                            {
+                                    writer.StartArray();
+
+                                    ssi_event_map_t *ptr = ssi_pcast(ssi_event_map_t, e->ptr);
+
+                                    for (int i = 0; i < e->tot / sizeof(ssi_event_map_t); i++) {
+
+                                            writer.StartObject();
+                                                    writer.String(Factory::GetString(ptr[i].id));
+                                                    writer.Double(ptr[i].value);
+                                            writer.EndObject();
+
+                                    }
+
+                                    writer.EndArray();
+                            }
+
+                            else if (e->type == SSI_ETYPE_UNDEF)
+                            {
+                                /*
+                                    unsigned char *convbuf = reinterpret_cast<unsigned char*>(e->ptr);
+                                    char *base64_buf = new char[4 * (int)ceil(e->tot / 3.0)]; //http://stackoverflow.com/questions/9668863/predict-the-byte-size-of-a-base64-encoded-byte
+
+                                    mg_base64_encode(convbuf, e->tot, base64_buf);
+
+                                    writer.String(e->ptr, strlen(base64_buf));*/
+                            }
+                            else // unknown types!
+                            {
+                                    ssi_wrn("unknown event type!");
+                                    writer.Null();
+                            }
+
+
+                            writer.EndObject();
+
+                            //server->sendEvent(s.GetString());
+
+
+                            if(sensorCollectorServiceClass&&sendByteMethod)
+                            {
+                                std::string str=s.GetString();
+                                std::thread blubb(&AndroidJavaSensors::stringToJava,this, str);
+                                /*
+                                pthread_create(&hThread, NULL, &stringToJava, &);
+                                stringToJava(s.GetString());*/
+                                blubb.join();
+                            }
+                    }
+            }
+
+
+                return true;
+        }
+
+        void  AndroidJavaSensors::listen_flush() {
+
+
+
+        }
+
+
+
 	AndroidJavaSensors::~AndroidJavaSensors()
 	{
 		androidJavaSensorsInstance=0;

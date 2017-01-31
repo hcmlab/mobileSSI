@@ -158,17 +158,17 @@ int SocketOsc::send_event(const ssi_char_t *sender_id,
 	Lock lock (_send_mutex);
 
 	// calculate message size
-	long required = 4;
-	required += OutboundPacketStream::RoundUp4 (ssi_cast (long, strlen (SocketOsc::MESSAGE_PATTERN)) + 1); // pattern
+    int32_t required = 4;
+    required += OutboundPacketStream::RoundUp4 (ssi_cast (int32_t, strlen (SocketOsc::MESSAGE_PATTERN)) + 1); // pattern
 	required += OutboundPacketStream::RoundUp4 (4 + 2*n_events + 1 + 1); // #tags + \0 + comma
 	//required += OutboundPacketStream::RoundUp4(ssi_cast(long, strlen(sender_id)) + 1); // sender id
-	required += OutboundPacketStream::RoundUp4(ssi_cast(long, strlen(event_id)) + 1); // event id
+    required += OutboundPacketStream::RoundUp4(ssi_cast(int32_t, strlen(event_id)) + 1); // event id
 	required += sizeof (osc_int32); // time
 	required += sizeof (osc_int32); // dur
 	required += sizeof (osc_int32); // state
 	required += 4; // event size
 	for (osc_int32 i = 0; i < n_events; i++) {
-		required += OutboundPacketStream::RoundUp4 (ssi_cast (long, strlen (names[i])) + 1); // name
+        required += OutboundPacketStream::RoundUp4 (ssi_cast (int32_t, strlen (names[i])) + 1); // name
 		required += 4; // value
 	}
 	required = OutboundPacketStream::RoundUp4 (required);
@@ -187,12 +187,12 @@ int SocketOsc::send_event(const ssi_char_t *sender_id,
 	}
 	*_stream << EndMessage;
 
-	long stream_size = _stream->Size ();
+    int32_t stream_size = _stream->Size ();
 	SSI_ASSERT (required <= stream_size);
 	return _socket.send (_stream->Data(), stream_size);
 }
 
-int SocketOsc::recv (SocketOscListener *listener, long timeout) {
+int SocketOsc::recv (SocketOscListener *listener, int64_t timeout) {
 
 	int result = _socket.recv (_recv_buffer, _buffer_size, timeout);
 
@@ -201,7 +201,7 @@ int SocketOsc::recv (SocketOscListener *listener, long timeout) {
 		ReceivedPacket packet (_recv_buffer, result);
 		ReceivedMessage message (packet);
 
-		try {
+        try {
 			ReceivedMessageArgumentStream args = message.ArgumentStream();
 			ReceivedMessage::const_iterator arg = message.ArgumentsBegin();
 	        
@@ -210,6 +210,7 @@ int SocketOsc::recv (SocketOscListener *listener, long timeout) {
 			if (strcmp (pattern, SocketOsc::STREAM_PATTERN) == 0) {
 				const ssi_char_t *id;
 				osc_int32 time, num, dim, bytes, type;
+
 				float sr;				
 				void *data;
 				if (parse_stream (args, id, time, sr, num, dim, bytes, type, data)) {
@@ -220,8 +221,8 @@ int SocketOsc::recv (SocketOscListener *listener, long timeout) {
 			} else if (strcmp (pattern, SocketOsc::EVENT_PATTERN) == 0) {
 				const ssi_char_t *event_id;
 				const ssi_char_t *sender_id;
-				osc_int32 time, dur, state, n_events;
-				if (parse_event (args, sender_id, event_id, time, dur, state, n_events, _event_name_buffer, _event_values_buffer)) {
+                osc_int32 time=0, dur=0, state=0, n_events=0;
+                if (parse_event (args, sender_id, event_id, time, dur, state, n_events, _event_name_buffer, _event_values_buffer)) {
 					listener->event (_socket.getRecvAddress (), sender_id, event_id, time, dur, state, n_events, _event_name_buffer, _event_values_buffer);
 				} else {
 					ssi_wrn ("could not parse event");
@@ -240,10 +241,10 @@ int SocketOsc::recv (SocketOscListener *listener, long timeout) {
 			} else {
 				ssi_wrn ("unkown message address %s", pattern);
 			}
-			
-		} catch (Exception& e) {
-			ssi_wrn ("error while parsing message %s: %s", message.AddressPattern(), e.what());
-		}
+
+        } catch (Exception& e) {
+            ssi_wrn ("error while parsing message %s: %s", message.AddressPattern(), e.what());
+        }
 	}
 	
 	return result;

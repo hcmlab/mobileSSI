@@ -38,10 +38,14 @@
 
 
 #include <jni.h>
-
+#include "../../../libs/build/rapidjson/writer.h"
+#include "../../../libs/build/rapidjson/stringbuffer.h"
 
 extern "C"
 {
+static jobject gClassLoader;
+static jmethodID gFindClassMethod;
+
 	void Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_addEvent
 													(JNIEnv* env,
 													jobject thiz,
@@ -49,9 +53,11 @@ extern "C"
 													jstring in_eventName,
 													jstring in_eventText
 													);
+
 													
 													
-	void get_AndroidJavaSensorsFromJava();
+        jboolean Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_initC(JNIEnv* env,
+                                                                             jobject thiz);
 
 
 }
@@ -115,6 +121,23 @@ namespace ssi
 				return androidJavaSensorsInstance;
 			}
 		}
+                static void setJMembers(JavaVM* jvm, jclass SensorCollectorServiceClass,  jmethodID sendByteMethod)
+                {
+                    ssi_wrn("setJMembers");
+                    if(androidJavaSensorsInstance)
+                    {
+                        ssi_wrn("setJMembers with instance");
+
+                        androidJavaSensorsInstance->sensorCollectorServiceClass=SensorCollectorServiceClass;
+                        androidJavaSensorsInstance->sendByteMethod=sendByteMethod;
+                        androidJavaSensorsInstance->jvm=jvm;
+
+
+
+                    }
+
+                }
+
 		static AndroidJavaSensors* getAndroidJavaSensors(const ssi_char_t *file)
 		{
 			if(!androidJavaSensorsInstance)
@@ -137,6 +160,8 @@ namespace ssi
 		{
 			return _event_address.getAddress();
 		}
+
+                void stringToJava(std::string str);
 		
 		IEventListener	*_elistener;
 		EventAddress	_event_address;
@@ -145,6 +170,11 @@ namespace ssi
 		ITheFramework	*_frame;
 
 		void addJavaEvent(const char* sender, const char* name, const char* text);
+
+                // to listen for ssi events
+                void listen_enter();
+                bool update(IEvents &events, ssi_size_t n_new_events, ssi_size_t time_ms);
+                void listen_flush();
 		 
 		private:
 		
@@ -159,8 +189,18 @@ namespace ssi
 
 		ssi_char_t *_file;
 		Options _options;
-		static char ssi_log_name[];
+		//static char ssi_log_name[];
 
+
+
+
+                jclass sensorCollectorServiceClass;
+                jmethodID sendByteMethod;
+                JavaVM* jvm;
+
+                IEventListener *_listener;
+                ssi_event_t _event;
+                std::string ssiEventString;
 	};
 
 

@@ -1,4 +1,4 @@
-// Energy.cpp
+// Mean.cpp
 // author: Johannes Wagner <wagner@hcm-lab.de>
 // created: 2008/01/18
 // Copyright (C) University of Augsburg, Lab for Human Centered Multimedia
@@ -24,7 +24,7 @@
 //
 //*************************************************************************************************
 
-#include "Energy.h"
+#include "Mean.h"
 #include "signal/mathext.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
@@ -38,7 +38,7 @@
 
 namespace ssi {
 
-Energy::Energy (const ssi_char_t *file)
+Mean::Mean (const ssi_char_t *file)
 	: _file (0) {
 
 	if (file) {
@@ -49,7 +49,7 @@ Energy::Energy (const ssi_char_t *file)
 	}
 }
 
-Energy::~Energy () {
+Mean::~Mean () {
 
 	if (_file) {
 		OptionList::SaveXML (_file, _options);
@@ -57,7 +57,7 @@ Energy::~Energy () {
 	}
 }
 
-void Energy::transform (ITransformer::info info,
+void Mean::transform (ITransformer::info info,
 	ssi_stream_t &stream_in,
 	ssi_stream_t &stream_out,
 	ssi_size_t xtra_stream_in_num,
@@ -68,43 +68,19 @@ void Energy::transform (ITransformer::info info,
 
 	ssi_real_t *srcptr = ssi_pcast (ssi_real_t, stream_in.ptr);
 	ssi_real_t *dstptr = ssi_pcast (ssi_real_t, stream_out.ptr);
+	
+	for (ssi_size_t j = 0; j < sample_dimension; j++) {
+		dstptr[j] = 0;
+	}
+	
+	for (ssi_size_t i = 0; i < sample_number; i++) {		
+		for (ssi_size_t j = 0; j < sample_dimension; j++) {
+			dstptr[j] += *srcptr++;
+		}		
+	}	
 
-	if (_options.global) {
-
-		ssi_real_t sum = 0;
-		ssi_size_t elems = sample_number * sample_dimension;
-		ssi_real_t value;
-		for (ssi_size_t i = 0; i < elems; i++) {
-            value = *srcptr;
-            srcptr++;
-			sum += value * value;
-		}
-		*dstptr = sqrt (sum / elems);
-
-	} else {
-
-		ssi_real_t *dstptr_tmp = dstptr;
-		ssi_real_t value;
-		for (ssi_size_t i = 0; i < sample_dimension; i++) {
-            value = *srcptr;
-            srcptr++;
-			*dstptr++ = value * value;
-		}
-		for (ssi_size_t i = 1; i < sample_number; i++) {
-			dstptr = dstptr_tmp;	
-			for (ssi_size_t j = 0; j < sample_dimension; j++) {
-                value = *srcptr;
-                srcptr++;
-                *dstptr += value * value;
-                dstptr++;
-			}
-		}
-		dstptr = dstptr_tmp;
-		for (ssi_size_t i = 0; i < sample_dimension; i++) {
-			value = *dstptr;
-            *dstptr = sqrt (value / sample_number);
-            dstptr++;
-		}
+	for (ssi_size_t j = 0; j < sample_dimension; j++) {
+		dstptr[j] /= sample_number;
 	}
 }
 

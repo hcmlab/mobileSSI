@@ -51,7 +51,7 @@ EVector::EVector ()
 	_param (0),
 	_starting_weight (0),
 	_current_weight (0),
-	_decay_weight(false){
+    _decay_weight(false){
 
 }
 
@@ -69,7 +69,7 @@ EVector::EVector (ssi_size_t dim, ssi_real_t weight, ssi_real_t speed, EVector::
 	_param (0),
 	_starting_weight (0),
 	_current_weight (0),
-	_decay_weight (false){
+    _decay_weight (false){
 
 		if (type > 2) {
 			ssi_wrn ("vector decay type '%u' not defined", type);
@@ -134,7 +134,7 @@ void EVector::Release() {
 bool EVector::update(ssi_size_t framework_time, ssi_real_t *baseline){
 	
 	//calculate lifetime
-	set_lifetime(framework_time);
+    set_lifetime(framework_time);
 	
 	subtract_baseline(baseline);
 
@@ -143,7 +143,7 @@ bool EVector::update(ssi_size_t framework_time, ssi_real_t *baseline){
 
 	//decay
 	decay();
-	
+
 	add_baseline(baseline);
 
 	//calculate new norms
@@ -199,7 +199,7 @@ bool EVector::decay(){
 
 	ssi_real_t decay_factor = 0.0f;
 
-	ssi_real_t dt = ssi_cast(ssi_real_t, _lifetime)/1000;
+    ssi_real_t dt = ssi_cast(ssi_real_t, _lifetime)/1000;
 	ssi_real_t dur = 1.0f/_speed;
 	ssi_real_t fac = abs (_norm - ground);
 	ssi_real_t lambda = (10.0f * param) / (fac * dur);
@@ -280,6 +280,7 @@ bool EVector::set_values(ssi_size_t dim, ssi_event_map_t* tuples){
 	
 	for(ssi_size_t i = 0; i < dim; i++){
 		_value[i] = tuples[i].value;
+        //ssi_wrn("NEW VALUE: %f", tuples[i].value );
 	}
 
 	return true;
@@ -315,8 +316,8 @@ bool EVector::set_values_decay(ssi_size_t dim, const ssi_real_t *value){
 
 bool EVector::set_lifetime(ssi_size_t framework_time){
 	
-	_lifetime = framework_time - _creation_time;
-	
+    _lifetime = framework_time - _creation_time;
+
 	return true;
 }
 

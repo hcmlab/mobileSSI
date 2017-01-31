@@ -1,6 +1,6 @@
-// Energy.cpp
-// author: Johannes Wagner <wagner@hcm-lab.de>
-// created: 2008/01/18
+// Relative.cpp
+// author: Andreas Seiderer <seiderer@hcm-lab.de>
+// created: 2016/10/17
 // Copyright (C) University of Augsburg, Lab for Human Centered Multimedia
 //
 // *************************************************************************************************
@@ -24,7 +24,7 @@
 //
 //*************************************************************************************************
 
-#include "Energy.h"
+#include "Relative.h"
 #include "signal/mathext.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
@@ -38,8 +38,10 @@
 
 namespace ssi {
 
-Energy::Energy (const ssi_char_t *file)
-	: _file (0) {
+ssi_char_t *Relative::ssi_log_name = "relative__";
+
+Relative::Relative(const ssi_char_t *file)
+	: _file (0), lastPrevVal(nullptr), first(true){
 
 	if (file) {
 		if (!OptionList::LoadXML (file, _options)) {
@@ -49,15 +51,32 @@ Energy::Energy (const ssi_char_t *file)
 	}
 }
 
-Energy::~Energy () {
+Relative::~Relative() {
 
 	if (_file) {
 		OptionList::SaveXML (_file, _options);
 		delete[] _file;
 	}
+
+	if (lastPrevVal)
+		delete[] lastPrevVal;
 }
 
-void Energy::transform (ITransformer::info info,
+void Relative::transform_enter(ssi_stream_t &stream_in,
+	ssi_stream_t &stream_out,
+	ssi_size_t xtra_stream_in_num,
+	ssi_stream_t xtra_stream_in[]) {
+
+	if (!lastPrevVal)
+	{
+		lastPrevVal = new ssi_real_t[stream_in.dim];
+		for (unsigned int i = 0; i < stream_in.dim; i++)
+			lastPrevVal[i] = 0;
+	}
+}
+
+
+void Relative::transform (ITransformer::info info,
 	ssi_stream_t &stream_in,
 	ssi_stream_t &stream_out,
 	ssi_size_t xtra_stream_in_num,
@@ -68,45 +87,33 @@ void Energy::transform (ITransformer::info info,
 
 	ssi_real_t *srcptr = ssi_pcast (ssi_real_t, stream_in.ptr);
 	ssi_real_t *dstptr = ssi_pcast (ssi_real_t, stream_out.ptr);
-
-	if (_options.global) {
-
-		ssi_real_t sum = 0;
-		ssi_size_t elems = sample_number * sample_dimension;
-		ssi_real_t value;
-		for (ssi_size_t i = 0; i < elems; i++) {
-            value = *srcptr;
-            srcptr++;
-			sum += value * value;
-		}
-		*dstptr = sqrt (sum / elems);
-
-	} else {
-
-		ssi_real_t *dstptr_tmp = dstptr;
-		ssi_real_t value;
-		for (ssi_size_t i = 0; i < sample_dimension; i++) {
-            value = *srcptr;
-            srcptr++;
-			*dstptr++ = value * value;
-		}
-		for (ssi_size_t i = 1; i < sample_number; i++) {
-			dstptr = dstptr_tmp;	
-			for (ssi_size_t j = 0; j < sample_dimension; j++) {
-                value = *srcptr;
-                srcptr++;
-                *dstptr += value * value;
-                dstptr++;
+	
+	for (ssi_size_t i = 0; i < sample_number; i++) {
+		for (ssi_size_t j = 0; j < sample_dimension; j++) {
+			if (first) {
+				*dstptr++ = 0;
+				lastPrevVal[j] = *srcptr++;
+				first = false;
+			}
+			else {
+				ssi_real_t val = *srcptr++;
+				*dstptr++ = val - lastPrevVal[j];
+				lastPrevVal[j] = val;
 			}
 		}
-		dstptr = dstptr_tmp;
-		for (ssi_size_t i = 0; i < sample_dimension; i++) {
-			value = *dstptr;
-            *dstptr = sqrt (value / sample_number);
-            dstptr++;
-		}
-	}
+	}	
 }
+
+void Relative::transform_flush(ssi_stream_t &stream_in,
+	ssi_stream_t &stream_out,
+	ssi_size_t xtra_stream_in_num,
+	ssi_stream_t xtra_stream_in[]) {
+
+	delete[] lastPrevVal;
+	lastPrevVal = nullptr;
+}
+
+
 
 }
 

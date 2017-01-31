@@ -76,7 +76,7 @@ if(ANDROID)
 SET(SSI_PLATFORM Android)
 #set compiler and linker flags
 #for android 4 and later use -fPIE position independent executeable
-SET(SSI_CFLAG " -ggdb -std=c++11 -fPIE -fexceptions -DHEADLESS")
+SET(SSI_CFLAG " -ggdb -fexceptions -std=c++11 -fPIE -DHEADLESS")
 SET(SSI_LD_FLAG "-pie")
 # none for Android
 SET(SSI_GUI none)
@@ -93,10 +93,10 @@ endif(OPENSSI_BUILD_GUI)
 
 #set compiler and linker flags
 IF(SSI_GUI STREQUAL "SDL")
-    SET(SSI_CFLAG "-std=c++11   -fPIC")
+    SET(SSI_CFLAG "-std=c++11 -ggdb  -fPIC")
     SET(SSI_LD_FLAG "-lrt")
 else(SSI_GUI STREQUAL "SDL")
-    SET(SSI_CFLAG "-std=c++11  -fPIC -DHEADLESS")
+    SET(SSI_CFLAG "-std=c++11 -ggdb -fPIC -DHEADLESS")
     SET(SSI_LD_FLAG "-lrt")
 endif(SSI_GUI STREQUAL "SDL")
 
@@ -110,6 +110,6 @@ add_subdirectory(core)
 add_subdirectory(libs)
 add_subdirectory(plugins)
 
-IF(IS_DIRECTORY programms)
-        add_subdirectory(programms)
-ENDIF(IS_DIRECTORY programms)
+#IF(IS_DIRECTORY programms)
+ #       add_subdirectory(programms)
+#ENDIF(IS_DIRECTORY programms)

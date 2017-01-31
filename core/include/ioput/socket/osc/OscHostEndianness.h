@@ -61,6 +61,13 @@
 
 
 #elif defined(__GNUC__)
+#include <endian.h>
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+    #define __LITTLE_ENDIAN__
+#else
+
+#endif
 
 #if defined(__LITTLE_ENDIAN__)
 #define OSC_HOST_LITTLE_ENDIAN 1

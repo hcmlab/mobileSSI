@@ -25,7 +25,7 @@
 //*************************************************************************************************
 
 #include "ssiandroidjavasensors.h"
-#include "androidSensors/include/ssiandroidsensors.h"
+//#include "androidSensors/include/ssiandroidsensors.h"
 #include "base/Factory.h"
 
 
