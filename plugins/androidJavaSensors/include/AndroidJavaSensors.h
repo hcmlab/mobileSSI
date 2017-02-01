@@ -76,7 +76,7 @@ namespace ssi
 
 				Options() : pollMs(100) {
 					setSender("AndroidJavaSensors");
-					setAllSensorsOn();
+                                        setAllSensorsOff();
 					addOption("sname", sname, SSI_MAX_CHAR, SSI_CHAR, "name of sender (if sent to event board)");
 
 					addOption("activesensors", activeSensors, NJSENSORS, SSI_BOOL, "activate / disable sensors [battery, bluetooth, wlan]");
@@ -170,6 +170,7 @@ namespace ssi
 		ITheFramework	*_frame;
 
 		void addJavaEvent(const char* sender, const char* name, const char* text);
+
 
                 // to listen for ssi events
                 void listen_enter();

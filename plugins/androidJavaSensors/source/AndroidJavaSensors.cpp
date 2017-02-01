@@ -145,7 +145,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *pjvm, void *reserved) {
     {
         if (jVM->GetEnv( (void**) env, JNI_VERSION_1_4) != JNI_OK)
         {
-           ssi_wrn ("android_java_callback: attaching current thread");
+
             jVM->AttachCurrentThread( (void**) env, NULL);
 
             if (jVM->GetEnv( (void**) env, JNI_VERSION_1_4) != JNI_OK)
@@ -243,7 +243,8 @@ namespace ssi
 		if (_elistener)
 		{
 
-				_elistener->update(_event_batt);
+                if(_options.activeSensors[0]||_options.activeSensors[1]||_options.activeSensors[2])
+                    _elistener->update(_event_batt);
 				
 		}
 
@@ -264,7 +265,7 @@ namespace ssi
 			return false;
 
 
-		if (_options.activeSensors[0]||true) {
+        if (_options.activeSensors[0]) {
 
 
 			_event_batt.sender_id = sender_id;
@@ -301,12 +302,10 @@ namespace ssi
 			}
 			_file = ssi_strcpy(file);
 		}
-			if (_options.activeSensors[0]||true)
-			{
 
 				ssi_event_init(_event_batt, SSI_ETYPE_STRING);
 				ssi_event_adjust(_event_batt, 64 * sizeof(ssi_char_t));
-			}
+
 		
 	}
 
@@ -326,8 +325,9 @@ namespace ssi
                     bool sendEvent = false;
 
                     //filter out own messages?
-                    if (e->sender_id == _event.sender_id)
+                    if ((e->sender_id == _event.sender_id) && _event.sender_id!=NULL)
                     {
+                        ssi_wrn("sender id %s, event sender %s : not send", e->sender_id, _event.sender_id);
                             //if (!_options.send_own_events)
                                     sendEvent = false;
                            // else
@@ -335,6 +335,7 @@ namespace ssi
                     }
                     else
                     {
+                        ssi_wrn("sender id %s, event sender %s : send", e->sender_id, _event.sender_id);
                             sendEvent = true;
                     }
 
