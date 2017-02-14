@@ -116,8 +116,11 @@ public class SensorCollectorService extends Service{
 
 		//JNI
 		//startSensorLoop();
+		//wait 4s for ssi and androidJavasensor might not be in use!
+		long timeoutExpiredMs = System.currentTimeMillis() + 4000;
 		
-		while(!initC());
+		while(!initC() && (System.currentTimeMillis() < timeoutExpiredMs));
+		
 		Toast.makeText(this, "Congrats! My Service Started", Toast.LENGTH_LONG).show();
 
 		

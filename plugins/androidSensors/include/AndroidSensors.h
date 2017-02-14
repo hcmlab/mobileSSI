@@ -108,6 +108,7 @@ enum SensorType {
                         Options() : pollMs(100), sr(100) {
 				setSender("AndroidSensors");
 				setAllSensorsOn();
+                                activeSensors[SENSOR_HEART_RATE]=false;
 				addOption("sname", sname, SSI_MAX_CHAR, SSI_CHAR, "name of sender (if sent to event board)");
 				addOption("sensorpoll", &pollMs, 1, SSI_INT, "default sensor polling time in ms");
                                 addOption ("sr", &sr, 1, SSI_DOUBLE, "sample rate in Hz");

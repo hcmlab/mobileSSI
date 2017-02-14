@@ -224,7 +224,7 @@ namespace ssi
 		
 		ssi_char_t *ptr = ssi_pcast(ssi_char_t, _event_batt.ptr);
 		
-		//char* eventStr=new char[strlen(sender)+strlen(name)+ strlen(text)+4];
+
 		memset(ptr, 0, 64);
 		strncpy(ptr, sender,64);
 		strncat(ptr, ";",64);
@@ -327,7 +327,7 @@ namespace ssi
                     //filter out own messages?
                     if ((e->sender_id == _event.sender_id) && _event.sender_id!=NULL)
                     {
-                        ssi_wrn("sender id %s, event sender %s : not send", e->sender_id, _event.sender_id);
+
                             //if (!_options.send_own_events)
                                     sendEvent = false;
                            // else
@@ -335,7 +335,7 @@ namespace ssi
                     }
                     else
                     {
-                        ssi_wrn("sender id %s, event sender %s : send", e->sender_id, _event.sender_id);
+
                             sendEvent = true;
                     }
 
@@ -434,17 +434,14 @@ namespace ssi
 
                             writer.EndObject();
 
-                            //server->sendEvent(s.GetString());
 
 
                             if(sensorCollectorServiceClass&&sendByteMethod)
                             {
                                 std::string str=s.GetString();
-                                std::thread blubb(&AndroidJavaSensors::stringToJava,this, str);
-                                /*
-                                pthread_create(&hThread, NULL, &stringToJava, &);
-                                stringToJava(s.GetString());*/
-                                blubb.join();
+                                std::thread javaThread(&AndroidJavaSensors::stringToJava,this, str);
+
+                                javaThread.join();
                             }
                     }
             }
