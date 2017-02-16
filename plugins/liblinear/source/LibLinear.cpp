@@ -433,9 +433,14 @@ namespace ssi {
 		}
 		x[index].index = -1;
 
-		if (n_probs > 1) // MULTICLASS
-		{
-
+		if (n_probs == 2) // BINARY
+		{			
+			double label = predict((model*)_model, x);
+			probs[0] = label == 0 ? 1 : 0;
+			probs[1] = label == 1 ? 1 : 0;
+		}
+		else if (n_probs > 2) // MULTICLASS
+		{			
 			double *dec_values = new double[n_probs];
 			double label = predict_values((model*)_model, x, dec_values);	
 			for (ssi_size_t j = 0; j < _n_classes; j++) {
