@@ -70,7 +70,7 @@ public:
 			NAME,
 			TIME,
 			TIME_SYSTEM,
-			TIME_RELATIVE,
+			TIME_RELATIVE2,
 			DURATION,
 			STATE,
 			EVENT,
@@ -85,7 +85,7 @@ public:
 			case Field::NAME: return "name";
 			case Field::TIME: return "time";
 			case Field::TIME_SYSTEM: return "time_system";
-			case Field::TIME_RELATIVE: return "time_relative";
+			case Field::TIME_RELATIVE2: return "time_relative";
 			case Field::DURATION: return "duration";
 			case Field::STATE: return "state";
 			case Field::EVENT: return "event";

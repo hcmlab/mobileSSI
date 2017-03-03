@@ -66,7 +66,7 @@ protected:
 	void mouseDown(ssi_point_t position, IWindow::KEY vkey);
 	void keyDown(IWindow::KEY key, IWindow::KEY vkey);
 
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #else
 	LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	HWND _hWnd;

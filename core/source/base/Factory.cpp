@@ -34,7 +34,7 @@
 #include "graphic/SDL_WindowManager.h"
 #endif
 
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 
     #include <stdlib.h>
     #include <stdio.h>
@@ -42,6 +42,10 @@
     #include <iostream>
 	#include <fstream>
 
+#endif
+
+#if __APPLE__
+#define DEBUG 1
 #endif
 
 #ifdef USE_SSI_LEAK_DETECTOR
@@ -138,20 +142,37 @@ bool Factory::registerDLL (const ssi_char_t *filepath, FILE *logfile, IMessage *
 		#ifdef DEBUG
 			if (ssi_strcmp(fp.getName(), "ssi", true, 3))
 			{
+            #if __APPLE__
+                filepath_x = ssi_strcat(fp.getPath(), "d.dylib");
+            #else
 				filepath_x = ssi_strcat(fp.getPath(), "d.so");
+            #endif
+                
 			}
 			else
 			{
+            #if __APPLE__
+                filepath_x = ssi_strcat(fp.getDir(), "ssi", fp.getName(), "d.dylib");
+            #else
 				filepath_x = ssi_strcat(fp.getDir(), "ssi", fp.getName(), "d.so");
+            #endif
 			}
-		#else 
+		#else
 			if (ssi_strcmp(fp.getName(), "ssi", true, 3))
 			{
+                #if __APPLE__
+                filepath_x = ssi_strcat(fp.getPath(), ".dylib");
+                #else
 				filepath_x = ssi_strcat(fp.getPath(), ".so");
+                #endif
 			}
 			else
 			{
+            #if __APPLE__
+                filepath_x = ssi_strcat(fp.getDir(), "ssi", fp.getName(), ".dylib");
+            #else
 				filepath_x = ssi_strcat(fp.getDir(), "ssi", fp.getName(), ".so");
+            #endif
 			}
 			#if __ANDROID__
 				//add lib prefix
@@ -562,7 +583,7 @@ void Factory::clear () {
 			if(strcmp((it->first.str()), "ssixsensd.dll") != 0 && strcmp((it->first.str()), "ssixsens.dll") != 0) //bug in xsens api 4.2.1
 			{
 				if (it->second) {
-					#if __gnu_linux__
+                    #if __gnu_linux__ || __APPLE__
 					if(!dlclose(it->second))
 					{
 						const char* error;
@@ -627,7 +648,7 @@ IWindowManager *Factory::getWindowManager()
 	return _wmanager;
 }
 
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 char *GetModuleFileName(void* addr, char *pDest, int nDestLen )
 {
         Dl_info rInfo;

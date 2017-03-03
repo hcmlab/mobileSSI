@@ -29,7 +29,7 @@
 // declarations
 #include "expparser.h"
 
-#if (defined(ANDROID))
+#if (defined(ANDROID)) || __APPLE__
 	#define _snprintf snprintf
 #endif
 /*

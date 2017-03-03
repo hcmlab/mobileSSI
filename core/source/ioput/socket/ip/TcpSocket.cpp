@@ -36,9 +36,9 @@
 #endif
 
 
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #ifdef __ANDROID__
-#else
+#elif __gnu_linux__
 #include <stropts.h>
 #endif
 #include <unistd.h> 

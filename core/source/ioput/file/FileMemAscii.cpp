@@ -34,7 +34,7 @@
 		static char THIS_FILE[] = __FILE__;
 	#endif
 #endif
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #define _snprintf snprintf
 #endif
 namespace ssi {

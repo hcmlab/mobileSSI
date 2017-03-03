@@ -106,7 +106,7 @@ public:
 	// Connect to a remote endpoint which is used as the target
 	// for calls to Send()
 	void Connect( const IpEndpointName& remoteEndpoint );
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
         void SetEnableBroadcast(bool enableBroadcast);
         void SetAllowReuse(bool enableReuse);
 #endif

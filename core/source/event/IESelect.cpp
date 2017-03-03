@@ -92,7 +92,7 @@ ssi_event_t *IESelect::get (ssi_size_t index) {
 	return next ();
 }
 
-bool IESelect::check (ssi_event_t &e, bool check_time_span) {
+bool IESelect::check2 (ssi_event_t &e, bool check_time_span) {
 
 	switch (_state_filter) {
 		case EVENT_STATE_FILTER::COMPLETED:
@@ -146,7 +146,7 @@ bool IESelect::check (ssi_event_t &e, bool check_time_span) {
 	}
 
 	return sender_ok && event_ok;
-}
+};
 
 ssi_event_t *IESelect::next () {
 
@@ -156,7 +156,7 @@ ssi_event_t *IESelect::next () {
 		ok = false;
 		e = _events.next ();
 		if (e) {			
-			ok = check (*e, _time_span > 0);		
+			ok = check2 (*e, _time_span > 0);
 		}
 	} while (e && !ok);
 

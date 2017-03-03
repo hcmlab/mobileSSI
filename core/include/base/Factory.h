@@ -43,7 +43,7 @@
 #endif
 
 
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #define HMODULE void*
 #endif
 

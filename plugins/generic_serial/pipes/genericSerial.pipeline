@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<pipeline>
+
+   <register>
+        <load name="ssigenericserial" />
+		<load name="ssiioput"/>
+   </register>
+
+   <sensor create="GenericSerial" port="/dev/ttyUSB1" baud="115200" dim="6" sr="2" separator=";" option="genericserial" size="1s">
+       <output channel="serialrawdata" pin="pin_serial_raw_data" />
+   </sensor>
+
+	<consumer create="FileWriter" path="genericSerial" type="1" stream="false" delim=";">
+		<input pin="pin_serial_raw_data" frame="1" />
+	</consumer>
+
+   </pipeline>

@@ -26,7 +26,7 @@
 
 #include "ioput/file/StringList.h"
 
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #include <string.h>
 #define _stricmp strcmp
 #endif

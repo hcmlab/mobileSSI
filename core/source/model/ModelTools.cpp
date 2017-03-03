@@ -746,7 +746,7 @@ namespace ssi {
 				sample_elems = sample->streams[0]->dim;
 				// we print only the first sample
 				for (ssi_size_t i = 0; i < sample_elems; i++) {
-#if __MINGW32__||__gnu_linux__
+#if __MINGW32__||__gnu_linux__ || __APPLE__
 					if ((*sample_ptr) != (*sample_ptr) || std::isfinite(*sample_ptr))
 #else
 					if (_isnan(*sample_ptr) || !_finite(*sample_ptr))

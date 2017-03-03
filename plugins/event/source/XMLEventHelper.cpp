@@ -369,8 +369,8 @@ bool XMLEventHelper::parseField(Mapping &map, const ssi_char_t *string) {
 		map.field = Field::TIME;
 	} else if (ssi_strcmp(string, FieldName(Field::TIME_SYSTEM), false)) {
 		map.field = Field::TIME_SYSTEM;
-	} else if (ssi_strcmp(string, FieldName(Field::TIME_RELATIVE), false)) {
-		map.field = Field::TIME_RELATIVE;
+	} else if (ssi_strcmp(string, FieldName(Field::TIME_RELATIVE2), false)) {
+		map.field = Field::TIME_RELATIVE2;
 	} else if (ssi_strcmp(string, FieldName(Field::DURATION), false)) {
 		map.field = Field::DURATION;
 	} else if (ssi_strcmp(string, FieldName(Field::STATE), false)) {
@@ -706,7 +706,7 @@ bool XMLEventHelper::applyEvent(Mapping &map, ssi_event_t &e) {
 			break;
 		}
 
-		case Field::TIME_RELATIVE: {
+		case Field::TIME_RELATIVE2: {
 
 			ssi_size_t time = Factory::GetFramework()->GetElapsedTimeMs() - e.time;
 			ssi_sprint(_strbuf, "%d", time);

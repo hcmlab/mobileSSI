@@ -80,7 +80,7 @@ ssi_bitmask_t IFunctionals::Name2Format (const ssi_char_t *name) {
 
 	for (ssi_size_t i = 0; i < FORMAT_SIZE; i++) {
 		if (strcmp (name, FORMAT_NAMES[i]) == 0) {
-			#if __MINGW32__|__gnu_linux__
+			#if __MINGW32__|__gnu_linux__|__APPLE__
             format = ((uint64_t)1) << i;
 			#else
 			format = 1i64 << i;
@@ -362,7 +362,7 @@ const ssi_char_t *Functionals::getName (ssi_size_t index) {
 	ssi_bitmask_t format = Names2Format (_options.names);
 
 	for (ssi_size_t i = 0; i < FORMAT_SIZE; i++) {
-		#if __MINGW32__|__gnu_linux__
+		#if __MINGW32__|__gnu_linux__|__APPLE__
         if (format & (((uint64_t)1) << i)) {
 		#else
 		if (format & (1i64 << i)) {

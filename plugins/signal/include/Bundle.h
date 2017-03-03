@@ -130,7 +130,7 @@ protected:
 	ssi_real_t *_last;
 	REPLACE::List _replace;
 
-	bool check(ssi_real_t *in, ssi_real_t *out, ssi_real_t &last, ssi_size_t dim, bool above, ssi_size_t n);
+	bool check2(ssi_real_t *in, ssi_real_t *out, ssi_real_t &last, ssi_size_t dim, bool above, ssi_size_t n);
 	void replace(ssi_real_t *in, ssi_real_t *out, ssi_real_t last, ssi_size_t dim, bool above, ssi_size_t n, REPLACE::List method);
 };
 

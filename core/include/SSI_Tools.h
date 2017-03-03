@@ -30,7 +30,7 @@
 #define SSI_TOOLS_H
 #include <string>
 #include "r250.h"
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h> /* for fork */
@@ -1536,7 +1536,7 @@ SSI_INLINE void static ssi_abs(ssi_size_t num,
 	ssi_real_t *srcptr) {
 
 	for (ssi_size_t i = 0; i < num * dim; i++) {		
-		*srcptr = abs(*srcptr);
+                *srcptr = fabs(*srcptr);
 		srcptr++;
 	}
 }
@@ -1587,11 +1587,11 @@ SSI_INLINE void static ssi_peak_count (ssi_size_t num,
 	for (ssi_size_t i = 0; i < num; i++) {
 		for (ssi_size_t j = 0; j < dim; j++) {
 			val = *srcptr++;
-			if (abs (val) > thres && counter[j] == 0) {
+                        if (fabs (val) > thres && counter[j] == 0) {
 				++dstptr[j];
 				counter[j] = hangover;
 			}
-			if (abs (val) <= thres && counter[j] > 0) {
+                        if (fabs (val) <= thres && counter[j] > 0) {
 				--counter[j];
 			}
 		}
@@ -2041,7 +2041,7 @@ SSI_INLINE int32_t *ssi_parse_indices (const ssi_char_t *str, ssi_size_t &n_indi
 
 SSI_INLINE static bool ssi_fullpath(const ssi_char_t *path, ssi_char_t *full, ssi_size_t n_full)
 {
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 	return false;
 #else
 	bool result = false;
@@ -2142,7 +2142,8 @@ SSI_INLINE static bool ssi_exists_dir(const ssi_char_t *path) {
 		return true;
 	}
 
-#if __gnu_linux__
+    
+#if __gnu_linux__ || __APPLE__
 	struct stat statbuf;
 
 	if (stat(path, &statbuf) == -1)
@@ -2173,8 +2174,9 @@ SSI_INLINE static bool ssi_mkdir(const ssi_char_t *dir) {
 		return true;
 	}
 	else {
-#if __gnu_linux__
-	mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        
+#if __gnu_linux__ || __APPLE__
+        mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	return ssi_exists_dir(dir);
 #else		
 	bool result = false;
@@ -2233,7 +2235,7 @@ SSI_INLINE static bool ssi_mkdir_r(const ssi_char_t *dir, char delim = SSI_PATH_
 SSI_INLINE static FILE *ssi_fopen(const char *filename, const char *mode)
 {
 	FILE *fp = 0;
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 	fp = fopen(filename, mode);
 #else
 	bool result = false;

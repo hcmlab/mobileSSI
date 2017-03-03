@@ -1025,7 +1025,7 @@ void FileTools::WriteSampleData (File &file,
 		FileTools::WriteStreamData (file, *data.streams[i], version);
 	}
 }
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 uint8_t hasExt(const char* ext, const char* filename)
 {
     int a=((int)ext[0]);

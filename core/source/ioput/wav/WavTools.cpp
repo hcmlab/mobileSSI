@@ -28,7 +28,7 @@
 #include "ioput/file/FileTools.h"
 #include "base/Factory.h"
 #include "ioput/file/FilePath.h"
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #define DWORD uint32_t
 #endif
 

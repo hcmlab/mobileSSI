@@ -1,63 +1,35 @@
 #include "Serial.h"
 #include "SSI_Cons.h"
+#include <string>
 
-Serial::Serial(const char *portName, DWORD speed )
+Serial::Serial(const char *portName, uint32_t speed )
 {
     this->connected = false;
 
 	char com [100];
-	_snprintf(com, 100, "\\\\.\\%s", portName);	
+	snprintf(com, 100, "\\\\.\\%s", portName);
 
-	this->hSerial = CreateFile( com,
-        GENERIC_READ | GENERIC_WRITE,
-        0,    // exclusive access 
-        NULL, // default security attributes 
-        OPEN_EXISTING,
-        0,//FILE_FLAG_OVERLAPPED,
-        NULL 
-    );
+    std:: string port(portName);
+    
+    this->hSerial= new serial::Serial(port, speed, serial::Timeout::simpleTimeout(1000));
+    
+    std::vector<serial::PortInfo> ports = serial::list_ports();
 
-    if (hSerial == INVALID_HANDLE_VALUE) 
-    {        
-        printf("CreateFile failed with error %d.\n", GetLastError());
-        return;
-    }
-
-    //Check if the connection was successfull
-    if(this->hSerial==INVALID_HANDLE_VALUE)
+    bool exists = false;
+    for (int i = 0; i < ports.size(); i++)
     {
-        //If not success full display an Error
-        if(GetLastError() == ERROR_FILE_NOT_FOUND)
-            printf("ERROR: Handle was not attached. Reason: %s not available.\n", portName);
-        else
-            printf("ERROR!!!");
-    }
-    else
-    {
-        //If connected we try to set the comm parameters
-        DCB dcbSerialParams = {0};
-
-        //Try to get the current
-        if (!GetCommState(this->hSerial, &dcbSerialParams))
-        {
-            printf("failed to get current serial parameters!");
-        }
-        else
-        {
-            //Define serial connection parameters for the arduino board
-            dcbSerialParams.BaudRate = speed;
-            dcbSerialParams.ByteSize = 8;
-            dcbSerialParams.StopBits = ONESTOPBIT;
-            dcbSerialParams.Parity = NOPARITY;
-
-            //Set the parameters and check for their proper application
-            if(!SetCommState(hSerial, &dcbSerialParams))
-				printf("ALERT: Could not set Serial Port parameters");
-            else            
-                this->connected = true;
-		}
+        if (ports[i].port.compare(port) == 0)
+            exists = true;
     }
 
+    if (!exists) ssi_err("Port %s not found!", port);
+
+    this->hSerial->setRTS(true);
+
+    if(this->hSerial->isOpen())
+            this->connected = true;
+
+printf("####connected?: %d \n", this->connected);
 }
 
 Serial::~Serial()
@@ -65,27 +37,27 @@ Serial::~Serial()
     if(this->connected)
     {
         this->connected = false;
-        CloseHandle(this->hSerial);
+        delete this->hSerial;
+        
     }
 }
 
 int Serial::ReadData(char *buffer, unsigned int nbChar)
 {
     //Number of bytes we'll have read
-    DWORD bytesRead;
+    uint32_t bytesRead;
     //Number of bytes we'll really ask to read
-    unsigned int toRead = nbChar;
+    uint32_t toRead = nbChar;
     //Use the ClearCommError function to get status info on the Serial port
-    ClearCommError(this->hSerial, &this->errors, &this->status);
+    std::string result;
+    int i=0;
 
     while(toRead > 0)
     {
-        if(!ReadFile(this->hSerial, buffer + (nbChar - toRead), toRead, &bytesRead, NULL))
-        {
-            return -1;
-        }
-
-		toRead -= bytesRead;
+        result= hSerial->read();
+        memcpy(buffer+i, result.c_str(),result.length());
+        i+=result.length();
+		toRead -= result.length();
     }
 
     return nbChar;
@@ -94,18 +66,13 @@ int Serial::ReadData(char *buffer, unsigned int nbChar)
 
 bool Serial::WriteData(char *buffer, unsigned int nbChar)
 {
-    DWORD bytesSend;
+    uint32_t bytesSend;
+    std::string sendString=std::string(buffer);
 
     //Try to write the buffer on the Serial port
-    if(!WriteFile(this->hSerial, buffer, nbChar, &bytesSend, NULL)) 
-    {
-		//printf("%X\n", GetLastError());
-        //In case it don't work get comm error and return false
-        ClearCommError(this->hSerial, &this->errors, &this->status);
-        return false;
-    }
-    else
-        return true;
+   bytesSend= this->hSerial->write(sendString);
+    
+    return nbChar == bytesSend;
 }
 
 bool Serial::IsConnected()

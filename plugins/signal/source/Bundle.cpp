@@ -115,7 +115,7 @@ void Bundle::transform (ITransformer::info info,
 	
 	for (ssi_size_t i = 0; i < stream_in.num - info.delta_num; i++) {
 		for (ssi_size_t j = 0; j < stream_in.dim; j++) {			
-			_above[j] = check(src, dst++, _last[j], stream_in.dim, _above[j], _above[j] ? _hang_out : _hang_in);
+			_above[j] = check2(src, dst++, _last[j], stream_in.dim, _above[j], _above[j] ? _hang_out : _hang_in);
 		}
 	}
 
@@ -131,7 +131,7 @@ void Bundle::transform (ITransformer::info info,
 
 }
 
-bool Bundle::check(ssi_real_t *in, ssi_real_t *out, ssi_real_t &last, ssi_size_t dim, bool above, ssi_size_t n) {
+bool Bundle::check2(ssi_real_t *in, ssi_real_t *out, ssi_real_t &last, ssi_size_t dim, bool above, ssi_size_t n) {
 
 	ssi_size_t n_above = 0;
 	for (ssi_size_t i = 0; i < n; i += dim) {

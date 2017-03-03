@@ -98,11 +98,11 @@
 #include "event/include/ssievent.h"
 
 #include "ioput/include/ssiioput.h"
-#if __ANDROID__
+#if __ANDROID__ || __APPLE__
 #else
 #include "mouse/include/ssimouse.h"
 #endif
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #ifdef SSI_USE_SDL
 #include "graphic/Console.h"
 #include "graphic/Window.h"

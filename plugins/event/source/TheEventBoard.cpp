@@ -177,7 +177,7 @@ bool TheEventBoard::process (ssi_size_t n) {
 		for (ssi_size_t i = 0; i < n; i++) {			
 			if (e = _events->next ()) {
 				for (ssi_size_t j = 0; j < _listener.count (); j++) {
-					if (_ieselect[j]->check (*e, false)) {
+					if (_ieselect[j]->check2 (*e, false)) {
 						_concerns_listener[j]++;
 					}
 				}

@@ -32,7 +32,7 @@
 #include "XMLEventHelper.h"
 #include "ioput/xml/tinyxml.h"
 #include "graphic/Monitor.h"
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 	#ifndef SSI_USE_SDL    
     #include "graphic/WindowFallback.h"
     #else

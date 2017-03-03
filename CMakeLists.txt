@@ -97,7 +97,11 @@ IF(SSI_GUI STREQUAL "SDL")
     SET(SSI_LD_FLAG "-lrt")
 else(SSI_GUI STREQUAL "SDL")
     SET(SSI_CFLAG "-std=c++11 -ggdb -fPIC -DHEADLESS")
+    if(APPLE)
+    SET(SSI_LD_FLAG "")
+    else(APPLE)
     SET(SSI_LD_FLAG "-lrt")
+    endif(APPLE)
 endif(SSI_GUI STREQUAL "SDL")
 
 

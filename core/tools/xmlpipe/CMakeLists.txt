@@ -95,7 +95,14 @@ set(SRC_FILES ${COMMON_SRC_FILES} )
 
 add_executable(xmlpipe ${SRC_FILES})
 if(UNIX)
+
+  if(APPLE)
+target_link_libraries(xmlpipe ssi ${MINGW_WSOCKET} ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES})
+  else(APPLE)
 target_link_libraries(xmlpipe ssi ${MINGW_WSOCKET} ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES})
+
+endif(APPLE)
+
 else(UNIX)
 target_link_libraries(xmlpipe ssi ${MINGW_WSOCKET} ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD})
 endif(UNIX)

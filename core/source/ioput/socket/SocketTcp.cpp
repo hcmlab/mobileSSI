@@ -35,7 +35,7 @@
 	#endif
 #endif
 
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #define SD_BOTH 2
 #include <chrono>
 #include <thread>

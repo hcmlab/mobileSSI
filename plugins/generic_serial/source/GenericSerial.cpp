@@ -26,6 +26,7 @@
 
 #include "GenericSerial.h"
 #include "Serial.h"
+#include <vector>
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -36,29 +37,12 @@
 	#endif
 #endif
 
-
+using namespace std;
 namespace ssi {
 
 static char ssi_log_name[] = "genericser";
 
 
-
-//https://stackoverflow.com/questions/1861294/how-to-calculate-execution-time-of-a-code-snippet-in-c
-_int64 GetTimeMicros64()
-{
-	FILETIME ft;
-	LARGE_INTEGER li;
-
-	GetSystemTimeAsFileTime(&ft);
-	li.LowPart = ft.dwLowDateTime;
-	li.HighPart = ft.dwHighDateTime;
-
-	unsigned _int64 ret = li.QuadPart;
-	ret -= 116444736000000000LL; /* Convert from file time to UNIX epoch time. */
-	ret /= 10; /* From 100 nano seconds (10^-7) to 1 µsec intervals */
-
-	return ret;
-}
 
 
 GenericSerial::GenericSerial (const ssi_char_t *file) 
@@ -85,21 +69,21 @@ GenericSerial::GenericSerial (const ssi_char_t *file)
 	}
 
 	//possbile baud rates from windows
-	baudRates[110]		= 110UL;
-	baudRates[300]		= 300UL;
-	baudRates[600]		= 600UL;
-	baudRates[1200]		= 1200UL;
-	baudRates[2400]		= 2400UL;
-	baudRates[4800]		= 4800UL;
-	baudRates[9600]		= 9600UL;
-	baudRates[14400]	= 14400UL;
-	baudRates[19200]	= 19200UL;
-	baudRates[38400]	= 38400UL;
-	baudRates[56000]	= 56000UL;
-	baudRates[57600]	= 57600UL;
-	baudRates[115200]	= 115200UL;
-	baudRates[128000]	= 128000UL;
-	baudRates[256000]	= 256000UL;
+	baudRates[110]		= 110;
+	baudRates[300]		= 300;
+	baudRates[600]		= 600;
+	baudRates[1200]		= 1200;
+	baudRates[2400]		= 2400;
+	baudRates[4800]		= 4800;
+	baudRates[9600]		= 9600;
+	baudRates[14400]	= 14400;
+	baudRates[19200]	= 19200;
+	baudRates[38400]	= 38400;
+	baudRates[56000]	= 56000;
+	baudRates[57600]	= 57600;
+	baudRates[115200]	= 115200;
+	baudRates[128000]	= 128000;
+	baudRates[256000]	= 256000;
 
 }
 
@@ -141,139 +125,25 @@ void GenericSerial::setSerialProvider (IProvider *provider) {
 bool GenericSerial::connect () {
 
 	//check for com port
+    
+    vector<serial::PortInfo> devices_found = serial::list_ports();
+    
+    vector<serial::PortInfo>::iterator iter = devices_found.begin();
+    
+    while( iter != devices_found.end() )
+    {
+        serial::PortInfo device = *iter++;
+        
+        printf( "(%s, %s, %s)\n", device.port.c_str(), device.description.c_str(),
+               device.hardware_id.c_str() );
+    }
 
-	std::vector<USBserialDevice*> serialDevices;
-	listComPorts(&serialDevices);
-
-	if (!getOptions()->useId) {
-
-		ssi_sprint (_port_s, "COM%u", _options.port);
-
-		bool foundSerial = false;
-
-		for (int i = 0; i < serialDevices.size(); i++ ) {
-			if( serialDevices.at(i)->comName == _port_s) {
-				foundSerial = true;
-				break;
-			}
-		}
-
-
-		if (!foundSerial) { 
-			ssi_msg(SSI_LOG_LEVEL_BASIC, "Available devices: ");
-			for (int i = 0; i< serialDevices.size(); i++)
-				std::cout << serialDevices.at(i)->comName << " - " << serialDevices.at(i)->manufacturer << " - " << serialDevices.at(i)->pnpId << std::endl;
-
-			//free vector
-			for (int i = 0; i< serialDevices.size(); i++)
-				delete serialDevices.at(i);
-
-			serialDevices.clear();
-		
-			ssi_err("Serial port (%s) not found!", _port_s);
-		}
-	}
-	else {
-		
-		bool foundId = false;
-
-		for (int i = 0; i < serialDevices.size(); i++ ) {
-			if( serialDevices.at(i)->pnpId == getOptions()->deviceInstanceId) {
-				strcpy(_port_s, serialDevices.at(i)->comName.c_str());
-				foundId = true;
-				break;
-			}
-		}
-
-		if (!foundId) {
-			ssi_msg(SSI_LOG_LEVEL_BASIC, "Available devices: ");
-			for (int i = 0; i< serialDevices.size(); i++)
-				std::cout << serialDevices.at(i)->comName << " - " << serialDevices.at(i)->manufacturer << " - " << serialDevices.at(i)->pnpId << std::endl;
-
-			//free vector
-			for (int i = 0; i< serialDevices.size(); i++)
-				delete serialDevices.at(i);
-
-			serialDevices.clear();
-		
-			ssi_err("Device instance ID (%s) not found!", getOptions()->deviceInstanceId);
-		}
-
-	}
-
-	//free vector
-	for (int i = 0; i< serialDevices.size(); i++)
-		delete serialDevices.at(i);
-
-	serialDevices.clear();
-
-
-
-	ssi_msg (SSI_LOG_LEVEL_DETAIL, "try to connect sensor (port=%s, baud=%u)...", _port_s, _options.baud);
-
-	//check if baud rate is supported by system
-	std::map<int, unsigned long>::iterator it;
-	it = baudRates.find(_options.baud);
-	if (it == baudRates.end()) {
-		ssi_wrn ("baud rate %u not supported", _options.baud);
-		return false;
-	}
-	else {
-		_serial = new Serial (_port_s, it->second);
-	}
-
-	_is_connected = _serial->IsConnected ();
-	if (!_is_connected) {
-		ssi_err ("could not connect serial sensor at port=%s", _port_s);
-		return false;
-	}
-
-	ssi_msg (SSI_LOG_LEVEL_DETAIL, "connected");
-
-	
-	//consume lines from serial connection
-	for (int i = 0; i < getOptions()->skipLinesAfterStart; i++) {
-		//skip a serial line
-		ssi_msg (SSI_LOG_LEVEL_BASIC, "dropping controller response ...");
-		do {
-			char c;
-			int r = _serial->ReadData (&c, 1);
-			if (r > 0 && c == '\n') 
-				break;
-
-		} while (true);
-	}
-	
-	
-	//sending start command if set
-
-	if (getOptions()->startCMD != "") {
-		ssi_msg (SSI_LOG_LEVEL_BASIC, "sending start message ...");
-		_serial->WriteData(getOptions()->startCMD, strlen(getOptions()->startCMD));
-
-		for (int i = 0; i < getOptions()->skipLinesAfterStartCMD; i++) {
-			//skip a serial line
-			ssi_msg (SSI_LOG_LEVEL_BASIC, "dropping controller response ...");
-			do {
-				char c;
-				int r = _serial->ReadData (&c, 1);
-				if (r > 0 && c == '\n') 
-					break;
-
-			} while (true);
-		}
-	}
-
-
+    _serial=new Serial(_options.port, _options.baud);
 	_frame_size = ssi_cast (ssi_size_t, _options.size * _options.sr + 0.5);
 	_counter = 0;
 	_buffer = new ssi_real_t[ _frame_size * _serial_channel->getStream().dim];
 	_buffer_ptr = _buffer;
-
-	// set thread name
-	Thread::setName (getName ());
-
-	lastCall = GetTimeMicros64();
+    _is_connected=_serial->IsConnected();
 
 	return true;
 }
@@ -319,34 +189,13 @@ void GenericSerial::run () {
 				_buffer_ptr += buffer.size();
 
 
-				if (_options.showDebugSR) {
-					//fps
-					double deltaMs = ((GetTimeMicros64() - lastCall) / 1000.0);
-
-					double fps = 1.0 / (deltaMs / 1000.0);
-
-					if (deltaMs != 0) {
-						avgFps += fps;
-						fpsValuecount++;
-					}
-
-					if (fpsValuecount == 10) {
-						avgFps /= fpsValuecount;
-						ssi_msg(SSI_LOG_LEVEL_BASIC, "avg input sr: %.3f", avgFps);
-						avgFps = 0;
-						fpsValuecount = 0;
-					}
-
-					lastCall = GetTimeMicros64();
-
-				}
 
 
 
 				_counter++;
 			}
 			else {
-				ssi_wrn("Value number (%llu) from serial port differs from dim () -> dropping!", buffer.size(), getOptions()->dim);
+				ssi_wrn("Value number (%d) from serial port differs from dim () -> dropping!", buffer.size(), getOptions()->dim);
 			}
 
 			buffer.clear();

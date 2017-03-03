@@ -23,27 +23,27 @@ cmake_minimum_required(VERSION 2.8)
 project(openssi-plugins)
 
 
-option(OPENSSI_BUILD_MOUSE "Build mouse plugin" ON)
+option(OPENSSI_BUILD_MOUSE "Build mouse plugin" OFF)
 option(OPENSSI_BUILD_BEACON_SCANNER "Build beacon scanner plugin" OFF)
-option(OPENSSI_BUILD_FFMPEG "Build ffmpeg plugin" ON)
-option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" ON)
+option(OPENSSI_BUILD_FFMPEG "Build ffmpeg plugin" OFF)
+option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" OFF)
 option(OPENSSI_BUILD_MQTT "Build mqtt plugin" OFF)
-option(OPENSSI_BUILD_STIMULI "Build stimuli plugin" ON)
-option(OPENSSI_BUILD_OPENSMILE "Build opensmile plugin" ON)
-option(OPENSSI_BUILD_EMOVOICE "Build emovoice plugin" ON)
-option(OPENSSI_BUILD_EVENTSERIALIZER "Build eventserializer plugin" ON)
+option(OPENSSI_BUILD_STIMULI "Build stimuli plugin" OFF)
+option(OPENSSI_BUILD_OPENSMILE "Build opensmile plugin" OFF)
+option(OPENSSI_BUILD_EMOVOICE "Build emovoice plugin" OFF)
+option(OPENSSI_BUILD_EVENTSERIALIZER "Build eventserializer plugin" OFF)
 option(OPENSSI_BUILD_SIGNAL "Build signal plugin" ON)
-option(OPENSSI_BUILD_MODEL "Build model plugin" ON)
-option(OPENSSI_BUILD_AUDIO "Build audio plugin" ON)
+option(OPENSSI_BUILD_MODEL "Build model plugin" OFF)
+option(OPENSSI_BUILD_AUDIO "Build audio plugin" OFF)
 option(OPENSSI_BUILD_XMPP "Build xmpp plugin" OFF)
 option(OPENSSI_BUILD_PYTHON "Build python plugin" OFF)
-option(OPENSSI_BUILD_SSJSENSOR "Build ssjSensor plugin" ON)
+option(OPENSSI_BUILD_SSJSENSOR "Build ssjSensor plugin" OFF)
 option(OPENSSI_BUILD_SHORE "Build shore plugin" OFF)
 option(OPENSSI_BUILD_FUSION "Build fusion plugin" OFF)
 option(OPENSSI_BUILD_CONTINUOUSSYNC "Build coninuous sync plugin" OFF)
 option(OPENSSI_BUILD_LIBLINEAR "Build liblinear plugin" OFF)
-option(OPENSSI_BUILD_FASTDTW "Build fastDTW plugin" ON)
-
+option(OPENSSI_BUILD_FASTDTW "Build fastDTW plugin" OFF)
+option(OPENSSI_BUILD_GENERICSERIAL "Build serial plugin" ON)
 
 include_directories()
 
@@ -59,11 +59,12 @@ add_dependencies(ssiframe ssi )
 add_subdirectory(ioput)
 add_dependencies(ssiioput ssi )
 
-add_subdirectory(androidJavaSensors)
-add_dependencies(ssiandroidjavasensors ssiframe ssi )
+
 
 if(ANDROID)
 
+add_subdirectory(androidJavaSensors)
+add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
 add_subdirectory(androidSensors)
 add_dependencies(ssiandroidsensors ssiframe ssi )
@@ -97,6 +98,11 @@ if(OPENSSI_BUILD_FFMPEG)
     add_dependencies(ssiffmpeg ssi )
 endif(OPENSSI_BUILD_FFMPEG)
 
+
+if(OPENSSI_BUILD_GENERICSERIAL)
+    add_subdirectory(generic_serial)
+    add_dependencies(ssigenericserial ssi )
+endif(OPENSSI_BUILD_GENERICSERIAL)
 
 if(OPENSSI_BUILD_PYTHON)
 	add_subdirectory(python)
@@ -187,11 +193,6 @@ if(OPENSSI_BUILD_LIBLINEAR)
 endif(OPENSSI_BUILD_LIBLINEAR)
 
 
-IF(SSI_GUI STREQUAL "SDL")
-else(SSI_GUI STREQUAL "SDL")
-	add_subdirectory(vectorfusionMobile)
-	add_dependencies(ssivectorfusion ssi )
-endif(SSI_GUI STREQUAL "SDL")
 
 
 if(OPENSSI_BUILD_SSJSENSOR)

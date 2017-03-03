@@ -36,7 +36,7 @@
 #include "graphic/SDL_Window.h"
 
 #else
-#if __gnu_linux__
+#if __gnu_linux__ || __APPLE__
 #include "graphic/WindowFallback.h"
 #include "base/IWindow.h"
 #else
