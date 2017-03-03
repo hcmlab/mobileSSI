@@ -1,9 +1,9 @@
 ![Logo](/logo/mobileSSI.png)
 # mobileSSI
-mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http://openssi.net/) to Linux and Android devices. Like SSI, mobileSSI is written in C++. Windows-platform dependend code was replaced by crossplatform compatible code like C++11 standard threading.
+mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http://openssi.net/) to Linux and Android devices as well as macOS. Like SSI, mobileSSI is written in C++. Windows-platform dependend code was replaced by crossplatform compatible code like C++11 standard threading.
 
 ## Features
-* same features as the SSI framework (Windows platform dependend plugins can't be included)
+* same features as the SSI framework (Windows platform dependend plugins are not included)
 * most plugins can be used on Android and Linux without changes
 * crossplatform C / C++ libraries can be easily included in plugins
 * Android / Android-wear support:
@@ -16,7 +16,7 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
 Please see our [Github Wiki](https://github.com/hcmlab/mobileSSI/wiki) to get started with mobileSSI.
 
 ## About
-The mobileSSI framework is beeing developed at the [Lab for Human Centered Multimedia](http://www.hcm-lab.de/) of the University of Augsburg.
+The mobileSSI framework is beeing developed at the [Lab for Human Centered Multimedia](http://www.hcm-lab.de/) of the [University of Augsburg](http://www.uni-augsburg.de/).
 
 ## License
 Core libraries are released under LGPL (see LICENSE in core folder).
