@@ -58,20 +58,20 @@ class ssjSensorContainer;
 
 struct SSJSensorNeccessities
 {
-int id;
-double sr;
-int num;
-int dim;
-int type;
-ssjSensor* sensor;
-/*
-Look for the bare necessities
-The simple bare necessities
-Forget about your worries and your strife
-I mean the bare necessities
-Old Mother Nature's recipes
-That brings the bare necessities of life
-*/
+    int id;
+    double sr;
+    int num;
+    int dim;
+    int type;
+    ssjSensor* sensor;
+    /*
+    Look for the bare necessities
+    The simple bare necessities
+    Forget about your worries and your strife
+    I mean the bare necessities
+    Old Mother Nature's recipes
+    That brings the bare necessities of life
+    */
 };
 
 int AttachJavaThread(JNIEnv *& env );

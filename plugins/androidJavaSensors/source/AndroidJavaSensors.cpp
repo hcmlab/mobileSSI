@@ -54,7 +54,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *pjvm, void *reserved) {
 }
 
 
-	
+        //event
 	void Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_addEvent
 													(JNIEnv* env,
 													jobject thiz,
@@ -101,6 +101,60 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *pjvm, void *reserved) {
 			env->ReleaseStringUTFChars(in_eventName, eventName);
 			env->ReleaseStringUTFChars(in_eventText, eventText);
 	}
+
+
+
+        //stream
+        void Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_updateData
+                                                                                                        (JNIEnv* env,
+                                                                                                        jobject thiz,
+                                                                                                        jstring in_modality,
+                                                                                                        jdouble x,
+                                                                                                        jdouble y,
+                                                                                                        jdouble z
+                                                                                                        )
+        {
+                        const char *modality = env->GetStringUTFChars(in_modality, 0);
+
+
+                //if(!ssi::Factory::isFactoryNull())
+
+                { bool framework_running=false;
+                    ssi::ITheFramework *frame = ssi::Factory::GetFramework ();
+
+                    if(frame)
+                    {
+                        if(frame->GetElapsedTimeMs())
+                            framework_running=true;
+                    }
+
+                    if(framework_running)
+                    {
+
+                        ssi::AndroidJavaSensors* ajavaSensors= ssi::AndroidJavaSensors::getAndroidJavaSensorsFromJava();
+
+
+
+                        if(ajavaSensors)
+                        {
+                                ajavaSensors->updateData(modality, x, y, z );
+                        }
+
+                    }
+
+
+                }
+
+
+                        env->ReleaseStringUTFChars(in_modality, modality);
+
+        }
+
+
+
+
+
+
 
 
     jboolean Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_initC(JNIEnv* env,
@@ -216,6 +270,19 @@ namespace ssi
         }
 
     }
+
+
+    bool AndroidJavaSensors::connect ()
+            {
+
+                    return true;
+            }
+    bool AndroidJavaSensors::disconnect ()
+            {
+
+                    return true;
+
+    }
 	
 	
 	void AndroidJavaSensors::addJavaEvent(const char* sender, const char* name, const char* text)
@@ -248,9 +315,25 @@ namespace ssi
 				
 		}
 
-    //delete[] eventStr;stringToJava
+
 	
 	}
+
+
+         void AndroidJavaSensors::updateData(const char* modality, double x, double y, double z)
+         {
+                if(strcmp(modality, "GPS")==0)
+                {
+                    databuffer[MODALITIES::GPS_X]=x;
+                    databuffer[MODALITIES::GPS_Y]=y;
+
+                    sensorProvider->provide(
+                                ssi_pcast(ssi_byte_t, databuffer), 1);
+                }
+
+
+         }
+
 
 
 	
@@ -289,6 +372,8 @@ namespace ssi
 
 
 
+
+
 	
 	AndroidJavaSensors::AndroidJavaSensors(const char* file)
 	                : _file(0)
@@ -303,12 +388,62 @@ namespace ssi
 			_file = ssi_strcpy(file);
 		}
 
-				ssi_event_init(_event_batt, SSI_ETYPE_STRING);
-				ssi_event_adjust(_event_batt, 64 * sizeof(ssi_char_t));
+                ssi_event_init(_event_batt, SSI_ETYPE_STRING);
+                ssi_event_adjust(_event_batt, 64 * sizeof(ssi_char_t));
+
+                sensorChannel=new AndroidJavaChannel();
+
 
 		
 	}
 
+
+
+
+        ssi_size_t AndroidJavaSensors::getChannelSize ()
+        {
+            return MODALITIES::N_MODALITIES;
+        }
+
+        IChannel *AndroidJavaSensors::getChannel (ssi_size_t index)
+        {
+            return sensorChannel;
+
+        }
+
+
+
+
+
+        bool AndroidJavaSensors::setProvider (const ssi_char_t *name, IProvider *provider)
+        {
+
+
+                        if (sensorProvider) {
+                                        ssi_wrn ("already set");
+                        }
+
+                        if(strcmp (name, SSI_ANDROIDJAVASENSORS_NAME) == 0)
+
+                        {
+
+                            ssi_wrn ("java sensor p: %s:, %d",name, provider);
+                            sensorProvider = provider;
+
+
+                            if (sensorProvider) {
+
+
+                                            sensorChannel->getStreamPtr()->sr = _options.sr;
+                                            sensorProvider->init (sensorChannel);
+                                            ssi_wrn ( "android java provider set");
+                                            return true;
+                            }
+                        }
+
+         return false;
+
+        }
 
         void AndroidJavaSensors::listen_enter() {
 
@@ -455,6 +590,47 @@ namespace ssi
 
 
         }
+/*
+
+        void AndroidJavaSensors::terminate()
+        {
+
+        }
+        void AndroidJavaSensors::flush()
+        {
+
+        }
+        void AndroidJavaSensors::enter()
+        {
+
+        }
+        bool AndroidJavaSensors::start()
+        {
+            //ssjsensor start
+
+            return Thread::start();
+
+        }
+        bool AndroidJavaSensors::stop()
+        {
+
+
+            return Thread::stop();
+
+        }
+
+
+        void AndroidJavaSensors::run()
+            {
+
+
+
+            ssi_sleep(10);
+
+            }
+
+
+*/
 
 
 

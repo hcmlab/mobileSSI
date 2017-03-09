@@ -1,4 +1,4 @@
-#-----------------------------------------------------------------------------
+    #-----------------------------------------------------------------------------
 # Initialize project.
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
@@ -31,6 +31,7 @@ add_subdirectory(ssiml)
 add_subdirectory(MlpXml)
 add_subdirectory(emovoice)
 add_subdirectory(liblinear-2.1)
+#add_subdirectory(tensorflow/tensorflow/contrib/cmake)
 #add_subdirectory(gloox)
 if(ANDROID)
 add_subdirectory(libzip)

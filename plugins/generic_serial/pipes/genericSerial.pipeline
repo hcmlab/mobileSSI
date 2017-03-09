@@ -6,7 +6,7 @@
 		<load name="ssiioput"/>
    </register>
 
-   <sensor create="GenericSerial" port="/dev/ttyUSB1" baud="115200" dim="6" sr="2" separator=";" option="genericserial" size="1s">
+   <sensor create="GenericSerial" port="/dev/ttyUSB0" baud="115200" dim="6" sr="2" separator=";" option="genericserial" size="1s">
        <output channel="serialrawdata" pin="pin_serial_raw_data" />
    </sensor>
 

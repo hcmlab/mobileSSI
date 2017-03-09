@@ -114,7 +114,7 @@ endif(UNIX)
 
 
 #rename targets if debug
-set_target_properties(android_xmlpipe PROPERTIES DEBUG_POSTFIX "d")
+#set_target_properties(android_xmlpipe PROPERTIES DEBUG_POSTFIX "d")
 
 #install target to ssi install path set in base directory
 install(TARGETS android_xmlpipe DESTINATION ${SSI_INSTALL}/${SSI_PLATFORM}/${SSI_COMPILER}/)

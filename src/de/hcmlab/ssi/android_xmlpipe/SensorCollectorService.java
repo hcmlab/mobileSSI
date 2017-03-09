@@ -17,6 +17,11 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.res.Resources;  
@@ -26,7 +31,7 @@ import android.content.res.*;
 
  * 
  */
-public class SensorCollectorService extends Service{
+public class SensorCollectorService extends Service implements LocationListener {
 	private NotificationManager mNM;
 	//private int NOTIFICATION_ID = R.string.local_service_started;
 	private static boolean overwriteFiles=false;
@@ -42,6 +47,13 @@ public class SensorCollectorService extends Service{
 	 
 	 
 	 MyThread myThread;
+
+	private double latitude=0;
+	private double longitude=0;
+	private long   time=0;
+	private long   updateTime=0;
+
+	public boolean receivedData;
 
 	
     /**
@@ -128,6 +140,49 @@ public class SensorCollectorService extends Service{
 		return START_STICKY;
 	}
 	
+	@Override
+	public void onLocationChanged(Location location)
+	{
+		if (location.getProvider().equals(LocationManager.NETWORK_PROVIDER))
+		{
+			receivedData = true;
+
+			latitude = location.getLatitude();
+			longitude = location.getLongitude();
+		}
+
+		if (location.getProvider().equals(LocationManager.GPS_PROVIDER))
+		{
+			receivedData = true;
+
+			latitude = location.getLatitude();
+			longitude = location.getLongitude();
+			time = location.getTime();
+		}
+		
+		
+	}
+	
+	@Override
+	public void onStatusChanged(String provider, int status, Bundle extras)
+	{
+
+	}
+
+	@Override
+	public void onProviderEnabled(String provider)
+	{
+
+	}
+
+	@Override
+	public void onProviderDisabled(String provider)
+	{
+		receivedData = false;
+	}
+
+
+	
 	public void sendBroadcast(String str) {  
 		
         Intent intent = new Intent("com.example.MyEvent");  
@@ -186,6 +241,7 @@ public class SensorCollectorService extends Service{
 		        Log.e("battery", String.valueOf(level) + "%");
 		        Log.e("plugged", String.valueOf(plugged));
 		        
+		        //updateData("BAttery", level,plugged, 0 );
 		        addEvent("BatteryChanged", "Level;Plugged", String.valueOf(level)+";"+String.valueOf(plugged));
 	         }
 	    };
@@ -368,6 +424,7 @@ public class SensorCollectorService extends Service{
 
     
     public native void addEvent(String in_eventSender, String in_eventName, String in_eventText);
+    public native void updateData(String in_modality, double x, double y, double z);
     public native void startSSI(String path, AssetManager am, boolean extractFiles);
     public native void stopSSI();
     public native boolean initC();

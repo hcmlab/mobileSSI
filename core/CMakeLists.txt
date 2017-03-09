@@ -227,8 +227,10 @@ ELSE(UNIX)
 target_link_libraries(ssi ${MINGW_PTHREAD})
 ENDIF(UNIX)
 #rename targets if debug
+if(ANDROID)
+else(ANDROID)
 set_target_properties(ssi PROPERTIES DEBUG_POSTFIX "d" PREFIX "")
-
+endif(ANDROID)
 #install target to ssi install path set in base directory
 install(TARGETS ssi DESTINATION ${SSI_INSTALL}/${SSI_PLATFORM}/${SSI_COMPILER})
 

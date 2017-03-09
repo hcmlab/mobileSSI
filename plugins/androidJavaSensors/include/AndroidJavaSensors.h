@@ -35,7 +35,7 @@
 #include "thread/Lock.h"
 
 #include "base/Factory.h"
-
+#include "AndroidJavaSensorChannels.h"
 
 #include <jni.h>
 #include "../../../libs/build/rapidjson/writer.h"
@@ -65,19 +65,31 @@ static jmethodID gFindClassMethod;
 
 namespace ssi
 {
+enum MODALITIES { GPS_X,
+                  GPS_Y,
+                  N_MODALITIES
 
-	class AndroidJavaSensors: public IObject
+};
+
+        class AndroidJavaSensors: public ISensor//, public Thread
 	{
 		public:
+
+
+
 		
 		class Options : public OptionList {
 
 			public:
 
-				Options() : pollMs(100) {
+                                Options() : pollMs(100), sr(1) {
 					setSender("AndroidJavaSensors");
+
                                         setAllSensorsOff();
-					addOption("sname", sname, SSI_MAX_CHAR, SSI_CHAR, "name of sender (if sent to event board)");
+
+                                        addOption("sname", sname, SSI_MAX_CHAR, SSI_CHAR, "name of sender (if sent to event board)");
+
+                                        addOption("sr", &sr, 1, SSI_DOUBLE, "samplerate");
 
 					addOption("activesensors", activeSensors, NJSENSORS, SSI_BOOL, "activate / disable sensors [battery, bluetooth, wlan]");
 				}
@@ -108,10 +120,11 @@ namespace ssi
 
 				bool activeSensors[NJSENSORS];
 				ssi_size_t pollMs;
+                                double sr;
 
 			};
 		
-		public:
+                public:
 		
 		static AndroidJavaSensors* getAndroidJavaSensorsFromJava()
 		{
@@ -161,6 +174,27 @@ namespace ssi
 			return _event_address.getAddress();
 		}
 
+
+
+
+                //implement sensor interface
+                ssi_size_t getChannelSize ();
+                IChannel *getChannel (ssi_size_t index);
+                bool setProvider (const ssi_char_t *name, IProvider *provider);
+                bool connect ();
+                bool disconnect ();
+                bool start(){return true;}
+                bool stop(){return true;}
+
+                //thread interface
+                /*
+
+                void run();
+                void flush();
+                void terminate();
+                void enter();*/
+
+
                 void stringToJava(std::string str);
 		
 		IEventListener	*_elistener;
@@ -170,6 +204,7 @@ namespace ssi
 		ITheFramework	*_frame;
 
 		void addJavaEvent(const char* sender, const char* name, const char* text);
+                void updateData(const char* modality, double x, double y , double z);
 
 
                 // to listen for ssi events
@@ -181,6 +216,12 @@ namespace ssi
 		
 		AndroidJavaSensors(AndroidJavaSensors const&)   = delete;
 		void operator=(AndroidJavaSensors const&)  = delete;
+
+
+                IProvider* sensorProvider;
+                IChannel* sensorChannel;
+
+                double databuffer[MODALITIES::N_MODALITIES];
 		
 		protected:
 		

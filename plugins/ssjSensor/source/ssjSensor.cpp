@@ -419,6 +419,8 @@ namespace ssi {
 
         return false;
 		}
+
+
         bool ssjSensor::connect ()
 		{
 
