@@ -71,7 +71,7 @@ void ex_sensingtex () {
 
 	SensingTex *senstex = ssi_create (SensingTex, 0, true);
 	senstex->getOptions()->scale = true;
-	senstex->getOptions()->port = 14;
+	senstex->getOptions()->setSerialDev("COM14");
 	senstex->getOptions()->cols = 16;	//floor mat: 16		//sitting mat: 8
 	senstex->getOptions()->rows = 14;	//floor mat: 14		//sitting mat: 8
 	senstex->getOptions()->sr = 20.0;
