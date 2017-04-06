@@ -23,15 +23,15 @@ cmake_minimum_required(VERSION 2.8)
 project(openssi-plugins)
 
 
-option(OPENSSI_BUILD_MOUSE "Build mouse plugin" OFF)
+option(OPENSSI_BUILD_MOUSE "Build mouse plugin" ON)
 option(OPENSSI_BUILD_BEACON_SCANNER "Build beacon scanner plugin" OFF)
-option(OPENSSI_BUILD_FFMPEG "Build ffmpeg plugin" OFF)
+option(OPENSSI_BUILD_FFMPEG "Build ffmpeg plugin" ON)
 option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" ON)
 option(OPENSSI_BUILD_MQTT "Build mqtt plugin" OFF)
-option(OPENSSI_BUILD_STIMULI "Build stimuli plugin" OFF)
+option(OPENSSI_BUILD_STIMULI "Build stimuli plugin" ON)
 option(OPENSSI_BUILD_OPENSMILE "Build opensmile plugin" ON)
 option(OPENSSI_BUILD_EMOVOICE "Build emovoice plugin" ON)
-option(OPENSSI_BUILD_EVENTSERIALIZER "Build eventserializer plugin" OFF)
+option(OPENSSI_BUILD_EVENTSERIALIZER "Build eventserializer plugin" ON)
 option(OPENSSI_BUILD_SIGNAL "Build signal plugin" ON)
 option(OPENSSI_BUILD_MODEL "Build model plugin" ON)
 option(OPENSSI_BUILD_AUDIO "Build audio plugin" ON)
@@ -41,9 +41,10 @@ option(OPENSSI_BUILD_SSJSENSOR "Build ssjSensor plugin" ON)
 option(OPENSSI_BUILD_SHORE "Build shore plugin" OFF)
 option(OPENSSI_BUILD_FUSION "Build fusion plugin" OFF)
 option(OPENSSI_BUILD_CONTINUOUSSYNC "Build coninuous sync plugin" OFF)
-option(OPENSSI_BUILD_LIBLINEAR "Build liblinear plugin" OFF)
-option(OPENSSI_BUILD_FASTDTW "Build fastDTW plugin" ON)
-option(OPENSSI_BUILD_GENERICSERIAL "Build serial plugin" ON)
+option(OPENSSI_BUILD_LIBLINEAR "Build liblinear plugin" ON)
+option(OPENSSI_BUILD_SENSINGTEX "Build sensingtex plugin" OFF)
+option(OPENSSI_BUILD_PRESSUREMATRIX "Build pressurematrix plugin" OFF)
+
 
 include_directories()
 
@@ -59,16 +60,14 @@ add_dependencies(ssiframe ssi )
 add_subdirectory(ioput)
 add_dependencies(ssiioput ssi )
 
-
-
 if(ANDROID)
 
-add_subdirectory(androidJavaSensors)
-add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
 add_subdirectory(androidSensors)
 add_dependencies(ssiandroidsensors ssiframe ssi )
 
+add_subdirectory(androidJavaSensors)
+add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
 else(ANDROID)
 
@@ -99,15 +98,20 @@ if(OPENSSI_BUILD_FFMPEG)
 endif(OPENSSI_BUILD_FFMPEG)
 
 
-if(OPENSSI_BUILD_GENERICSERIAL)
-    add_subdirectory(generic_serial)
-    add_dependencies(ssigenericserial ssi )
-endif(OPENSSI_BUILD_GENERICSERIAL)
-
 if(OPENSSI_BUILD_PYTHON)
 	add_subdirectory(python)
 	add_dependencies(ssipython ssi )
 endif(OPENSSI_BUILD_PYTHON)
+
+if(OPENSSI_BUILD_SENSINGTEX)
+    add_subdirectory(sensingtex)
+    add_dependencies(ssisensingtex ssi serial)
+endif(OPENSSI_BUILD_SENSINGTEX)
+
+if(OPENSSI_BUILD_PRESSUREMATRIX)
+    add_subdirectory(pressurematrix)
+    add_dependencies(ssipressurematrix ssi serial)
+endif(OPENSSI_BUILD_PRESSUREMATRIX)
 
 
 endif(ANDROID)
@@ -128,12 +132,6 @@ if(OPENSSI_BUILD_STIMULI)
 	add_subdirectory(stimuli)
 	add_dependencies(ssistimuli ssi )
 endif(OPENSSI_BUILD_STIMULI)
-
-
-if(OPENSSI_BUILD_FASTDTW)
-	add_subdirectory(fastDTW)
-	add_dependencies(ssifastDTW ssi )
-endif(OPENSSI_BUILD_FASTDTW)
 
 
 if(OPENSSI_BUILD_OPENSMILE)
@@ -193,6 +191,11 @@ if(OPENSSI_BUILD_LIBLINEAR)
 endif(OPENSSI_BUILD_LIBLINEAR)
 
 
+IF(SSI_GUI STREQUAL "SDL")
+else(SSI_GUI STREQUAL "SDL")
+	add_subdirectory(vectorfusionMobile)
+	add_dependencies(ssivectorfusion ssi )
+endif(SSI_GUI STREQUAL "SDL")
 
 
 if(OPENSSI_BUILD_SSJSENSOR)
