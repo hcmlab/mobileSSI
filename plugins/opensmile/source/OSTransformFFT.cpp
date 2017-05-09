@@ -64,6 +64,8 @@
 #include "base/Factory.h"
 #include <fftXg.h>  // fft4g include
 
+#include "ssistdMinMaxWrapper.h"
+
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG

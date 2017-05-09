@@ -95,12 +95,18 @@ namespace ssi {
 		ssi_size_t getStreamByte() { return sizeof(ssi_real_t); };
 		ssi_type_t getStreamType() { return SSI_REAL; };
 
+		void setLogLevel(int level)
+		{
+			ssi_log_level = level;
+		}
+
 	protected:
 
 		LibLinear(const ssi_char_t *file = 0);
 		ssi_char_t *_file;
 		Options _options;
 		static char ssi_log_name[];
+		int ssi_log_level;
 
 		ssi_size_t _n_classes;
 		ssi_size_t _n_features;
@@ -118,6 +124,8 @@ namespace ssi {
 		void exit_with_help();
 		static void silent(const char *s) {}
 	};
+
+
 
 }
 

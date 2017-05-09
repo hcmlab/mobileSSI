@@ -35,6 +35,8 @@
 	#endif
 #endif
 
+#include "ssistdMinMaxWrapper.h"
+
 namespace ssi {
 
 ssi_char_t *ElanTier::ssi_log_name = "elantier__";

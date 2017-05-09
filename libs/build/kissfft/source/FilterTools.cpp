@@ -38,6 +38,8 @@
 	#endif
 #endif
 
+#include "ssistdMinMaxWrapper.h"
+
 namespace ssi {
 
 Matrix<ssi_real_t> *FilterTools::Singen (double sample_rate,

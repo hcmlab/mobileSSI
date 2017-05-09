@@ -41,6 +41,8 @@
 #include "ISMissingData.h"
 #include "Evaluation.h"
 
+#include "ssistdMinMaxWrapper.h"
+
 namespace ssi {                                                           
 
 const ssi_char_t *Machine::ResampleTypeNames[3] = {"none", "under", "over"};

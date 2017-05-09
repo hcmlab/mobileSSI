@@ -26,25 +26,29 @@ project(openssi-plugins)
 option(OPENSSI_BUILD_MOUSE "Build mouse plugin" OFF)
 option(OPENSSI_BUILD_BEACON_SCANNER "Build beacon scanner plugin" OFF)
 option(OPENSSI_BUILD_FFMPEG "Build ffmpeg plugin" OFF)
-option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" ON)
+option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" OFF)
 option(OPENSSI_BUILD_MQTT "Build mqtt plugin" OFF)
 option(OPENSSI_BUILD_STIMULI "Build stimuli plugin" OFF)
-option(OPENSSI_BUILD_OPENSMILE "Build opensmile plugin" ON)
-option(OPENSSI_BUILD_EMOVOICE "Build emovoice plugin" ON)
-option(OPENSSI_BUILD_EVENTSERIALIZER "Build eventserializer plugin" OFF)
+option(OPENSSI_BUILD_OPENSMILE "Build opensmile plugin" OFF)
+option(OPENSSI_BUILD_EMOVOICE "Build emovoice plugin" OFF)
+option(OPENSSI_BUILD_EVENTSERIALIZER "Build eventserializer plugin" ON)
 option(OPENSSI_BUILD_SIGNAL "Build signal plugin" ON)
 option(OPENSSI_BUILD_MODEL "Build model plugin" ON)
 option(OPENSSI_BUILD_AUDIO "Build audio plugin" ON)
 option(OPENSSI_BUILD_XMPP "Build xmpp plugin" OFF)
-option(OPENSSI_BUILD_PYTHON "Build python plugin" ON)
-option(OPENSSI_BUILD_SSJSENSOR "Build ssjSensor plugin" ON)
+option(OPENSSI_BUILD_PYTHON "Build python plugin" OFF)
+option(OPENSSI_BUILD_SSJSENSOR "Build ssjSensor plugin" OFF)
 option(OPENSSI_BUILD_SHORE "Build shore plugin" OFF)
 option(OPENSSI_BUILD_FUSION "Build fusion plugin" OFF)
 option(OPENSSI_BUILD_CONTINUOUSSYNC "Build coninuous sync plugin" OFF)
 option(OPENSSI_BUILD_LIBLINEAR "Build liblinear plugin" OFF)
-option(OPENSSI_BUILD_FASTDTW "Build fastDTW plugin" ON)
-option(OPENSSI_BUILD_GENERICSERIAL "Build serial plugin" ON)
-
+option(OPENSSI_BUILD_FASTDTW "Build fastDTW plugin" OFF)
+option(OPENSSI_BUILD_OPENFACE "Build Openface plugin" OFF)
+option(OPENSSI_BUILD_IMAGE "Build Image plugin" OFF)
+option(OPENSSI_BUILD_DLIBSVM "Build Dlib SVM plugin" OFF)
+option(OPENSSI_BUILD_LIBLINEARINCDEC "Build liblinear incremental plugin" OFF)
+option(OPENSSI_BUILD_TENSORFLOW "Build Tensorflow plugin" ON)
+option(OPENSSI_BUILD_FFTW "Build FFTW plugin" ON)
 include_directories()
 
 add_subdirectory(event)
@@ -59,55 +63,63 @@ add_dependencies(ssiframe ssi )
 add_subdirectory(ioput)
 add_dependencies(ssiioput ssi )
 
-
-
 if(ANDROID)
 
-add_subdirectory(androidJavaSensors)
-add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
-add_subdirectory(androidSensors)
-add_dependencies(ssiandroidsensors ssiframe ssi )
+	add_subdirectory(androidSensors)
+	add_dependencies(ssiandroidsensors ssiframe ssi )
+
+	add_subdirectory(androidJavaSensors)
+	add_dependencies(ssiandroidjavasensors ssiframe ssi )
+	
 
 
 else(ANDROID)
 
-IF(WIN32)
-    add_subdirectory(graphic)
-endif(WIN32)
-IF(SSI_GUI STREQUAL "SDL")
-    add_subdirectory(graphic)
-    add_dependencies(ssigraphic ssi )
-endif(SSI_GUI STREQUAL "SDL")
+	IF(WIN32)
+		add_subdirectory(graphic)
+	endif(WIN32)
+	IF(SSI_GUI STREQUAL "SDL")
+		add_subdirectory(graphic)
+		add_dependencies(ssigraphic ssi )
+	endif(SSI_GUI STREQUAL "SDL")
 
 
+        add_subdirectory(androidJavaSensors)
+        add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
 
-if(OPENSSI_BUILD_MOUSE)
-    add_subdirectory(mouse)
-    add_dependencies(ssimouse ssi )
-endif(OPENSSI_BUILD_MOUSE)
+	if(OPENSSI_BUILD_MOUSE)
+		add_subdirectory(mouse)
+		add_dependencies(ssimouse ssi )
+	endif(OPENSSI_BUILD_MOUSE)
 
-if(OPENSSI_BUILD_BEACON_SCANNER)
-    add_subdirectory(beaconScanner)
-    add_dependencies(ssibeaconscanner ssi serial)
-endif(OPENSSI_BUILD_BEACON_SCANNER)
+	if(OPENSSI_BUILD_BEACON_SCANNER)
+		add_subdirectory(beaconScanner)
+		add_dependencies(ssibeaconscanner ssi serial)
+	endif(OPENSSI_BUILD_BEACON_SCANNER)
 
-if(OPENSSI_BUILD_FFMPEG)
-    add_subdirectory(ffmpeg)
-    add_dependencies(ssiffmpeg ssi )
-endif(OPENSSI_BUILD_FFMPEG)
+	if(OPENSSI_BUILD_FFMPEG)
+		add_subdirectory(ffmpeg)
+		add_dependencies(ssiffmpeg ssi )
+	endif(OPENSSI_BUILD_FFMPEG)
 
 
-if(OPENSSI_BUILD_GENERICSERIAL)
-    add_subdirectory(generic_serial)
-    add_dependencies(ssigenericserial ssi )
-endif(OPENSSI_BUILD_GENERICSERIAL)
+	if(OPENSSI_BUILD_PYTHON)
+		add_subdirectory(python)
+		add_dependencies(ssipython ssi )
+	endif(OPENSSI_BUILD_PYTHON)
 
-if(OPENSSI_BUILD_PYTHON)
-	add_subdirectory(python)
-	add_dependencies(ssipython ssi )
-endif(OPENSSI_BUILD_PYTHON)
+	if(OPENSSI_BUILD_OPENFACE)
+		add_subdirectory(openface)
+		add_dependencies(ssiopenface ssi )
+	endif(OPENSSI_BUILD_OPENFACE)
+	
+	if(OPENSSI_BUILD_IMAGE)
+		add_subdirectory(image)
+		add_dependencies(ssiimage ssi )
+	endif(OPENSSI_BUILD_IMAGE)
+	
 
 
 endif(ANDROID)
@@ -192,7 +204,32 @@ if(OPENSSI_BUILD_LIBLINEAR)
         add_dependencies(ssiliblinear ssi )
 endif(OPENSSI_BUILD_LIBLINEAR)
 
+if(OPENSSI_BUILD_LIBLINEARINCDEC)
+        add_subdirectory(liblinear-incdec)
+        add_dependencies(ssiliblinearincdec ssi )
+endif(OPENSSI_BUILD_LIBLINEARINCDEC)
 
+if(OPENSSI_BUILD_DLIBSVM)
+        add_subdirectory(dlibSvm)
+        add_dependencies(ssidlibSvm ssi )
+endif(OPENSSI_BUILD_DLIBSVM)
+
+	if(OPENSSI_BUILD_TENSORFLOW)
+		add_subdirectory(tensorflow)
+		add_dependencies(ssitensorflow ssi )
+	endif(OPENSSI_BUILD_TENSORFLOW)
+	
+if(OPENSSI_BUILD_FFTW)
+	add_subdirectory(fftw-android)
+	add_dependencies(ssifftw-android ssi )
+endif(OPENSSI_BUILD_FFTW)
+
+
+IF(SSI_GUI STREQUAL "SDL")
+else(SSI_GUI STREQUAL "SDL")
+	add_subdirectory(vectorfusionMobile)
+	add_dependencies(ssivectorfusion ssi )
+endif(SSI_GUI STREQUAL "SDL")
 
 
 if(OPENSSI_BUILD_SSJSENSOR)

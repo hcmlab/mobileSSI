@@ -33,6 +33,8 @@
 #include "thread/Timer.h"
 #include "graphic/Monitor.h"
 
+#include "ssistdMinMaxWrapper.h"
+
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG

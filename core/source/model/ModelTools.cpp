@@ -53,6 +53,8 @@ static char THIS_FILE[] = __FILE__;
 #endif
 #endif
 
+#include "ssistdMinMaxWrapper.h"
+
 namespace ssi {
 	
 	ssi_char_t *ModelTools::ssi_log_name = "modeltools";

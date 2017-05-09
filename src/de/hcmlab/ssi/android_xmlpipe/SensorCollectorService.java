@@ -241,7 +241,7 @@ public class SensorCollectorService extends Service implements LocationListener 
 		        Log.e("battery", String.valueOf(level) + "%");
 		        Log.e("plugged", String.valueOf(plugged));
 		        
-		        //updateData("BAttery", level,plugged, 0 );
+		        updateData("GPS", 3.1415 , (double)plugged, 3.1415 );
 		        addEvent("BatteryChanged", "Level;Plugged", String.valueOf(level)+";"+String.valueOf(plugged));
 	         }
 	    };

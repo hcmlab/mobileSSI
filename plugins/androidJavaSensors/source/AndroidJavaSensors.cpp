@@ -115,6 +115,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *pjvm, void *reserved) {
                                                                                                         )
         {
                         const char *modality = env->GetStringUTFChars(in_modality, 0);
+                        double _x=x, _y=y, _z=z;
 
 
                 //if(!ssi::Factory::isFactoryNull())
@@ -137,7 +138,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *pjvm, void *reserved) {
 
                         if(ajavaSensors)
                         {
-                                ajavaSensors->updateData(modality, x, y, z );
+                                ajavaSensors->updateData(modality, _x, _y, _z );
                         }
 
                     }
@@ -322,13 +323,17 @@ namespace ssi
 
          void AndroidJavaSensors::updateData(const char* modality, double x, double y, double z)
          {
+             ssi_wrn("blubb: %s ", modality);
+
                 if(strcmp(modality, "GPS")==0)
                 {
+                    ssi_wrn("blub");
                     databuffer[MODALITIES::GPS_X]=x;
                     databuffer[MODALITIES::GPS_Y]=y;
+                ssi_wrn("blubb %f, %f",databuffer[MODALITIES::GPS_X],  databuffer[MODALITIES::GPS_Y]);
+                   // sensorProvider->provide(
+                   //             ssi_pcast(ssi_byte_t, databuffer), 1);
 
-                    sensorProvider->provide(
-                                ssi_pcast(ssi_byte_t, databuffer), 1);
                 }
 
 
@@ -590,7 +595,7 @@ namespace ssi
 
 
         }
-/*
+
 
         void AndroidJavaSensors::terminate()
         {
@@ -619,18 +624,24 @@ namespace ssi
 
         }
 
-
+        //repeat data provided from java for stable samplerate
         void AndroidJavaSensors::run()
             {
 
 
+            sensorProvider->provide(
+                        ssi_pcast(ssi_byte_t, databuffer),
+                        1);
 
-            ssi_sleep(10);
+            double sleepTime=(1000.0/_options.sr) -10.0;
+            if(sleepTime<0)sleepTime=10.0;
+
+            ssi_sleep(sleepTime);
 
             }
 
 
-*/
+
 
 
 

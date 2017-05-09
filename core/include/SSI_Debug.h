@@ -578,7 +578,10 @@ SSI_INLINE void ssi_log_file_end () {
 	fprintf (ssiout, "-------------------------------------------\n\t%s-------------------------------------------\n", ssi_now ());
 	//freopen ("CON", "w", stdout);
 	fclose (ssiout);
+	#if __ANDROID__
+	#else
 	ssiout = stdout;
+	#endif
 	ssi_log_file_on = false;
 }
 

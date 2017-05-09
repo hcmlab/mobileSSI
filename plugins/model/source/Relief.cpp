@@ -26,6 +26,8 @@
 
 #include "Relief.h"
 
+#include "ssistdMinMaxWrapper.h"
+
 namespace ssi {
 
 int Relief::ssi_log_level = SSI_LOG_LEVEL_DEFAULT;

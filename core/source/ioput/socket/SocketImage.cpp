@@ -226,7 +226,16 @@ int SocketImage::sendImage (ssi_video_params_t params, const void *ptr, ssi_size
 	data->id = _header.id;
 	ssi_size_t remaining = n_image;
 	for (ssi_size_t i = 0; i < n_packets; i++) {
-		ssi_size_t n_bytes = min (_n_packet, n_image - i * _n_packet);
+#if __gnu_linux__
+
+#if __ANDROID__
+        ssi_size_t n_bytes = min (_n_packet, n_image - i * _n_packet);
+#else
+        ssi_size_t n_bytes = std::min (_n_packet, n_image - i * _n_packet);
+#endif
+#else
+        ssi_size_t n_bytes = min (_n_packet, n_image - i * _n_packet);
+#endif
 		data->num = i;
 		data->bytes = n_bytes;
 		memcpy (_buffer + sizeof (DATA), image, n_bytes);

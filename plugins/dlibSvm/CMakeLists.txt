@@ -43,12 +43,12 @@ IF(SSI_GUI STREQUAL "SDL")
         #add_dependencies(ssidlibSvm_test ssi)
 endif(SSI_GUI STREQUAL "SDL")
 
-include_directories( include ../../core/include/ioput/socket ../../core/include/ioput ../../core/include ../ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
+include_directories( include ../../core/include/ioput/socket ../../core/include/ioput ../../libs/build/ssiml/include ../../core/include ../ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 
 set(COMMON_SRC_FILES
 
-#source/svm_ex.cpp
-source/empirical_kernel_map_ex.cpp
+source/ExportMain.cpp
+source/DlibSVM.cpp
 
 )
  IF(SSI_GUI STREQUAL "SDL")

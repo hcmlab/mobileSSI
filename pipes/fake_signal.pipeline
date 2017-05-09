@@ -18,7 +18,7 @@
 		<output pin="fft"/>
 	</transformer>
 	
-	<consumer create="FileWriter" path="fft">
+	<consumer create="FileWriter" type="1" path="fft">
 		<input pin="fft" frame="1"/>
 	</consumer>
 	

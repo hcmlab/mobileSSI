@@ -26,6 +26,8 @@
 
 #include "MvgMinMax.h"
 
+#include "ssistdMinMaxWrapper.h"
+
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG

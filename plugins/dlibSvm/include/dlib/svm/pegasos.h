@@ -10,6 +10,7 @@
 #include "kernel.h"
 #include "kcentroid.h"
 #include <iostream>
+#include "../serialize.h"
 #include "../smart_pointers.h"
 
 namespace dlib
@@ -248,6 +249,7 @@ namespace dlib
         ) const
         {
             distance_function<offset_kernel<kernel_type> > df = w.get_distance_function();
+            //return probabilistic_decision_function<kernel_type>()
             return decision_function<kernel_type>(df.get_alpha(), -tau*sum(df.get_alpha()), kernel, df.get_basis_vectors());
         }
 
@@ -266,8 +268,9 @@ namespace dlib
             exchange(w,              item.w);
         }
 
-        friend void serialize(const svm_pegasos& item, std::ostream& out)
+         friend void serialize(const svm_pegasos& item, std::ostream& out)
         {
+
             serialize(item.max_sv, out);
             serialize(item.kernel, out);
             serialize(item.lambda_c1, out);

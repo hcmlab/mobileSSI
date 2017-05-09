@@ -33,7 +33,7 @@
 #include "ioput/option/OptionList.h"
 #include "event/EventAddress.h"
 #include "thread/Lock.h"
-
+#include "thread/Thread.h"
 #include "base/Factory.h"
 #include "AndroidJavaSensorChannels.h"
 
@@ -53,6 +53,14 @@ static jmethodID gFindClassMethod;
 													jstring in_eventName,
 													jstring in_eventText
 													);
+        void Java_de_hcmlab_ssi_android_1xmlpipe_SensorCollectorService_updateData
+                                                                                                        (JNIEnv* env,
+                                                                                                        jobject thiz,
+                                                                                                        jstring in_modality,
+                                                                                                        jdouble x,
+                                                                                                        jdouble y,
+                                                                                                        jdouble z
+                                                                                                        );
 
 													
 													
@@ -71,7 +79,7 @@ enum MODALITIES { GPS_X,
 
 };
 
-        class AndroidJavaSensors: public ISensor//, public Thread
+        class AndroidJavaSensors: public ISensor, public Thread
 	{
 		public:
 
@@ -183,16 +191,16 @@ enum MODALITIES { GPS_X,
                 bool setProvider (const ssi_char_t *name, IProvider *provider);
                 bool connect ();
                 bool disconnect ();
-                bool start(){return true;}
-                bool stop(){return true;}
+                bool start();
+                bool stop();
 
                 //thread interface
-                /*
+
 
                 void run();
                 void flush();
                 void terminate();
-                void enter();*/
+                void enter();
 
 
                 void stringToJava(std::string str);
@@ -221,7 +229,7 @@ enum MODALITIES { GPS_X,
                 IProvider* sensorProvider;
                 IChannel* sensorChannel;
 
-                double databuffer[MODALITIES::N_MODALITIES];
+                float databuffer[MODALITIES::N_MODALITIES];
 		
 		protected:
 		

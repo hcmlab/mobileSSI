@@ -30,6 +30,8 @@
 #include "thread/RunAsThread.h"
 #include "thread/Timer.h"
 
+#include "ssistdMinMaxWrapper.h"
+
 namespace ssi {
 
 char DecisionSmoother::ssi_log_name[] = "decsmooth_";

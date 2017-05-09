@@ -34,7 +34,8 @@ namespace ssi {
 	char LibLinear::ssi_log_name[] = "liblinear_";
 
 	LibLinear::LibLinear(const ssi_char_t *file)
-		: _file(0) {
+		: _file(0),
+		ssi_log_level(SSI_LOG_LEVEL_DEFAULT) {
 
 		if (file) {
 			if (!OptionList::LoadXML(file, _options)) {
@@ -264,10 +265,10 @@ namespace ssi {
 		}
 
 		if (_options.seed > 0) {
-			srand(_options.seed);
+			ssi_random_seed(_options.seed);
 		}
 		else {
-			srand(ssi_time_ms());
+			ssi_random_seed(ssi_time_ms());
 		}
 
 		ISamples *s_balance = 0;
@@ -423,7 +424,8 @@ namespace ssi {
 		ssi_size_t index = 0;
 		for (; index < _n_features; index++) {
 			x[index].index = index + 1;
-			x[index].value = *ptr++;
+            x[index].value = *ptr;
+            ptr++;
 		}
 		if (bias >= 0)
 		{
@@ -433,38 +435,48 @@ namespace ssi {
 		}
 		x[index].index = -1;
 
-		if (n_probs == 2) // BINARY
-		{			
-			double label = predict((model*)_model, x);
-			probs[0] = label == 0 ? 1 : 0;
-			probs[1] = label == 1 ? 1 : 0;
-		}
-		else if (n_probs > 2) // MULTICLASS
-		{			
-			double *dec_values = new double[n_probs];
-			double label = predict_values((model*)_model, x, dec_values);	
-			for (ssi_size_t j = 0; j < _n_classes; j++) {
-				probs[j] = (ssi_real_t) dec_values[j];				
-			}			
-			ssi_real_t minval, maxval;
-			ssi_minmax(n_probs, 1, probs, &minval, &maxval);
-			ssi_real_t sum = 0;
-			for (ssi_size_t j = 0; j < _n_classes; j++) {				
-				probs[j] -= minval;
-				sum += probs[j];
+		if (n_probs >= 2) // MULTICLASS
+		{									
+			double *prob_estimates = new double[n_probs];
+			if (check_probability_model((model*)_model))
+			{
+				predict_probability((model*)_model, x, prob_estimates);
+				for (ssi_size_t j = 0; j < _n_classes; j++) {
+					probs[j] = (ssi_real_t)prob_estimates[j];
+				}
 			}
-			for (ssi_size_t j = 0; j < _n_classes; j++) {
-				probs[j] /= sum;				
+			else
+			{
+				if (n_probs == 2)
+				{
+					double label = predict((model*)_model, x);
+					probs[0] = label == 0 ? 1.0f : 0.0f;
+					probs[1] = label == 1 ? 1.0f : 0.0f;
+				}
+				else
+				{
+					predict_values((model*)_model, x, prob_estimates);
+					for (ssi_size_t j = 0; j < _n_classes; j++) {
+						probs[j] = (ssi_real_t)prob_estimates[j];
+					}
+					ssi_real_t minval, maxval;
+					ssi_minmax(n_probs, 1, probs, &minval, &maxval);
+					ssi_real_t sum = 0;
+					for (ssi_size_t j = 0; j < _n_classes; j++) {
+						probs[j] -= minval;
+						sum += probs[j];
+					}
+					for (ssi_size_t j = 0; j < _n_classes; j++) {
+						probs[j] /= sum;
+					}
+				}
 			}
 			
-			delete[] dec_values;
+			delete[] prob_estimates;
 		}
 		else // REGRESSION 
 		{			
 			ssi_real_t score = (ssi_real_t) predict((model*)_model, x);
-			//double prob_estimates;
-			//predict_probability((model*)_model, x, &prob_estimates);
-			//printf("%.2lf\n", prob_estimates);
 			probs[0] = score;
 		}
 
@@ -497,4 +509,5 @@ namespace ssi {
 		model *m = (model *)_model;
 		return save_model(filepath, m) == 0;
 	}
+
 }

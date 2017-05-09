@@ -1,3 +1,3 @@
 
 add_subdirectory(xmlpipe)
-add_dependencies(android_xmlpipe ssiandroidsensors ssi zip ssiaudio ssiframe ssievent ssiioput ssimodel ssisignal ssiemovoice ssiandroidjavasensors ssiwebsocket ssistimuli)
+add_dependencies(android_xmlpipe ssiandroidsensors ssi zip ssiaudio ssiframe ssievent ssiioput ssimodel ssisignal ssiemovoice ssiandroidjavasensors ssiwebsocket ssistimuli ssitensorflow ssifftw-android)
