@@ -114,10 +114,10 @@ ENDIF(MINGW)
 #link_directories(../staticLib/)
 add_library(ssitensorflow SHARED ${SRC_FILES} )
 if(ANDROID)
-target_link_libraries(ssitensorflow  ${CMAKE_SOURCE_DIR}/plugins/tensorflow/staticLib/libtensorflow-core.a
-				     ${CMAKE_SOURCE_DIR}/plugins/tensorflow/staticLib/libprotobuf.a
-				     ${CMAKE_SOURCE_DIR}/plugins/tensorflow/staticLib/libprotoc.a 
-				     ${CMAKE_SOURCE_DIR}/plugins/tensorflow/staticLib/libprotobuf-lite.a
+target_link_libraries(ssitensorflow  ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/tensorflow/staticLib/libtensorflow-core.a
+				     ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/tensorflow/staticLib/libprotobuf.a
+				     ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/tensorflow/staticLib/libprotoc.a
+				     ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/tensorflow/staticLib/libprotobuf-lite.a
 				      android log zip ssiml ssi ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
 else(ANDROID)
 target_link_libraries(ssitensorflow /usr/local/lib/libtensorflow_all.so ssiml ssi ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
