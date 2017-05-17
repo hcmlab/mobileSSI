@@ -22,11 +22,11 @@ cmake_minimum_required(VERSION 2.8)
 
 project(android_xmlpipe)
 
-if(ANDROID)
+#if(ANDROID)
 
-include("${CMAKE_SOURCE_DIR}/android.apk.cmake")
+#include("${CMAKE_SOURCE_DIR}/android.apk.cmake")
 
-endif(ANDROID)
+#endif(ANDROID)
 
 
 
@@ -124,6 +124,6 @@ install(TARGETS android_xmlpipe DESTINATION ${SSI_INSTALL}/${SSI_PLATFORM}/${SSI
 if(ANDROID)
 
 #include("${CMAKE_SOURCE_DIR}/android.apk.cmake")
-android_create_apk(android_xmlpipe "de.hcmlab.ssi.android_xmlpipe" 
-  "${SSI_INSTALL}/Apk"  "${CMAKE_SOURCE_DIR}/libs" "${CMAKE_SOURCE_DIR}/android" "${CMAKE_SOURCE_DIR}/assets")
+#android_create_apk(android_xmlpipe "de.hcmlab.ssi.android_xmlpipe" 
+#  "${SSI_INSTALL}/Apk"  "${CMAKE_SOURCE_DIR}/libs" "${CMAKE_SOURCE_DIR}/android" "${CMAKE_SOURCE_DIR}/assets")
 endif(ANDROID)
