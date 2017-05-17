@@ -27,7 +27,7 @@ option(OPENSSI_BUILD_MOUSE "Build mouse plugin" ON)
 option(OPENSSI_BUILD_BEACON_SCANNER "Build beacon scanner plugin" OFF)
 
 option(OPENSSI_BUILD_FFMPEG "Build ffmpeg plugin" OFF)
-option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" OFF)
+option(OPENSSI_BUILD_WEBSOCKET "Build websocket plugin" ON)
 option(OPENSSI_BUILD_MQTT "Build mqtt plugin" OFF)
 option(OPENSSI_BUILD_STIMULI "Build stimuli plugin" OFF)
 option(OPENSSI_BUILD_OPENSMILE "Build opensmile plugin" OFF)
@@ -75,8 +75,7 @@ if(ANDROID)
 	add_subdirectory(androidSensors)
 	add_dependencies(ssiandroidsensors ssiframe ssi )
 
-	add_subdirectory(androidJavaSensors)
-	add_dependencies(ssiandroidjavasensors ssiframe ssi )
+
 	
 
 add_subdirectory(androidJavaSensors)
@@ -242,11 +241,7 @@ else(SSI_GUI STREQUAL "SDL")
 	add_dependencies(ssivectorfusion ssi )
 endif(SSI_GUI STREQUAL "SDL")
 
-IF(SSI_GUI STREQUAL "SDL")
-else(SSI_GUI STREQUAL "SDL")
-	add_subdirectory(vectorfusionMobile)
-	add_dependencies(ssivectorfusion ssi )
-endif(SSI_GUI STREQUAL "SDL")
+
 
 
 if(OPENSSI_BUILD_SSJSENSOR)

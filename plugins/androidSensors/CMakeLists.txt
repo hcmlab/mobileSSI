@@ -29,8 +29,8 @@ cmake_minimum_required(VERSION 2.8)
 project(openssi-androidsensors)
 
 add_subdirectory(tools)
-add_subdirectory(test)
-add_dependencies(ssiandroidsensors_test ssi ssiandroidsensors)
+#add_subdirectory(test)
+#add_dependencies(ssiandroidsensors_test ssi ssiandroidsensors)
 
 
 
