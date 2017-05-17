@@ -43,7 +43,7 @@ IF(SSI_GUI STREQUAL "SDL")
         #add_dependencies(ssifftw-android_test ssi)
 endif(SSI_GUI STREQUAL "SDL")
 
-include_directories( include ../signal/include ../../libs/build/ssiml/include/ ../../core/include/ ../../core/include/ioput/socket ../../core/include/ioput /usr/include/ /usr/local/include/ ../ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
+include_directories( include ../signal/include ../../libs/build/ssiml/include/ ../../core/include/ ../../core/include/ioput/socket ../../core/include/ioput /usr/include/../ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 
 set(COMMON_SRC_FILES
 
