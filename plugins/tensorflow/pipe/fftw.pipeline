@@ -1,0 +1,58 @@
+<?xml version="1.0" ?>
+<pipeline ssi-v="1">
+
+    <!-- register dlls -->
+	<register>
+		<load name="ioput"/>
+		<load name="audio"/>
+        	<load name="signal"/>
+		<load name="websocket"/>
+		<load name="fftw-android"/>
+		<load name="tensorflow"/>
+	</register>
+    
+    <!-- micro sensor 
+	<sensor create="Audio" sr="22050" option="audio">		
+		<output channel="audio" pin="audio" size="20s"/>		
+	</sensor> -->
+    
+    <!-- audio sensor --> 
+    <sensor create="WavReader" scale="true" path="test_sox.wav">
+        <output channel="audio" pin="audio" size="15s"/>	
+    </sensor> 
+
+    <transformer create="Selector"  indices="0">
+	<input pin="audio" frame="8000" delta="0s" />
+	<output pin="mono"/>
+    </transformer>
+
+	
+
+    <!-- fftw plugin -->
+    <transformer create="FFTWfeat">
+	<input pin="mono" frame="8000" delta="0s" />
+	<output pin="fftw"/>
+    </transformer>
+
+    <!-- tensorflow -->
+    <consumer create="Tensorflow" address="prediction@tensorflow">
+	<input pin="fftw" frame="15"/>
+    </consumer>
+
+    <object create="websocket" http_root="website" >
+	<listen address="@" />
+    </object> 
+
+    <object create="FileEventWriter" path="tf_predictions">
+	<listen address="@"/>
+    </object>
+
+
+	<consumer create="FileWriter" type="1" path="test_fftw_values">
+		<input pin="fftw" frame="1"/>
+	</consumer>
+
+	<consumer create="FileWriter" type="1" path="test_wav_data">
+		<input pin="mono" frame="1"/>
+	</consumer>
+</pipeline>
