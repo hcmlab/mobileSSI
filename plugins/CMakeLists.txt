@@ -70,16 +70,14 @@ add_subdirectory(ioput)
 add_dependencies(ssiioput ssi )
 
 if(ANDROID)
-
-
 	add_subdirectory(androidSensors)
 	add_dependencies(ssiandroidsensors ssiframe ssi )
 
+	add_subdirectory(androidJavaSensors)
+	add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
-	
-
-add_subdirectory(androidJavaSensors)
-add_dependencies(ssiandroidjavasensors ssiframe ssi )
+	add_subdirectory(ssjbridge)
+	add_dependencies(ssissjbridge ssi )
 
 else(ANDROID)
 
