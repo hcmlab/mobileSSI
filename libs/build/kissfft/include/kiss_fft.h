@@ -21,10 +21,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include <stdio.h>
 #include <math.h>
 #include <memory.h>
-#if __APPLE__
-#else
 #include <malloc.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {

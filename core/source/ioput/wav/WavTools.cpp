@@ -28,7 +28,7 @@
 #include "ioput/file/FileTools.h"
 #include "base/Factory.h"
 #include "ioput/file/FilePath.h"
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 #define DWORD uint32_t
 #endif
 
@@ -248,7 +248,7 @@ bool WavTools::ReadWavHeader (File &file,
 	}
 	buffer[4] = 0;
 	if (strcmp (buffer, "RIFF")!=0) {
-		ssi_err ("bad RIFF format");
+		ssi_wrn ("bad RIFF format");
 		return false;
 	}
 	for (int i = 0; i < 4; i++) {
@@ -256,7 +256,7 @@ bool WavTools::ReadWavHeader (File &file,
 	}
 	buffer[4] = 0;
 	if (strcmp (buffer, "WAVE") !=0) {
-		ssi_err ("bad WAVE format");
+		ssi_wrn("bad WAVE format");
 		return false;
 	}
 	for (int i = 0; i < 3; i++) {
@@ -264,11 +264,11 @@ bool WavTools::ReadWavHeader (File &file,
 	}
 	buffer[3] = 0;
 	if (strcmp (buffer, "fmt") != 0) {
-		ssi_err ("bad fmt format");
+		ssi_wrn("bad fmt format");
 		return false;
 	}
     if (header.compressionTag != 1) {
-		ssi_err ("compression not supported");
+		ssi_wrn("compression not supported");
 		return false;
 	}
 
@@ -394,12 +394,12 @@ bool WavTools::RepairWavFile (const ssi_char_t *path,
 		return false;
 	}
 
-	ssi_size_t from = file->tell ();
+	int64_t from = file->tell ();
 	file->seek (0, File::END);
-	ssi_size_t to = file->tell ();
+	int64_t to = file->tell ();
 	file->seek (from, File::BEGIN);
 
-	ssi_size_t sample_number = (to-from) / (header.nChannels * header.nBitsPerSample / 8);
+	ssi_size_t sample_number = ssi_size_t(to-from) / (header.nChannels * header.nBitsPerSample / 8);
 	ssi_stream_init (data, sample_number, header.nChannels, header.nBitsPerSample / 8, SSI_SHORT, header.nSamplesPerSec);
 	file->read (data.ptr, 1, data.tot);
 

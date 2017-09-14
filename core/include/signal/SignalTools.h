@@ -32,13 +32,17 @@
 #include "base/ITransformer.h"
 #include "base/IConsumer.h"
 #include "signal/SignalCons.h"
+#include "thread/Lock.h"
 
 namespace ssi {
 
 class SignalTools {
 
 public:
-
+	
+	// old function:
+	// delta corrensponds to a right context
+	// the center of the first window is (frame + delta)/2	
 	static void Transform (ssi_stream_t &from,
 		ssi_stream_t &to,
 		ITransformer &transformer,		
@@ -55,6 +59,26 @@ public:
 		bool call_enter = true,
 		bool call_flush = true,
 		bool copy_input = true);
+
+	// refined function:
+	// allow it to set a left and a right context
+	// center of the first window is 0
+	static void Transform(ssi_stream_t &from,
+		ssi_stream_t &to,
+		ITransformer &transformer,
+		ssi_size_t frame,
+		ssi_size_t context_left,
+		ssi_size_t context_right,
+		bool call_enter = true,
+		bool call_flush = true);
+	static void Transform(ssi_stream_t &from,
+		ssi_stream_t &to,
+		ITransformer &transformer,
+		const ssi_char_t *frame,
+		const ssi_char_t *context_left,
+		const ssi_char_t *context_right,
+		bool call_enter = true,
+		bool call_flush = true);
 
 	static void Transform_Xtra (ssi_stream_t &from,
 		ssi_stream_t &to,

@@ -33,7 +33,7 @@
 #include "ioput/pipe/NamedPipeListener.h"
 #include "thread/Thread.h"
 
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 
 #define OVERLAPPED int
 

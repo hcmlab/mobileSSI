@@ -97,12 +97,10 @@ public:
     OutboundPacketStream& operator<<( const InfinitumType& rhs );
     OutboundPacketStream& operator<<( osc_int32 rhs );
 
-// TODO fix 32bit
-    /*
 #ifndef x86_64
     OutboundPacketStream& operator<<( int rhs )
             { *this << (osc_int32)rhs; return *this; }
-#endif*/
+#endif
 
     OutboundPacketStream& operator<<( float rhs );
     OutboundPacketStream& operator<<( char rhs );

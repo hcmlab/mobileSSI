@@ -86,21 +86,24 @@ public:
 
 	void lock();
 	void unlock();
+	bool isReadOnly();
+	void setReadOnly(bool toggle);
 
 	void print (FILE *file);
 
-	static bool LoadXML (const ssi_char_t *filename, IOptions &list);		
-	static bool SaveXML (const ssi_char_t *filename, IOptions &list);
-	static bool LoadXML (FILE *file, IOptions &list);
-	static bool LoadBinary (FILE *file, IOptions &list);
-	static bool SaveXML (FILE *file, IOptions &list);	
-	static bool SaveBinary (FILE *file, IOptions &list);	
+	static bool LoadXML (const ssi_char_t *filename, IOptions *list);		
+	static bool SaveXML (const ssi_char_t *filename, IOptions *list);
+	static bool LoadXML (FILE *file, IOptions *list);
+	static bool LoadBinary (FILE *file, IOptions *list);
+	static bool SaveXML (FILE *file, IOptions *list);	
+	static bool SaveBinary (FILE *file, IOptions *list);	
 
 protected:
 
 	static ssi_char_t *ssi_log_name;
 
 	std::vector<ssi_option_t *> _list;	
+	bool _readOnly;
 
 	static ssi_char_t *Strcpy (const ssi_char_t *string);
 	static ssi_size_t GetTypeSize (ssi_type_t);

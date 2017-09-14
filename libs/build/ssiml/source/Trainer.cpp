@@ -25,14 +25,17 @@
 //*************************************************************************************************
 
 #include "Trainer.h"
-#include "model/ModelTools.h"
+#include "ModelTools.h"
 #include "base/Factory.h"
 #include "ISMissingData.h"
 #include "ISSelectDim.h"
+#include "ISUnderSample.h"
+#include "ISOverSample.h"
 #include "ISTransform.h"
 #include "Selection.h"
 #include "signal/SignalTools.h"
 #include "ioput/option/OptionList.h"
+#include "base/Random.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -50,24 +53,24 @@ int Trainer::ssi_log_level = SSI_LOG_LEVEL_DEFAULT;
 
 Trainer::VERSION Trainer::DEFAULT_VERSION = Trainer::V5;
 
-Trainer::Trainer ()
-	: _n_models (0),
-	_models (0),	
-	_fusion (0),	
-	_n_classes (0),
-	_class_names (0), 
-	_n_users (0),
-	_user_names (0),
-	_n_streams (0),
-	_stream_index (0),
-	_stream_refs (0),
-	_n_stream_select (0),
-	_stream_select (0),
-	_has_selection (false),
-	_transformer (0),
-	_transformer_frame (0),
-	_transformer_delta (0),
-	_has_transformer (false),
+Trainer::Trainer()
+	: _n_models(0),
+	_models(0),
+	_fusion(0),
+	_n_classes(0),
+	_class_names(0),
+	_n_users(0),
+	_user_names(0),
+	_n_streams(0),
+	_stream_index(0),
+	_stream_refs(0),
+	_n_stream_select(0),
+	_stream_select(0),
+	_has_selection(false),
+	_transformer(0),
+	_transformer_frame(0),
+	_transformer_delta(0),
+	_has_transformer(false),
 	_activity(0),
 	_activity_frame(0),
 	_activity_delta(0),
@@ -75,10 +78,15 @@ Trainer::Trainer ()
 	_has_normalization(false),
 	_normalization(0),
 	_normalization_free(false),
-	_is_trained (false),
-	_preproc_mode (false),
-	_n_samplepaths (0),
-	_samplepaths (0) {
+	_is_trained(false),
+	_preproc_mode(false),
+	_n_samplepaths(0),
+	_samplepaths(0),
+	_balance(BALANCE::NONE),
+	_registerNode(0),
+	_preventWarningsSpam(false)
+{
+	_seed = Random::Seed();
 }
 
 Trainer::Trainer (IModel *model,
@@ -110,10 +118,16 @@ Trainer::Trainer (IModel *model,
 	_is_trained (false),
 	_preproc_mode (false),
 	_n_samplepaths (0),
-	_samplepaths (0) {
+	_samplepaths (0),
+	_balance(BALANCE::NONE),
+	_registerNode(0),
+	_preventWarningsSpam(false)
+{
 
 	_models = new IModel*[1];
 	_models[0] = model;
+
+	_seed = Random::Seed();
 };
 
 Trainer::Trainer (ssi_size_t n_models,
@@ -146,23 +160,29 @@ Trainer::Trainer (ssi_size_t n_models,
 	_is_trained (false),
 	_preproc_mode (false),
 	_n_samplepaths (0),
-	_samplepaths (0) {
+	_samplepaths (0),
+	_balance(BALANCE::NONE),
+	_registerNode(0),
+	_preventWarningsSpam(false)
+{
 
 	_models = new IModel*[_n_models];
 	for (ssi_size_t n_model = 0; n_model < n_models; n_model++) {
 		_models[n_model] = models[n_model];
 	}
 
+	_seed = Random::Seed();
 }
 
 Trainer::~Trainer () {
-
-	release ();	
+	
 	release_transformer ();
 	release_activity();
 	release_selection ();
 	release_normalization ();
 	release_samples ();
+
+	release();
 
 	delete[] _models;
 	delete[] _stream_refs;
@@ -171,6 +191,7 @@ Trainer::~Trainer () {
 
 void Trainer::release () {
 	
+	_preventWarningsSpam = false;
 	if (_fusion) {
 		_fusion->release ();		
 	}
@@ -183,6 +204,8 @@ void Trainer::release () {
 	_is_trained = false;
 	delete[] _stream_refs;
 	_stream_refs = 0;
+	delete[] _registerNode; _registerNode = 0;
+	Meta.clear();
 }
 
 void Trainer::release_samples () {
@@ -297,10 +320,20 @@ void Trainer::free_user_names () {
 	}	
 }
 
+void Trainer::setSeed(ssi_size_t seed)
+{
+	_seed = seed;
+}
+
+void Trainer::setBalance(BALANCE::Value balance)
+{
+	_balance = balance;
+}
+
 bool Trainer::setSelection(ssi_size_t n_select,
 	ssi_size_t *stream_select) {
 
-	return setSelection(0, &n_select, &stream_select);
+	return setSelection(1, &n_select, &stream_select);
 }
 
 bool Trainer::setSelection (ssi_size_t n_streams, 
@@ -315,7 +348,7 @@ bool Trainer::setSelection (ssi_size_t n_streams,
 	release_selection ();
 
 	if (_n_streams > 0 && n_streams != _n_streams) {
-		ssi_wrn("#streams do not match (%u != %u)", _n_streams, _n_streams);
+		ssi_wrn("#streams do not match (%u != %u)", n_streams, _n_streams);
 	} else {
 		_n_streams = n_streams;
 	}
@@ -691,16 +724,6 @@ bool Trainer::setNormalization(ssi_size_t n_streams,
 
 bool Trainer::train () {
 
-	if (_is_trained) {
-		ssi_wrn ("already trained, call release() first");
-		return false;
-	}	
-
-	if (_n_models == 0) {
-		ssi_wrn ("no models");
-		return false;
-	}
-
 	if (_n_samplepaths == 0) {
 		ssi_wrn ("no paths to samples found");
 		return false;
@@ -715,11 +738,15 @@ bool Trainer::train () {
 }
 
 bool Trainer::train (ISamples &samples) {	
-
-	if (_is_trained) {
-		ssi_wrn ("already trained, call release() first");
-		return false;
-	}	
+	
+	if (_is_trained)
+	{
+		ssi_msg(SSI_LOG_LEVEL_BASIC, "start re-training");
+	}
+	else
+	{
+		ssi_msg(SSI_LOG_LEVEL_BASIC, "start training");
+	}
 
 	if (_n_models == 0) {
 		ssi_wrn ("no models");
@@ -783,11 +810,15 @@ bool Trainer::train (ISamples &samples) {
 		samples_ptr = samples_norm;
 	}
 
+	//ModelTools::SaveSampleList(*samples_ptr, "check", File::BINARY);
+
 	bool result = train_h (*samples_ptr);
 		
 	delete samples_transf;
 	delete samples_select;
 	delete samples_norm;
+
+	_preventWarningsSpam = false;
 
 	return result;
 }
@@ -800,40 +831,52 @@ void Trainer::eval(ISamples &strain, ISamples &sdevel, FILE *file, Evaluation::P
 
 void Trainer::eval(ISamples &samples, FILE *file, Evaluation::PRINT::List format) {
 
+	if (!_is_trained)
+	{
+		ssi_wrn("not trained");
+		return;
+	}
+
 	Evaluation eval;
-	eval.eval(this, samples);
+	eval.eval(this, samples, samples.getClassSize() == 1 ? IModel::TASK::REGRESSION : IModel::TASK::CLASSIFICATION);
 	eval.print(file, format);
 }
 
 void Trainer::evalSplit(ISamples &samples, ssi_real_t split, FILE *file, Evaluation::PRINT::List format) {
 
 	Evaluation eval;
-	eval.evalSplit (this, samples, split);
+	eval.evalSplit (this, samples, split, samples.getClassSize() == 1 ? IModel::TASK::REGRESSION : IModel::TASK::CLASSIFICATION);
 	eval.print(file, format);
 }
 
 void Trainer::evalKFold(ISamples &samples, ssi_size_t k, FILE *file, Evaluation::PRINT::List format) {
 
 	Evaluation eval;
-	eval.evalKFold (this, samples, k);
+	eval.evalKFold (this, samples, k, samples.getClassSize() == 1 ? IModel::TASK::REGRESSION : IModel::TASK::CLASSIFICATION);
 	eval.print(file, format);
 }
 
 void Trainer::evalLOO(ISamples &samples, FILE *file, Evaluation::PRINT::List format) {
 
 	Evaluation eval;
-	eval.evalLOO (this, samples);
+	eval.evalLOO (this, samples, samples.getClassSize() == 1 ? IModel::TASK::REGRESSION : IModel::TASK::CLASSIFICATION);
 	eval.print(file, format);
 }
 
 void Trainer::evalLOUO(ISamples &samples, FILE *file, Evaluation::PRINT::List format) {
 
 	Evaluation eval;
-	eval.evalLOUO (this, samples);
+	eval.evalLOUO (this, samples, samples.getClassSize() == 1 ? IModel::TASK::REGRESSION : IModel::TASK::CLASSIFICATION);
 	eval.print(file, format);
 }
 
 void Trainer::evalSplit(ssi_real_t split, FILE *file, Evaluation::PRINT::List format) {
+
+	if (!_is_trained)
+	{
+		ssi_wrn("not trained");
+		return;
+	}
 
 	SampleList samples;
 	for (ssi_size_t i = 0; i < _n_samplepaths; i++) {
@@ -878,41 +921,105 @@ void Trainer::evalLOUO(FILE *file, Evaluation::PRINT::List format) {
 	evalLOUO(samples, file, format);
 }
 
-bool Trainer::train_h (ISamples &samples) {	
+bool Trainer::train_h (ISamples &samples_raw) {	
 
 	bool result = false;
 
+	ISamples *samples = &samples_raw;
+	if (_balance != BALANCE::NONE)
+	{
+
+#if SSI_RANDOM_LEGACY_FLAG	
+		ssi_random_seed(_seed);
+#endif
+
+		switch (_balance)
+		{
+		case BALANCE::UNDER:
+		{			
+			ISUnderSample *under = new ISUnderSample(&samples_raw);
+			under->setSeed(_seed);
+			under->setUnder(ISUnderSample::Strategy::RANDOM);			
+			samples = under;
+			ssi_msg(SSI_LOG_LEVEL_BASIC, "apply under sampling (%u->%u)", samples_raw.getSize(), samples->getSize());
+			break;
+		}
+		case BALANCE::OVER:
+		{
+			ssi_msg(SSI_LOG_LEVEL_BASIC, "apply over sampling (%u->%u)", samples_raw.getSize(), samples->getSize());
+			ISOverSample *over = new ISOverSample(&samples_raw);
+			over->setSeed(_seed);
+			over->setOver(ISOverSample::Strategy::RANDOM);
+			samples = over;
+			break;
+		}
+		}
+	}
+
 	if (_fusion) {
-		ssi_msg (SSI_LOG_LEVEL_DETAIL, "train '%s' using %u streams", _fusion->getName (), samples.getStreamSize ());
-		if (ssi_log_level >= SSI_LOG_LEVEL_DETAIL) {
-			for (ssi_size_t nstream = 0; nstream < samples.getStreamSize (); nstream++) {				 
-				ssi_print ("             stream#%02u %ux%u %s\n", nstream, samples.getSize (), samples.getStream (nstream).dim, SSI_TYPE_NAMES[samples.getStream (nstream).type]);
+		ssi_msg (SSI_LOG_LEVEL_BASIC, "train '%s' using %u streams", _fusion->getName (), samples->getStreamSize ());
+		if (ssi_log_level >= SSI_LOG_LEVEL_BASIC) {
+			for (ssi_size_t nstream = 0; nstream < samples->getStreamSize (); nstream++) {				 
+				ssi_print ("             stream#%02u %ux%u %s\n", nstream, samples->getSize (), samples->getStream (nstream).dim, SSI_TYPE_NAMES[samples->getStream (nstream).type]);
 			}	
 			for (ssi_size_t nmodel = 0; nmodel < _n_models; nmodel++) {				 
 				ssi_print ("             model#%02u '%s'\n", nmodel, _models[nmodel]->getName ());
 			}			
 		}
-		result = _fusion->train(_n_models, _models, samples);
+		result = _fusion->train(_n_models, _models, *samples);
 	} else {
-		ssi_msg (SSI_LOG_LEVEL_DETAIL, "train '%s' using stream#%02u %ux%u %s", _models[0]->getName (), _stream_index, samples.getSize (), samples.getStream (_stream_index).dim, SSI_TYPE_NAMES[samples.getStream (_stream_index).type]);
-		if (samples.hasMissingData ()) {
-			ISMissingData samples_md (&samples);
+		ssi_msg (SSI_LOG_LEVEL_BASIC, "train '%s' using stream#%02u %ux%u %s", _models[0]->getName (), _stream_index, samples->getSize (), samples->getStream (_stream_index).dim, SSI_TYPE_NAMES[samples->getStream (_stream_index).type]);
+		if (samples->hasMissingData ()) {
+			ISMissingData samples_md (samples);
 			samples_md.setStream (_stream_index);
 			result = _models[0]->train(samples_md, _stream_index);
 		} else {
-			result = _models[0]->train(samples, _stream_index);
+			result = _models[0]->train(*samples, _stream_index);
 		}
 	}
 	
-	init_class_names (samples);	
-	init_user_names (samples);
+	init_class_names (*samples);	
+	init_user_names (*samples);
 	_is_trained = result;
+
+	if (samples != &samples_raw)
+	{
+		delete samples;
+	}
 
 	return result;
 }
 
 // test sample
-bool Trainer::forward (ssi_stream_t &stream, ssi_size_t &class_index) {	
+bool Trainer::forward(ssi_stream_t &stream,
+	ssi_size_t &class_index,
+	ssi_real_t &class_prob)
+{
+	ssi_real_t *probs = new ssi_real_t[_n_classes];
+	if (!forward_probs(stream, _n_classes, probs))
+	{
+		return false;
+	}
+
+	ssi_size_t max_ind = 0;
+	ssi_real_t max_val = probs[0];
+	for (ssi_size_t i = 1; i < _n_classes; i++) {
+		if (probs[i] > max_val) {
+			max_val = probs[i];
+			max_ind = i;
+		}
+	}
+
+	class_index = max_ind;
+	class_prob = probs[max_ind];
+
+	delete[] probs;
+
+	return true;
+}
+
+bool Trainer::forward (ssi_stream_t &stream, 
+	ssi_size_t &class_index) {	
 
 	ssi_stream_t *s = &stream;
 	return forward (1, &s, class_index);
@@ -957,12 +1064,20 @@ bool Trainer::forward_probs (ssi_size_t n_streams,
 	ssi_real_t *probs) {
 
 	if (!_is_trained) {
-		ssi_wrn ("not trained");
+		if (!_preventWarningsSpam)
+		{
+			ssi_wrn("prediction failed because model is not trained");
+			_preventWarningsSpam = true;
+		}
 		return false;
 	}
 
 	if (n_streams != _n_streams) {
-		ssi_wrn ("#streams not compatible (%u != %u)", n_streams, _n_streams);
+		if (!_preventWarningsSpam)
+		{
+			ssi_wrn("prediction failed because #streams not compatible (%u != %u)", n_streams, _n_streams);
+			_preventWarningsSpam = true;
+		}		
 		return false;
 	}
 
@@ -973,11 +1088,15 @@ bool Trainer::forward_probs (ssi_size_t n_streams,
 	if (!_preproc_mode) {
 		for (ssi_size_t n_stream = 0; n_stream < n_streams; n_stream++) {		
 			if (streams[n_stream] && !ssi_stream_compare (*streams[n_stream], _stream_refs[n_stream])) {
-				ssi_wrn ("stream #%u not compatible", n_stream);
-				ssi_print ("received stream:\n");
-				ssi_stream_info (*streams[n_stream], ssiout);
-				ssi_print ("expected stream:\n");
-				ssi_stream_info (_stream_refs[n_stream], ssiout);
+				if (!_preventWarningsSpam)
+				{
+					ssi_wrn("prediction failed because stream #%u not compatible", n_stream);
+					ssi_print("received stream:\n");
+					ssi_stream_info(*streams[n_stream], ssiout);
+					ssi_print("expected stream:\n");
+					ssi_stream_info(_stream_refs[n_stream], ssiout);
+					_preventWarningsSpam = true;
+				}				
 				return false;			
 			}
 		}
@@ -990,7 +1109,7 @@ bool Trainer::forward_probs (ssi_size_t n_streams,
 	ssi_stream_t **streams_n = new ssi_stream_t *[n_streams];
 	for (ssi_size_t i = 0; i < n_streams; i++) {
 		streams_o[i] = new ssi_stream_t;
-		ssi_stream_clone(*streams[i], *streams_o[i]);
+		ssi_stream_copy(*streams[i], *streams_o[i], 0, streams[i]->num);
 		streams_ptr[i] = streams_o[i];
 		streams_s[i] = 0;
 		streams_t[i] = 0;
@@ -1150,7 +1269,11 @@ bool Trainer::Load (Trainer &trainer,
 			trainer._is_trained = result;
 			break;
 		case V5:
-			result = Load_V5 (trainer, fp, body);
+			result = Load_V5 (trainer, fp, body);	
+			if (!result)
+			{
+				trainer._is_trained = false;
+			}
 			break;
 		default:
 			ssi_wrn ("unkown version %d", version);
@@ -1216,44 +1339,91 @@ bool Trainer::Load_V5 (Trainer &trainer,
 		return false;
 	}
 	const ssi_char_t *trained = element->Attribute ("trained");
+	bool is_trained;
 	if (!trained) {
 		ssi_wrn ("attribute <trained> missing in <info>");
 		return false;
 	} else {
-		trainer._is_trained = ssi_strcmp (trained, "true", false);
+		is_trained = ssi_strcmp (trained, "true", false);
+	}
+	trainer._is_trained = is_trained;		
+	int seed = 0;
+	if (element->Attribute("seed", &seed))
+	{
+		trainer.setSeed(ssi_size_t(seed));
 	}
 
-	if (!trainer._is_trained) {
+	element = body->FirstChildElement("register");	
+	if (element)
+	{
+		trainer._registerNode = element->Clone();
+		Factory::RegisterXML(element, ssiout, ssimsg);
+	}
+
+	element = body->FirstChildElement("meta");
+	if (element)
+	{		
+		TiXmlAttribute *meta_attribute = element->FirstAttribute();
+		do {
+			trainer.Meta[meta_attribute->Name()] = meta_attribute->Value();
+		} while (meta_attribute = meta_attribute->Next());		
+	}
+
+	if (!is_trained) {
 
 		element = body->FirstChildElement ("samples");
-		int n_streams;
-		if (!element->Attribute("n_streams", &n_streams)) {
-			ssi_wrn("attribute <n_streams> missig in <samples>");
-			return false;
-		}
-		trainer._n_streams = ssi_cast (ssi_size_t, n_streams);
+		if (element)
+		{
+			int n_streams;
+			if (!element->Attribute("n_streams", &n_streams)) {
+				ssi_wrn("attribute <n_streams> missig in <samples>");
+				return false;
+			}
+			trainer._n_streams = ssi_cast(ssi_size_t, n_streams);
 
-		ssi_size_t n_samples = 0;	
-		if (!GetChildSize (element, "item", n_samples)) {		
-			return false;	
-		}	
-		ssi_char_t const **samples = new ssi_char_t const *[n_samples];
-		item = element->FirstChildElement ("item");
-		for (ssi_size_t n_sample = 0; n_sample < n_samples; n_sample++) {
-			if (!item || strcmp (item->Value (), "item") != 0) {
-				ssi_wrn ("could not parse tag <item> in <samples>");
+			const ssi_char_t *balance = element->Attribute("balance");
+			if (balance && !ssi_strcmp(balance, "none", false)) {
+				if (ssi_strcmp(balance, "over", false))
+				{
+					trainer.setBalance(BALANCE::OVER);
+				}
+				else if (ssi_strcmp(balance, "under", false))
+				{
+					trainer.setBalance(BALANCE::UNDER);
+				}
+				else
+				{
+					ssi_wrn("unkown balance value '%s'", balance);
+				}
+			}
+
+			ssi_size_t n_samples = 0;
+			if (!GetChildSize(element, "item", n_samples)) {
 				return false;
 			}
-			const char *path = item->Attribute ("path");
-			if (!path) {
-				ssi_wrn ("attribute <path> missing in <item>");
-				return false;
+			ssi_char_t const **samples = new ssi_char_t const *[n_samples];
+			item = element->FirstChildElement("item");
+			for (ssi_size_t n_sample = 0; n_sample < n_samples; n_sample++) {
+				if (!item || strcmp(item->Value(), "item") != 0) {
+					ssi_wrn("could not parse tag <item> in <samples>");
+					return false;
+				}
+				const char *path = item->Attribute("path");
+				if (!path) {
+					ssi_wrn("attribute <path> missing in <item>");
+					return false;
+				}
+				samples[n_sample] = path;
+				item = item->NextSiblingElement("item");
 			}
-			samples[n_sample] = path;
-			item = item->NextSiblingElement("item");
+
+			trainer.setSamples(n_samples, samples);
+			delete[] samples;
 		}
-		trainer.setSamples (n_samples, samples);
-		delete[] samples;
+		else
+		{
+			trainer._n_streams = 1;
+		}
 
 	} else {
 	
@@ -1555,7 +1725,13 @@ bool Trainer::Load_V5 (Trainer &trainer,
 					if (ssi_strcmp(method, ISNorm::METHOD_NAMES[i])) {
 						trainer._normalization[stream_id] = new ISNorm::Params;
 						ISNorm::ZeroParams(*trainer._normalization[stream_id], ISNorm::METHOD::List(i));
+						const ssi_char_t *limits = item->Attribute("limits");
+						if (limits)
+						{
+							ssi_string2array(2, trainer._normalization[stream_id]->limits, limits, ',');						
+						}
 						found_method = true;
+	
 						break;
 					}
 				}
@@ -1563,7 +1739,7 @@ bool Trainer::Load_V5 (Trainer &trainer,
 					ssi_wrn("unkown normalization method '%s'", method);
 					return false;
 				}
-				if (trainer._is_trained) {
+				if (is_trained) {
 					const ssi_char_t *path = item->Attribute("path");
 					if (!path) {
 						ssi_wrn("attribute <path> missing in <item>");
@@ -1572,6 +1748,22 @@ bool Trainer::Load_V5 (Trainer &trainer,
 					ssi_sprint(string, "%s%s", fp.getDir(), path);
 					ISNorm::LoadParams(string, *trainer._normalization[stream_id]);
 				}
+
+				if (trainer._normalization[stream_id]->method == ISNorm::METHOD::SCALE)
+				{
+					ssi_msg(SSI_LOG_LEVEL_BASIC, "apply normalization '%s[%.g,%.g]' on stream #%u",
+						ISNorm::METHOD_NAMES[trainer._normalization[stream_id]->method],
+						trainer._normalization[stream_id]->limits[0],
+						trainer._normalization[stream_id]->limits[1],
+						stream_id);
+				}
+				else
+				{
+					ssi_msg(SSI_LOG_LEVEL_BASIC, "apply normalization '%s' on stream #%u",
+						ISNorm::METHOD_NAMES[trainer._normalization[stream_id]->method],
+						stream_id);
+				}
+
 			} while (item = item->NextSiblingElement("item"));
 		}
 	}
@@ -2393,6 +2585,238 @@ bool Trainer::save(const ssi_char_t *filepath, VERSION version, File::TYPE type)
 	return true;
 }
 
+bool Trainer::save_V5(const ssi_char_t *filepath, TiXmlElement &body, File::TYPE type) {
+
+	ssi_char_t string[SSI_MAX_CHAR];
+
+	TiXmlElement info("info");
+	info.SetAttribute("trained", _is_trained ? "true" : "false");
+	body.InsertEndChild(info);
+	
+	if (Meta.size() > 0)
+	{
+		TiXmlElement meta("meta");
+		for (std::map<String, String>::iterator it = Meta.begin(); it != Meta.end(); it++) {
+			meta.SetAttribute(it->first.str(), it->second.str());
+		}		
+		body.InsertEndChild(meta);
+	}
+
+	if (_registerNode)
+	{ 
+		body.InsertEndChild(*_registerNode);
+	}
+
+	if (!_is_trained) {
+		if (_n_streams == 0 && _n_samplepaths > 0) {
+			SampleList samples;
+			ModelTools::LoadSampleList(samples, _samplepaths[0]);
+			_n_streams = samples.getStreamSize();
+		}
+		TiXmlElement samples("samples");
+		samples.SetAttribute("n_streams", ssi_cast(int, _n_streams));
+		for (ssi_size_t n_samples = 0; n_samples < _n_samplepaths; n_samples++) {
+			TiXmlElement item("item");
+			item.SetAttribute("path", _samplepaths[n_samples]);
+			samples.InsertEndChild(item);
+		}
+		body.InsertEndChild(samples);
+	}
+	else {
+
+		TiXmlElement streams("streams");
+		for (ssi_size_t n_stream = 0; n_stream < _n_streams; n_stream++) {
+			TiXmlElement item("item");
+			item.SetAttribute("byte", ssi_cast(int, _stream_refs[n_stream].byte));
+			item.SetAttribute("dim", ssi_cast(int, _stream_refs[n_stream].dim));
+			item.SetDoubleAttribute("sr", _stream_refs[n_stream].sr);
+			item.SetAttribute("type", SSI_TYPE_NAMES[_stream_refs[n_stream].type]);
+			streams.InsertEndChild(item);
+		}
+		body.InsertEndChild(streams);
+
+		TiXmlElement classes("classes");
+		for (ssi_size_t n_class = 0; n_class < _n_classes; n_class++) {
+			TiXmlElement item("item");
+			item.SetAttribute("name", _class_names[n_class]);
+			classes.InsertEndChild(item);
+		}
+		body.InsertEndChild(classes);
+
+		TiXmlElement users("users");
+		for (ssi_size_t n_user = 0; n_user < _n_users; n_user++) {
+			TiXmlElement item("item");
+			item.SetAttribute("name", _user_names[n_user]);
+			users.InsertEndChild(item);
+		}
+		body.InsertEndChild(users);
+	}
+
+	if (_has_activity) {
+		TiXmlElement transform("activity");
+		for (ssi_size_t n = 0; n < _n_streams; n++) {
+			if (_activity[n]) {
+				TiXmlElement item("item");
+				item.SetAttribute("create", _activity[n]->getName());
+				item.SetAttribute("stream", n);
+				item.SetDoubleAttribute("percentage", _activity_percentage[n]);
+				item.SetDoubleAttribute("frame", _activity_frame[n]);
+				item.SetDoubleAttribute("delta", _activity_delta[n]);
+				if (_activity[n]->getOptions()) {
+
+					ssi_sprint(string, "%s%s.#%u.%s", filepath, SSI_FILE_TYPE_TRAINER, n, _activity[n]->getName());
+					OptionList::SaveXML(string, _activity[n]->getOptions());
+					FilePath fp(filepath);
+					ssi_sprint(string, "%s%s.#%u.%s", fp.getName(), SSI_FILE_TYPE_TRAINER, n, _activity[n]->getName());
+					item.SetAttribute("option", string);
+
+				}
+				transform.InsertEndChild(item);
+			}
+		}
+		body.InsertEndChild(transform);
+	}
+
+
+	if (_has_transformer) {
+		TiXmlElement transform("transform");
+		for (ssi_size_t n = 0; n < _n_streams; n++) {
+			if (_transformer[n]) {
+				TiXmlElement item("item");
+				item.SetAttribute("create", _transformer[n]->getName());
+				item.SetAttribute("stream", n);
+				item.SetDoubleAttribute("frame", _transformer_frame[n]);
+				item.SetDoubleAttribute("delta", _transformer_delta[n]);
+				if (_transformer[n]->getOptions()) {
+					ssi_sprint(string, "%s%s.#%u.%s", filepath, SSI_FILE_TYPE_TRAINER, n, _transformer[n]->getName());
+
+					OptionList::SaveXML(string, _transformer[n]->getOptions());
+					FilePath fp(filepath);
+					ssi_sprint(string, "%s%s.#%u.%s", fp.getName(), SSI_FILE_TYPE_TRAINER, n, _transformer[n]->getName());
+					item.SetAttribute("option", string);
+
+				}
+				transform.InsertEndChild(item);
+			}
+		}
+		body.InsertEndChild(transform);
+	}
+
+	if (_has_selection) {
+		TiXmlElement select("select");
+		for (ssi_size_t n = 0; n < _n_streams; n++) {
+			if (_stream_select[n]) {
+				TiXmlElement item("item");
+				item.SetAttribute("stream", ssi_cast(int, n));
+				item.SetAttribute("size", ssi_cast(int, _n_stream_select[n]));
+				ssi_array2string(_n_stream_select[n], _stream_select[n], SSI_MAX_CHAR, string, ' ');
+				item.SetAttribute("select", string);
+				select.InsertEndChild(item);
+			}
+		}
+		body.InsertEndChild(select);
+	}
+
+	if (_has_normalization) {
+		TiXmlElement normalize("normalize");
+		for (ssi_size_t n = 0; n < _n_streams; n++) {
+			if (_normalization[n] && _normalization[n]->method != ISNorm::METHOD::NONE) {
+				TiXmlElement item("item");
+				item.SetAttribute("method", ISNorm::METHOD_NAMES[_normalization[n]->method]);
+				item.SetAttribute("stream", n);
+				if (_is_trained) {
+					ssi_sprint(string, "%s%s.#%u", filepath, SSI_FILE_TYPE_TRAINER, n);
+					if (!ISNorm::SaveParams(string, *_normalization[n], type)) {
+						ssi_wrn("failed saving normalization for stream#%u to '%s'", n, string);
+						return false;
+					}
+					FilePath fp(filepath);
+					ssi_sprint(string, "%s%s.#%u", fp.getNameFull(), SSI_FILE_TYPE_TRAINER, n);
+					item.SetAttribute("path", string);
+				}
+				normalize.InsertEndChild(item);
+			}
+		}
+		body.InsertEndChild(normalize);
+	}
+
+	if (_fusion) {
+
+		TiXmlElement fusion("fusion");
+		fusion.SetAttribute("create", _fusion->getName());
+		ssi_sprint(string, "%s%s.%s%s", filepath, SSI_FILE_TYPE_TRAINER, _fusion->getName(), SSI_FILE_TYPE_FUSION);
+		FilePath fp(string);
+		fusion.SetAttribute("path", fp.getName());
+		if (!_fusion->save(string)) {
+			ssi_wrn("failed saving fusion to '%s'", string);
+			return false;
+		}
+		if (_fusion->getOptions()) {
+
+			FilePath fp(string);
+			OptionList::SaveXML(string, _fusion->getOptions());
+			fusion.SetAttribute("option", fp.getName());
+
+		}
+
+		TiXmlElement models("models");
+		for (ssi_size_t n_model = 0; n_model < _n_models; n_model++) {
+			TiXmlElement item("item");
+			item.SetAttribute("create", _models[n_model]->getName());
+			if (_models[n_model]->isTrained()) {
+				ssi_sprint(string, "%s%s.#%u.%s%s", filepath, SSI_FILE_TYPE_TRAINER, n_model, _models[n_model]->getName(), SSI_FILE_TYPE_MODEL);
+				FilePath fp(string);
+				item.SetAttribute("path", fp.getName());
+				if (!_models[n_model]->save(string)) {
+					ssi_wrn("failed saving model #%u to '%s'", n_model, string);
+					return false;
+				}
+			}
+			if (_models[n_model]->getOptions()) {
+
+				ssi_sprint(string, "%s%s.#%u.%s", filepath, SSI_FILE_TYPE_TRAINER, n_model, _models[n_model]->getName());
+				OptionList::SaveXML(string, _models[n_model]->getOptions());
+				FilePath fp(filepath);
+				ssi_sprint(string, "%s%s.#%u.%s", fp.getName(), SSI_FILE_TYPE_TRAINER, n_model, _models[n_model]->getName());
+				item.SetAttribute("option", string);
+
+			}
+			models.InsertEndChild(item);
+		}
+		fusion.InsertEndChild(models);
+
+		body.InsertEndChild(fusion);
+
+	}
+	else {
+
+		TiXmlElement model("model");
+		model.SetAttribute("create", _models[0]->getName());
+		model.SetAttribute("stream", _stream_index);
+		if (_models[0]->isTrained()) {
+			ssi_sprint(string, "%s%s.%s%s", filepath, SSI_FILE_TYPE_TRAINER, _models[0]->getName(), SSI_FILE_TYPE_MODEL);
+			FilePath fp(string);
+			model.SetAttribute("path", fp.getName());
+			if (!_models[0]->save(string)) {
+				ssi_wrn("failed saving model '%s'", string);
+				return false;
+			}
+		}
+		if (_models[0]->getOptions()) {
+
+			ssi_sprint(string, "%s%s.%s", filepath, SSI_FILE_TYPE_TRAINER, _models[0]->getName());
+			OptionList::SaveXML(string, _models[0]->getOptions());
+			FilePath fp(filepath);
+			ssi_sprint(string, "%s%s.%s", fp.getNameFull(), SSI_FILE_TYPE_TRAINER, _models[0]->getName());
+			model.SetAttribute("option", string);
+
+		}
+		body.InsertEndChild(model);
+	}
+
+	return true;
+}
+
 bool Trainer::save_V4 (const ssi_char_t *filepath, TiXmlElement &body) {
 	
 	ssi_char_t string[SSI_MAX_CHAR];
@@ -2440,7 +2864,7 @@ bool Trainer::save_V4 (const ssi_char_t *filepath, TiXmlElement &body) {
 				if (_transformer[n]->getOptions ()) {
 
 					ssi_sprint (string, "%s.%02u.%s%s", filepath, n, _transformer[n]->getName (), SSI_FILE_TYPE_OPTION);
-					OptionList::SaveXML (string, *_transformer[n]->getOptions ());
+					OptionList::SaveXML (string, _transformer[n]->getOptions ());
 					FilePath fp (filepath);
 					ssi_sprint (string, "%s.%02u.%s%s", fp.getName (), n, _transformer[n]->getName (), SSI_FILE_TYPE_OPTION);
                     item.SetAttribute ("option", string);
@@ -2515,223 +2939,6 @@ bool Trainer::save_V4 (const ssi_char_t *filepath, TiXmlElement &body) {
 		if (!_models[0]->save (string)) {
 			ssi_wrn ("failed saving model '%s'", string);
 			return false;
-		}
-		body.InsertEndChild (model);
-	}
-
-	return true;
-}
-
-
-bool Trainer::save_V5(const ssi_char_t *filepath, TiXmlElement &body, File::TYPE type) {
-	
-	ssi_char_t string[SSI_MAX_CHAR];
-
-	TiXmlElement info ("info" );	
-	info.SetAttribute ("trained", _is_trained ? "true" : "false");
-	body.InsertEndChild (info);
-
-	if (!_is_trained) {		
-		if (_n_streams == 0 && _n_samplepaths > 0) {
-			SampleList samples;
-			ModelTools::LoadSampleList(samples, _samplepaths[0]);
-			_n_streams = samples.getStreamSize();
-		}
-		TiXmlElement samples ("samples");	
-		samples.SetAttribute("n_streams", ssi_cast (int, _n_streams));
-		for (ssi_size_t n_samples = 0; n_samples < _n_samplepaths; n_samples++) {
-			TiXmlElement item ("item" );
-			item.SetAttribute ("path", _samplepaths[n_samples]);		
-			samples.InsertEndChild (item);
-		}
-		body.InsertEndChild (samples);		
-	} else {
-
-		TiXmlElement streams ("streams" );	
-		for (ssi_size_t n_stream = 0; n_stream < _n_streams; n_stream++) {
-			TiXmlElement item ("item" );
-			item.SetAttribute ("byte", ssi_cast (int, _stream_refs[n_stream].byte));							
-			item.SetAttribute ("dim", ssi_cast (int, _stream_refs[n_stream].dim));
-			item.SetDoubleAttribute ("sr", _stream_refs[n_stream].sr);
-			item.SetAttribute ("type", SSI_TYPE_NAMES[_stream_refs[n_stream].type]);		
-			streams.InsertEndChild (item);
-		}
-		body.InsertEndChild (streams);
-
-		TiXmlElement classes ("classes" );	
-		for (ssi_size_t n_class = 0; n_class < _n_classes; n_class++) {
-			TiXmlElement item ("item" );
-			item.SetAttribute ("name", _class_names[n_class]);											
-			classes.InsertEndChild (item);
-		}
-		body.InsertEndChild (classes);
-	
-		TiXmlElement users ("users" );	
-		for (ssi_size_t n_user = 0; n_user < _n_users; n_user++) {
-			TiXmlElement item ("item" );
-			item.SetAttribute ("name", _user_names[n_user]);											
-			users.InsertEndChild (item);
-		}
-		body.InsertEndChild (users);
-	}
-
-	if (_has_activity) {
-		TiXmlElement transform("activity");
-		for (ssi_size_t n = 0; n < _n_streams; n++) {
-			if (_activity[n]) {
-				TiXmlElement item("item");
-				item.SetAttribute("create", _activity[n]->getName());
-				item.SetAttribute("stream", n);
-				item.SetDoubleAttribute("percentage", _activity_percentage[n]);
-				item.SetDoubleAttribute("frame", _activity_frame[n]);
-				item.SetDoubleAttribute("delta", _activity_delta[n]);
-				if (_activity[n]->getOptions()) {
-
-					ssi_sprint(string, "%s%s.#%u.%s", filepath, SSI_FILE_TYPE_TRAINER, n, _activity[n]->getName());
-					OptionList::SaveXML(string, *_activity[n]->getOptions());
-					FilePath fp(filepath);
-					ssi_sprint(string, "%s%s.#%u.%s", fp.getName(), SSI_FILE_TYPE_TRAINER, n, _activity[n]->getName());
-                    item.SetAttribute("option", string);
-
-				}
-				transform.InsertEndChild(item);
-			}
-		}
-		body.InsertEndChild(transform);
-	}
-
-
-	if (_has_transformer) {
-		TiXmlElement transform ("transform" );
-		for (ssi_size_t n = 0; n < _n_streams; n++) {
-			if (_transformer[n]) {
-				TiXmlElement item ("item");				
-				item.SetAttribute ("create", _transformer[n]->getName ());											
-				item.SetAttribute("stream", n);
-				item.SetDoubleAttribute ("frame", _transformer_frame[n]);
-				item.SetDoubleAttribute ("delta", _transformer_delta[n]);
-				if (_transformer[n]->getOptions ()) {
-					ssi_sprint (string, "%s%s.#%u.%s", filepath, SSI_FILE_TYPE_TRAINER, n, _transformer[n]->getName ());
-
-                    OptionList::SaveXML (string, *_transformer[n]->getOptions ());
-					FilePath fp (filepath);
-					ssi_sprint (string, "%s%s.#%u.%s", fp.getName (), SSI_FILE_TYPE_TRAINER, n, _transformer[n]->getName ());
-                    item.SetAttribute ("option", string);
-
-				}
-				transform.InsertEndChild (item);
-			}
-		}
-		body.InsertEndChild (transform);
-	}
-
-	if (_has_selection) {
-		TiXmlElement select ("select" );
-		for (ssi_size_t n = 0; n < _n_streams; n++) {
-			if (_stream_select[n]) {
-				TiXmlElement item ("item" );				
-				item.SetAttribute ("stream", ssi_cast (int, n)); 
-				item.SetAttribute ("size", ssi_cast (int, _n_stream_select[n])); 
-				ssi_array2string (_n_stream_select[n], _stream_select[n], SSI_MAX_CHAR, string, ' ');
-				item.SetAttribute ("select", string);			
-				select.InsertEndChild (item);
-			}
-		}
-		body.InsertEndChild (select);
-	}
-
-	if (_has_normalization) {
-		TiXmlElement normalize("normalize");
-		for (ssi_size_t n = 0; n < _n_streams; n++) {
-			if (_normalization[n] && _normalization[n]->method != ISNorm::METHOD::NONE) {
-				TiXmlElement item("item");
-				item.SetAttribute("method", ISNorm::METHOD_NAMES[_normalization[n]->method]);	
-				item.SetAttribute("stream", n);
-				if (_is_trained) {					
-					ssi_sprint(string, "%s%s.#%u", filepath, SSI_FILE_TYPE_TRAINER, n);
-					if (!ISNorm::SaveParams(string, *_normalization[n], type)) {
-						ssi_wrn("failed saving normalization for stream#%u to '%s'", n, string);
-						return false;
-					}
-					FilePath fp(filepath);
-					ssi_sprint(string, "%s%s.#%u", fp.getNameFull(), SSI_FILE_TYPE_TRAINER, n);
-					item.SetAttribute("path", string);
-				}
-				normalize.InsertEndChild(item);
-			}
-		}
-		body.InsertEndChild(normalize);
-	}
-	
-	if (_fusion) {
-
-		TiXmlElement fusion ("fusion" );
-		fusion.SetAttribute ("create", _fusion->getName ());
-		ssi_sprint (string, "%s%s.%s%s", filepath, SSI_FILE_TYPE_TRAINER, _fusion->getName (), SSI_FILE_TYPE_FUSION);				
-		FilePath fp (string);			
-		fusion.SetAttribute ("path", fp.getName ());
-		if (!_fusion->save (string)) {
-			ssi_wrn ("failed saving fusion to '%s'", string);
-			return false;
-		}
-		if (_fusion->getOptions ()) {
-
-			FilePath fp (string);
-			OptionList::SaveXML (string, *_fusion->getOptions ());			
-            fusion.SetAttribute ("option", fp.getName ());
-
-		}
-
-		TiXmlElement models ("models" );
-		for (ssi_size_t n_model = 0; n_model < _n_models; n_model++) {
-			TiXmlElement item ("item" );
-			item.SetAttribute ("create", _models[n_model]->getName ());	
-			if (_models[n_model]->isTrained ()) {
-				ssi_sprint (string, "%s%s.#%u.%s%s", filepath, SSI_FILE_TYPE_TRAINER, n_model, _models[n_model]->getName (), SSI_FILE_TYPE_MODEL);				
-				FilePath fp (string);
-				item.SetAttribute ("path", fp.getName ());			
-				if (!_models[n_model]->save (string)) {
-					ssi_wrn ("failed saving model #%u to '%s'", n_model, string);
-					return false;
-				}
-			}
-            if (_models[n_model]->getOptions ()) {
-
-				ssi_sprint (string, "%s%s.#%u.%s", filepath, SSI_FILE_TYPE_TRAINER, n_model, _models[n_model]->getName ());
-				OptionList::SaveXML (string, *_models[n_model]->getOptions ());
-				FilePath fp (filepath);
-				ssi_sprint (string, "%s%s.#%u.%s", fp.getName (), SSI_FILE_TYPE_TRAINER, n_model, _models[n_model]->getName ());
-                item.SetAttribute ("option", string);
-
-			}
-			models.InsertEndChild (item);
-		}
-		fusion.InsertEndChild (models);
-
-		body.InsertEndChild (fusion);
-
-	} else {
-
-		TiXmlElement model ("model" );				
-		model.SetAttribute ("create", _models[0]->getName ());										
-		model.SetAttribute ("stream", _stream_index);
-		if (_models[0]->isTrained ()) {
-			ssi_sprint (string, "%s%s.%s%s", filepath, SSI_FILE_TYPE_TRAINER, _models[0]->getName (), SSI_FILE_TYPE_MODEL);				
-			FilePath fp (string);
-			model.SetAttribute ("path", fp.getName ());		
-			if (!_models[0]->save (string)) {
-				ssi_wrn ("failed saving model '%s'", string);
-				return false;
-			}
-		}
-		if (_models[0]->getOptions ()) {
-
-			ssi_sprint (string, "%s%s.%s", filepath, SSI_FILE_TYPE_TRAINER, _models[0]->getName ());
-			OptionList::SaveXML (string, *_models[0]->getOptions ());
-			FilePath fp (filepath);
-			ssi_sprint (string, "%s%s.%s", fp.getNameFull (), SSI_FILE_TYPE_TRAINER, _models[0]->getName ());
-            model.SetAttribute ("option", string);
-
 		}
 		body.InsertEndChild (model);
 	}
@@ -2855,20 +3062,30 @@ bool Trainer::cluster (ISamples &samples) {
 		return false;
 	}
 
-	if (samples.getClassSize () != _models[0]->getClassSize ()) {
+	ssi_size_t n_classes = _models[0]->getClassSize();
+	if (samples.getClassSize () != n_classes) {
 		ssi_wrn ("#classes differs from #cluster");
 		return false;
 	}
 
 	ssi_sample_t *sample;
 	samples.reset ();
-	ssi_size_t index;
-	while (sample = samples.next ()) {
-		forward (sample->num, sample->streams, index);
-		sample->class_id = index;
+	while (sample = samples.next ()) {		
+		if (n_classes == 1) // REGRESSION
+		{			
+			forward_probs(sample->num, sample->streams, 1, &sample->score);
+		}
+		else // MULTICLASS
+		{
+			forward(sample->num, sample->streams, sample->class_id);			 
+		}
 	}
 
 	return true;
+}
+
+ssi_size_t Trainer::getModelSize() {
+	return _n_models;
 }
 
 IModel *Trainer::getModel (ssi_size_t index) {
@@ -2878,6 +3095,10 @@ IModel *Trainer::getModel (ssi_size_t index) {
 	}
 	ssi_wrn ("invalid index");
 	return 0;
+}
+
+IFusion *Trainer::getFusion() {
+	return _fusion;
 }
 
 const ssi_char_t *Trainer::getName () {

@@ -52,7 +52,7 @@ public:
 		ssi_size_t capacity = Socket::DEFAULT_MTU_SIZE);
 	virtual ~SocketOsc ();
 	
-        int recv (SocketOscListener *listener, int64_t timeout_in_ms);
+	int recv (SocketOscListener *listener, long timeout_in_ms);
 	
 	int send_stream (const ssi_char_t *id,
 		osc_int32 time,

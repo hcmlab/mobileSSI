@@ -12,15 +12,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
-#if __APPLE__
-    #include <stdlib.h>
-#else
-    #include <malloc.h>
-#endif
-
-
-
+#include <malloc.h>
 
 #define JPGE_MAX(a,b) (((a)>(b))?(a):(b))
 #define JPGE_MIN(a,b) (((a)<(b))?(a):(b))
@@ -874,7 +866,7 @@ jpeg_encoder::~jpeg_encoder()
 bool jpeg_encoder::init(output_stream *pStream, int width, int height, int src_channels, const params &comp_params)
 {
   deinit();
-  if (((!pStream) || (width < 1) || (height < 1)) || ((src_channels != 1) && (src_channels != 3) && (src_channels != 4)) || (!comp_params.check2())) return false;
+  if (((!pStream) || (width < 1) || (height < 1)) || ((src_channels != 1) && (src_channels != 3) && (src_channels != 4)) || (!comp_params.check())) return false;
   m_pStream = pStream;
   m_params = comp_params;
   return jpg_open(width, height, src_channels);

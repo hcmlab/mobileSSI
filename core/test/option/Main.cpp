@@ -93,9 +93,12 @@ bool ex_xml (void *arg) {
 	opts.print (ssiout);
 
 	// save and load
-	OptionList::SaveXML ("test.xml", opts);
+	opts.setReadOnly(true);
+	OptionList::SaveXML ("test.xml", &opts);
+	opts.setReadOnly(false);
+	OptionList::SaveXML("test.xml", &opts);
 	ssi_print("\n\nLOAD FROM FILE\n\n");
-	OptionList::LoadXML ("test.xml", opts);
+	OptionList::LoadXML ("test.xml", &opts);
 
 	opts.print(ssiout);	
 

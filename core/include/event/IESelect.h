@@ -47,8 +47,7 @@ public:
 		ssi_size_t *event_ids = 0,
 		ssi_size_t time_span_ms = 0,
 		EVENT_STATE_FILTER::List state_filter = EVENT_STATE_FILTER::ALL);
-    
-	bool check2 (ssi_event_t &e, bool check_time_span);
+	bool check (ssi_event_t &e, bool check_time_span);
 
 	void reset () {
 		_events.reset (); 

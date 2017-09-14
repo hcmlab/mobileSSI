@@ -31,8 +31,7 @@
 
 #include "SSI_Cons.h"
 #include "ioput/socket/ip/IpEndpointName.h"
-
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

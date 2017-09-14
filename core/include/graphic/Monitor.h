@@ -36,7 +36,7 @@
 #include "graphic/SDL_Monitor.h"
 
 #else
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 #include "graphic/MonitorFallback.h"
 #else
 #include "base/IMonitor.h"

@@ -33,7 +33,7 @@
 #include "KmUtils.h"
 #include "KMeans.h"
 #include "KmTree.h"
-#include "model/ModelTools.h"
+#include "ModelTools.h"
 #include "ioput/file/File.h"
 #include "ISOverSample.h"
 #include <sstream>
@@ -65,8 +65,8 @@ KMeans::KMeans (const ssi_char_t *file)
 	_file (0) {	
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -77,7 +77,7 @@ KMeans::~KMeans () {
 	release ();
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }

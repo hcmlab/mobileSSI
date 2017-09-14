@@ -30,7 +30,7 @@
 #define SSI_TOOLS_H
 #include <string>
 #include "r250.h"
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h> /* for fork */
@@ -397,8 +397,8 @@ SSI_INLINE static void  ssi_sleep(int32_t ms)
 
 
 // min and max function
-#if __MINGW32__ || __ANDROID__
-
+#if __MINGW32__ || __GNUC__
+/*
 template <class T> const T& max (const T& a, const T& b) {
   return (a<b)?b:a;     // or: return comp(a,b)?b:a; for version (2)
 }
@@ -406,10 +406,7 @@ template <class T> const T& max (const T& a, const T& b) {
 template <class T> const T& min (const T& a, const T& b) {
   return (a<b)?a:b;     // or: return comp(a,b)?b:a; for version (2)
 }
-#elif __gnu_linux__
-
-// include ssistdMinMaxWrapper.h where needed
-
+*/
 #else
 #ifndef min
 #define	min(a,b) ((a) > (b) ? (b) : (a))
@@ -519,17 +516,10 @@ SSI_INLINE bool ssi_strcmp (const ssi_char_t *s1, const ssi_char_t *s2, bool cas
 		n = n_s1;
 	} else {
 #if __gnu_linux__
-
-#if __ANDROID__
+               n = std::min(n, std::max(n_s1, n_s2));
+#else
 		n = min(n, max(n_s1, n_s2));
-#else
-                n = std::min(n, std::max(n_s1, n_s2));
 #endif
-#else
-                n = min(n, max(n_s1, n_s2));
-#endif
-
-
 	}
 
 	if (case_sensitive) {
@@ -937,16 +927,10 @@ SSI_INLINE void ssi_stream_select (const ssi_stream_t &from, ssi_stream_t &to, s
 	for (ssi_size_t j = 0; j < n_iter; j++) {
 		for (ssi_size_t i = 0; i < n_dims; i++) {
 #if __gnu_linux__
-
-#if __ANDROID__
-               select[k++] = min(n_values - 1, dims[i] + j * multiples);
+                        select[k++] = std::min(n_values - 1, dims[i] + j * multiples);
 #else
-               select[k++] = std::min(n_values - 1, dims[i] + j * multiples);
+			select[k++] = min(n_values - 1, dims[i] + j * multiples);
 #endif
-#else
-               select[k++] = min(n_values - 1, dims[i] + j * multiples);
-#endif
-
 		}
 	}
 
@@ -1333,12 +1317,12 @@ SSI_INLINE void ssi_sample_destroy (ssi_sample_t &sample) {
 // random
 
 SSI_INLINE void ssi_random_seed (uint32_t seed = ssi_cast (uint32_t, time (NULL))) {
-	//srand (seed);
+	srand (seed);
 	r250_init (seed);
 }
 SSI_INLINE double ssi_random () { // random number in interval [0..1]
-	//return ssi_cast (double, rand ()) / RAND_MAX;
-	return dr250 ();
+	return ssi_cast (double, rand ()) / RAND_MAX;
+	//return dr250 ();
 }
 SSI_INLINE double ssi_random_distr (double m, double s) { // random number drawn from distribution with mean m and standard deviation s
 	return dr250_box_muller (m, s);
@@ -1346,14 +1330,14 @@ SSI_INLINE double ssi_random_distr (double m, double s) { // random number drawn
 SSI_INLINE double ssi_random (double a, double b) { // random number in interval [a..b]
 	return (ssi_random () * (b - a)) + a;
 }
-SSI_INLINE double ssi_random (double max) { // random number in interval [0..max]
-	return ssi_random (0, max);
+SSI_INLINE double ssi_random (double max_val) { // random number in interval [0..max]
+	return ssi_random (0, max_val);
 }
-SSI_INLINE ssi_size_t ssi_random(int32_t max) { // integer random number in interval [0..max]
-	return ssi_cast(int32_t, max * ssi_random() + 0.5);
+SSI_INLINE ssi_size_t ssi_random(int32_t max_val) { // integer random number in interval [0..max]
+	return ssi_cast(int32_t, max_val * ssi_random() + 0.5);
 }
-SSI_INLINE ssi_size_t ssi_random (ssi_size_t max) { // integer random number in interval [0..max]
-	return ssi_cast (ssi_size_t, max * ssi_random () + 0.5);
+SSI_INLINE ssi_size_t ssi_random (ssi_size_t max_val) { // integer random number in interval [0..max]
+	return ssi_cast (ssi_size_t, max_val * ssi_random () + 0.5);
 }
 SSI_INLINE void ssi_random_shuffle (ssi_size_t n, ssi_size_t *arr) { // randomly shuffles elements in array arr
 	for (ssi_size_t i = 0; i < n; i++) {
@@ -1560,7 +1544,7 @@ SSI_INLINE void static ssi_abs(ssi_size_t num,
 	ssi_real_t *srcptr) {
 
 	for (ssi_size_t i = 0; i < num * dim; i++) {		
-                *srcptr = fabs(*srcptr);
+		*srcptr = abs(*srcptr);
 		srcptr++;
 	}
 }
@@ -1611,11 +1595,11 @@ SSI_INLINE void static ssi_peak_count (ssi_size_t num,
 	for (ssi_size_t i = 0; i < num; i++) {
 		for (ssi_size_t j = 0; j < dim; j++) {
 			val = *srcptr++;
-                        if (fabs (val) > thres && counter[j] == 0) {
+			if (abs (val) > thres && counter[j] == 0) {
 				++dstptr[j];
 				counter[j] = hangover;
 			}
-                        if (fabs (val) <= thres && counter[j] > 0) {
+			if (abs (val) <= thres && counter[j] > 0) {
 				--counter[j];
 			}
 		}
@@ -1635,7 +1619,7 @@ SSI_INLINE void static ssi_norm(ssi_size_t num,
 	}
 	for (ssi_size_t i = 0; i < num; i++) {
 		for (ssi_size_t j = 0; j < dim; j++) {
-			*ptr = (*ptr - minval[j]) / diffval[j];
+			*ptr = diffval[j] == 0 ? 0 : (*ptr - minval[j]) / diffval[j];
 			ptr++;
 		}
 	}
@@ -1776,7 +1760,7 @@ SSI_INLINE bool static ssi_array2string (ssi_size_t n_arr, ssi_real_t *arr, ssi_
 	return true;
 }
 
-SSI_INLINE ssi_size_t static ssi_split_string_count (const ssi_char_t *string, ssi_char_t delim = ' ') {
+SSI_INLINE ssi_size_t static ssi_split_string_count (const ssi_char_t *string, ssi_char_t delim = ' ', bool allow_empty = false) {
 
 	if (!string) {
 		return 0;
@@ -1788,28 +1772,29 @@ SSI_INLINE ssi_size_t static ssi_split_string_count (const ssi_char_t *string, s
 	}
 
 	ssi_size_t count = 1;
-	ssi_char_t *ptr = ssi_ccast (ssi_char_t *, string);
+	ssi_char_t *ptr = ssi_ccast(ssi_char_t *, string);
 	bool valid = false;
 	while (*ptr != '\0') {
 		if (*ptr++ == delim) {
-			if (valid) {
+			if (allow_empty || valid) {
 				count++;
 			}
 			valid = false;
-		} else {
+		}
+		else {
 			valid = true;
 		}
 	}
-	if (!valid) {
+	if (!allow_empty && !valid) {
 		count--;
 	}
 
 	return count;
 }
 
-SSI_INLINE bool static ssi_split_string (ssi_size_t n_arr, ssi_char_t **arr, const ssi_char_t *string, ssi_char_t delim = ' ') {
+SSI_INLINE bool static ssi_split_string (ssi_size_t n_arr, ssi_char_t **arr, const ssi_char_t *string, ssi_char_t delim = ' ', bool allow_empty = false) {
 
-	if (ssi_split_string_count (string, delim) != n_arr) {
+	if (ssi_split_string_count (string, delim, allow_empty) != n_arr) {
 		ssi_wrn ("invalid array size");
 		return false;
 	}
@@ -1818,17 +1803,42 @@ SSI_INLINE bool static ssi_split_string (ssi_size_t n_arr, ssi_char_t **arr, con
 		return true;
 	}
 
-	ssi_char_t delim_s[2];
-	delim_s[0] = delim;
-	delim_s[1] = '\0';
-
-	ssi_char_t *str = ssi_strcpy (string);
-	ssi_char_t * pch = strtok (str, delim_s);
-	for (ssi_size_t i = 0; i < n_arr; i++) {
-		arr[i] = ssi_strcpy (pch);
-		pch = strtok (NULL, delim_s);
+	ssi_size_t count = 0;
+	ssi_size_t from = 0;
+	ssi_size_t to = 0;
+	ssi_char_t *ptr = (ssi_char_t *)string;
+	while (*ptr != '\0')
+	{
+		if (*ptr == delim)
+		{
+			if (allow_empty || to > from)
+			{
+				ssi_size_t len = to - from;
+				arr[count] = new ssi_char_t[len + 1];
+				if (len > 0)
+				{
+					memcpy(arr[count], string + from, len);
+				}
+				arr[count][len] = '\0';
+				count++;
+			}
+			from = to + 1;
+		}
+		ptr++;
+		to++;
 	}
-	delete[] str;
+
+	if (allow_empty || to > from)
+	{
+		ssi_size_t len = to - from;
+		arr[count] = new ssi_char_t[len + 1];
+		if (len > 0)
+		{
+			memcpy(arr[count], string + from, len);
+		}
+		arr[count][len] = '\0';
+		count++;
+	}
 
 	return true;
 }
@@ -2065,7 +2075,7 @@ SSI_INLINE int32_t *ssi_parse_indices (const ssi_char_t *str, ssi_size_t &n_indi
 
 SSI_INLINE static bool ssi_fullpath(const ssi_char_t *path, ssi_char_t *full, ssi_size_t n_full)
 {
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 	return false;
 #else
 	bool result = false;
@@ -2166,8 +2176,7 @@ SSI_INLINE static bool ssi_exists_dir(const ssi_char_t *path) {
 		return true;
 	}
 
-    
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 	struct stat statbuf;
 
 	if (stat(path, &statbuf) == -1)
@@ -2198,9 +2207,8 @@ SSI_INLINE static bool ssi_mkdir(const ssi_char_t *dir) {
 		return true;
 	}
 	else {
-        
-#if __gnu_linux__ || __APPLE__
-        mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#if __gnu_linux__
+	mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	return ssi_exists_dir(dir);
 #else		
 	bool result = false;
@@ -2218,7 +2226,7 @@ SSI_INLINE static bool ssi_mkdir(const ssi_char_t *dir) {
 }
 
 // create directory recursively
-SSI_INLINE static bool ssi_mkdir_r(const ssi_char_t *dir, char delim = SSI_PATH_SEPERATOR) 
+SSI_INLINE static bool ssi_mkdir_r(const ssi_char_t *dir, char delim = SSI_PATH_SEPARATOR) 
 {
 	ssi_size_t n_tokens = ssi_split_string_count(dir, delim);
 	if (n_tokens > 0)
@@ -2259,7 +2267,7 @@ SSI_INLINE static bool ssi_mkdir_r(const ssi_char_t *dir, char delim = SSI_PATH_
 SSI_INLINE static FILE *ssi_fopen(const char *filename, const char *mode)
 {
 	FILE *fp = 0;
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 	fp = fopen(filename, mode);
 #else
 	bool result = false;
@@ -2278,20 +2286,31 @@ SSI_INLINE static FILE *ssi_fopen(const char *filename, const char *mode)
 }
 
 // check if file exist
-SSI_INLINE static bool ssi_exists(const ssi_char_t *filename) {
+SSI_INLINE static bool ssi_exists(const ssi_char_t *path) {
 
 	FILE* fp = NULL;
-	fp = ssi_fopen(filename, "rb");
+	fp = ssi_fopen(path, "rb");
 	if (fp != NULL) {
 		fclose(fp);
 		return true;
 	}
 	return false;
 }
-SSI_INLINE static bool ssi_exists(const ssi_char_t *filename, const ssi_char_t *extension) {
-	ssi_char_t *fullname = ssi_strcat(filename, extension);
-	bool result = ssi_exists(fullname);
-	delete[] fullname;
+SSI_INLINE static bool ssi_exists(const ssi_char_t *path, const ssi_char_t *extension) {
+	ssi_char_t *fullpath = ssi_strcat(path, extension);
+	bool result = ssi_exists(fullpath);
+	delete[] fullpath;
+	return result;
+}
+
+// remove file
+SSI_INLINE static bool ssi_remove(const ssi_char_t *path) {
+	return remove(path) == 0;
+}
+SSI_INLINE static bool ssi_remove(const ssi_char_t *path, const ssi_char_t *extension) {
+	ssi_char_t *fullpath = ssi_strcat(path, extension);
+	bool result = ssi_remove(fullpath);
+	delete[] fullpath;
 	return result;
 }
 

@@ -26,12 +26,12 @@
 
 #include "Machine.h"
 #include "base/Factory.h"
-#include "ioput/file/StringList.h"
+#include "base/StringList.h"
 #include "ioput/wav/WavTools.h"
 #include "ioput/file/FileTools.h"
 #include "ElanDocument.h"
 #include "signal/SignalTools.h"
-#include "model/ModelTools.h"
+#include "ModelTools.h"
 #include "ElanTools.h"
 #include "Trainer.h"
 #include "ISOverSample.h"
@@ -41,7 +41,10 @@
 #include "ISMissingData.h"
 #include "Evaluation.h"
 
-#include "ssistdMinMaxWrapper.h"
+#if __gnu_linux__
+using std::min;
+using std::max;
+#endif
 
 namespace ssi {                                                           
 
@@ -704,30 +707,6 @@ bool Machine::Train (Config &config, ISamples &samples, const ssi_char_t *prefix
 		return true;
 	}
 
-    int maxClassID=0;
-    int maxClassCount=0;
-
-
-
-    for (ssi_size_t nclass = 0; nclass < samples.getClassSize(); nclass++) {
-         if(samples.getSize(nclass)>maxClassCount)
-         {
-           maxClassID=nclass;
-           maxClassCount=samples.getSize(nclass);
-         }
-    }
-    int minClassID=0;
-    int minClassCount=0;
-
-    for (ssi_size_t nclass = 0; nclass < samples.getClassSize(); nclass++) {
-         if(samples.getSize(nclass)<minClassCount)
-         {
-           minClassID=nclass;
-           minClassCount=samples.getSize(nclass);
-         }
-    }
-
-
 	ISamples *s_train = 0;
 	ISOverSample s_over (&samples);	
 	ISUnderSample s_under (&samples);
@@ -738,7 +717,7 @@ bool Machine::Train (Config &config, ISamples &samples, const ssi_char_t *prefix
 			break;
 		case ResampleType::UNDER:
 			ssi_print ("...apply under sampling\n");
-            if (!s_under.setUnder ( /*maxClassID, (maxClassCount-minClassCount)*0.5  ,*/ ISUnderSample::RANDOM)) {
+			if (!s_under.setUnder (ISUnderSample::RANDOM)) {
 				return false;
 			}
 			s_train = &s_under;			

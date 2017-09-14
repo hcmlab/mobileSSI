@@ -27,6 +27,8 @@
 #include "ioput/file/FileTools.h"
 #include "ioput/file/FileStreamOut.h"
 #include "ioput/file/FileStreamIn.h"
+#include "ioput/wav/WavTools.h"
+#include "ioput/file/FilePath.h"
 
 #if _WIN32|_WIN64
 #include <commdlg.h> // for file dialog
@@ -109,7 +111,7 @@ static int CALLBACK BrowseForFolderCallback(HWND hwnd, UINT uMsg, LPARAM lParam,
 
 bool FileTools::CountLines (File &file, ssi_size_t &n_lines) {
 
-	ssi_size_t pos = file.tell ();
+	int64_t pos = file.tell ();
 
 	FILE *fp = file.getFile ();
 	char c = getc (fp);
@@ -158,9 +160,9 @@ bool FileTools::ReadRawFile (File &file,
 		}
 		case File::BINARY: {
 
-			ssi_size_t pos = file.tell ();
+			int64_t pos = file.tell ();
 			
-			ssi_size_t n_samples = pos / (data.dim * data.byte);
+			ssi_size_t n_samples = ssi_size_t(pos / (data.dim * data.byte));
 			ssi_stream_adjust (data, n_samples);
 
 			fread (data.ptr, data.tot, 1, file.getFile ());
@@ -196,7 +198,7 @@ bool FileTools::ReadStreamHeader (File &file,
 
 		case File::ASCII: {
 			ssi_char_t string[256];
-			ssi_size_t pos = file.tell ();
+			int64_t pos = file.tell ();
 			if (!file.readLine (256, string)) {
 				ssi_err ("could not read <id>");
 			}
@@ -327,7 +329,7 @@ bool FileTools::ReadStreamHeader (File &file,
 ssi_size_t FileTools::CountStreamHeader (File &file) {
 
 	// store position
-	ssi_size_t offset = file.tell ();
+	int64_t offset = file.tell ();
 
 	// read until end of file is reached
 	ssi_stream_t data;
@@ -389,7 +391,7 @@ ssi_size_t FileTools::CountStreamHeader (File &file) {
 ssi_size_t FileTools::CountDataHeader (File &file, ssi_size_t &tot_sample_number) {
 
 	// store position
-	ssi_size_t offset = file.tell ();	
+	int64_t offset = file.tell ();
 
 	// read until end of file is reached
 	ssi_stream_t data;
@@ -536,8 +538,7 @@ void FileTools::ReadStreamFile (File &file,
 	// read data
 	ssi_stream_t tmp;
 	
-	if(	  FileTools::ReadStreamHeader (file, tmp, version)
-	  )
+	if(FileTools::ReadStreamHeader (file, tmp, version))
 	{
 		ssi_stream_init (data, tot_sample_number, tmp.dim, tmp.byte, tmp.type, tmp.sr, tmp.time);
 		data.num = 0;
@@ -571,7 +572,7 @@ bool FileTools::RepairStreamFile (File::TYPE type,
 		ssi_size_t sample_number = 0;
 		ssi_stream_adjust (data, 1);
 
-		ssi_size_t pos = file->tell ();
+		int64_t pos = file->tell ();
 
 		file->setType (data.type);
 		while (file->read (data.ptr, data.byte, 1 * data.dim)) {
@@ -607,7 +608,7 @@ bool FileTools::RepairStreamFileV2 (File::TYPE type,
 	ssi_size_t sample_number = 0;
 	ssi_stream_adjust (data, 1);
 
-	ssi_size_t pos = file->tell ();
+	int64_t pos = file->tell ();
 
 	file->setType (data.type);
 	while (file->read (data.ptr, data.byte, 1 * data.dim)) {
@@ -639,20 +640,30 @@ void FileTools::ReadStreamFile (File::TYPE type,
 bool FileTools::ReadStreamFile (const ssi_char_t *path,
 	ssi_stream_t &data) {
 
-	FileStreamIn file_in;	
-	if (!file_in.open (data, path)) {
-		return false;
+	FilePath fp(path);
+
+	if (ssi_strcmp(fp.getExtension(), SSI_FILE_TYPE_WAV, false))
+	{
+		return WavTools::ReadWavFile(path, data, true);
 	}
-	ssi_stream_adjust (data, file_in.getTotalSampleSize ());
-	ssi_size_t num = 0;
-	ssi_byte_t *ptr = data.ptr;
-	while (num = file_in.read (data, FileStreamIn::NEXT_CHUNK)) {
-		if (num == FileStreamIn::READ_ERROR) {
+	else
+	{
+		FileStreamIn file_in;
+		if (!file_in.open(data, path)) {
 			return false;
 		}
-		data.ptr += num * data.byte * data.dim;
+		ssi_stream_adjust(data, file_in.getTotalSampleSize());
+		ssi_size_t num = 0;
+		ssi_byte_t *ptr = data.ptr;
+		while (num = file_in.read(data, FileStreamIn::NEXT_CHUNK)) {
+			if (num == FileStreamIn::READ_ERROR) {
+				return false;
+			}
+			data.ptr += num * data.byte * data.dim;
+		}
+		data.ptr = ptr;
 	}
-	data.ptr = ptr;
+
 	return true;
 }
 
@@ -796,6 +807,7 @@ void FileTools::WriteStreamFile (File &file,
 bool FileTools::WriteStreamFile (File::TYPE type,
 	const ssi_char_t *path,
 	ssi_stream_t &data,
+	const ssi_char_t *delim,
 	File::VERSION version) {
 
 	if (version <= File::V1) {
@@ -807,6 +819,7 @@ bool FileTools::WriteStreamFile (File::TYPE type,
 
 	} else {
 		FileStreamOut out;
+		out.setDelim(delim);
 		bool result = true;
 		result = result && out.open (data, path, type, version);
 		result = result &&out.write (data, false);
@@ -1025,7 +1038,7 @@ void FileTools::WriteSampleData (File &file,
 		FileTools::WriteStreamData (file, *data.streams[i], version);
 	}
 }
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 uint8_t hasExt(const char* ext, const char* filename)
 {
     int a=((int)ext[0]);
@@ -1193,8 +1206,9 @@ void FileTools::ReadLinesFromFile(StringList &files,
 	while (file->ready())
 	{
 		file->readLine(SSI_MAX_CHAR, line);
+		ssi_strtrim(line);
 		if (line[0] != '\0')
-		{
+		{			
 			files.add(line);
 		}
 	}

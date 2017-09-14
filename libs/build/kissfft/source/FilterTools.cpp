@@ -28,6 +28,7 @@
 #include "signal/MatrixOps.h"
 #include "FFT.h"
 #include "IFFT.h"
+#include "base/Random.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -37,8 +38,6 @@
 		static char THIS_FILE[] = __FILE__;
 	#endif
 #endif
-
-#include "ssistdMinMaxWrapper.h"
 
 namespace ssi {
 
@@ -231,8 +230,11 @@ Matrix<ssi_real_t> *FilterTools::Filterbank (int size,
 
         int maxind = static_cast<int> ((*intervalsptr / sample_rate) * size + static_cast<ssi_real_t> (0.5));
         intervalsptr++;
-
+#if __gnu_linux__
+        maxind = std::min (maxind, size-1);
+#else
         maxind = min (maxind, size-1);
+#endif
 		Matrix<ssi_real_t> *winmat = Window (1 + (maxind - minind), type, MATRIX_DIMENSION_ROW);
 		MatrixOps<ssi_real_t>::Div (winmat, MatrixOps<ssi_real_t>::Sum (winmat));
 		MatrixOps<ssi_real_t>::SetSubMatrix (filterbank, i, minind, winmat);
@@ -768,9 +770,12 @@ void FilterTools::Noise (ssi_stream_t &series,
 	// prepare noise
 	ssi_real_t *noise = new ssi_real_t[nfft * series.dim];
 	ssi_real_t *pnoise = noise;
+	
+	Randomf random(0, 1, Randomf::DISTRIBUTION::NORMAL);
+
 	for (ssi_size_t i = 0; i < nfft; ++i) {
 		for (ssi_size_t j = 0; j < series.dim; ++j) {
-            *pnoise = ssi_cast (ssi_real_t, noise_mean + noise_std * ssi_random_distr (0.0,1.0));
+            *pnoise = ssi_cast (ssi_real_t, noise_mean + noise_std * random.next());
             pnoise++;
 		}
 	}

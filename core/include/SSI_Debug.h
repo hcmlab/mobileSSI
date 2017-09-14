@@ -40,13 +40,6 @@ extern ssi_size_t ssi_print_offset;
 #define ssi_fprint fprintf
 #define ssi_sprint sprintf
 
-#if __APPLE__
-#include <CoreServices/CoreServices.h>
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-#endif
-
-
 #if __MINGW32__||__GNUC__
 #include <ctime>
 #include <stdint.h>
@@ -177,8 +170,6 @@ SSI_INLINE ssi_size_t ssi_time_ms () {
 	ms= ts.tv_sec*1000+ (uint32_t)(ts.tv_nsec/1000000);
 
 	return ssi_cast (ssi_size_t, ms);
-    #elif __APPLE__
-    return mach_absolute_time()/1000000;
 	#else
 	return ssi_cast (ssi_size_t, ::timeGetTime ());
 	#endif
@@ -213,9 +204,6 @@ SSI_INLINE void ssi_tic () {
 	clock_gettime (CLOCK_MONOTONIC_RAW, &ts);
 	ms= ts.tv_sec*1000+ (uint32_t)(ts.tv_nsec/1000000);
 	ssi_tic_start = ssi_cast (ssi_size_t, ms);
-    
-    #elif __APPLE__
-    return mach_absolute_time()/1000000;
 	#else
 	ssi_tic_start = ssi_cast (ssi_size_t, ::timeGetTime ());
 	#endif
@@ -227,11 +215,7 @@ SSI_INLINE ssi_size_t ssi_toc () {
 	clock_gettime (CLOCK_MONOTONIC_RAW, &ts);
 	ms= ts.tv_sec*1000+ (uint32_t)(ts.tv_nsec/1000000);
 	ssi_size_t stop = ssi_cast (ssi_size_t, ms);
-    
-    #elif __APPLE__
-    ssi_size_t stop = mach_absolute_time()/1000000;
-    
-    #else
+	#else
 	ssi_size_t stop = ssi_cast (ssi_size_t, ::timeGetTime ());
 	#endif
 	return stop - ssi_tic_start;
@@ -578,10 +562,7 @@ SSI_INLINE void ssi_log_file_end () {
 	fprintf (ssiout, "-------------------------------------------\n\t%s-------------------------------------------\n", ssi_now ());
 	//freopen ("CON", "w", stdout);
 	fclose (ssiout);
-	#if __ANDROID__
-	#else
 	ssiout = stdout;
-	#endif
 	ssi_log_file_on = false;
 }
 

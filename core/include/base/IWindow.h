@@ -105,7 +105,7 @@ public:
 #ifdef SSI_USE_SDL
 	virtual void update_safe() = 0;
 #else
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 
 #else
         virtual LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) = 0;

@@ -33,7 +33,7 @@
 #include "ioput/socket/ip/NetworkingUtils.h"
 #include "ioput/socket/ip/IpEndpointName.h"
 
-#if __gnu_linux__ || __APPLE__
+#if __gnu_linux__
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>

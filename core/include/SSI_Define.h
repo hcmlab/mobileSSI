@@ -35,11 +35,11 @@
 #define SSI_INLINE inline
 
 // version (major.minor.maintenance)
-#define SSI_VERSION "v0.9.9"
+#define SSI_VERSION "v1.0.1"
 
 // copyright
 #define SSI_COPYRIGHT "Built with Social Signal Interpretation (SSI)\n\n\
-(c) 2007-16 University of Augsburg, Lab for Human Centered Multimedia\n\
+(c) 2007-17 University of Augsburg, Lab for Human Centered Multimedia\n\
 Johannes Wagner, Florian Lingenfelser, Ionut Damian, Tobias Baur, Andreas Seiderer, Simon Flutura, Daniel Schork, Dominik Schiller\n\n\
 website: http://openssi.net\n\
 contact: support@openssi.net"
@@ -155,6 +155,8 @@ typedef enum
 
 // default string length
 #define SSI_MAX_CHAR	1024
-#define SSI_PATH_SEPERATOR '/'
+#define SSI_PATH_SEPARATOR '/'
+
+#define SSI_RANDOM_LEGACY_FLAG 0
 
 #endif
