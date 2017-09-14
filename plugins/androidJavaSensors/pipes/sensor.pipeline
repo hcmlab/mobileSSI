@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<pipeline>
+
+	<register>
+		<load name="ssiandroidjavasensors" />
+		<load name="ssiioput" />		
+	</register>	
+
+
+	
+	<sensor create="ssi_events_AnJSensors" sr="2.0" >
+		<output channel="androidjava" pin="acc"/>
+	</sensor>
+	
+	<consumer create="FileWriter" type="1" stream="true" path="./record/javasensors">
+		<input pin="acc" frame ="1" />
+	</consumer>
+	
+
+</pipeline>

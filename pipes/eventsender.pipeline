@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<pipeline>
+
+	<register>
+		<load name="ssiioput" />		
+	</register>	
+
+	<thread create="ClockEventSender" clock="1000" empty="false" string="blubb">
+	</thread>
+	
+	<object create="SocketEventWriter" type="0" osc="true" host="" port="1235" size="4096" >
+		<listen address="@" />
+	</object>	
+	
+
+
+
+</pipeline>

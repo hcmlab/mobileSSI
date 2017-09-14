@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<pipeline>
+
+	<register>
+		<load name="ssiandroidjavasensors" />
+		<load name="ssiioput" />		
+	</register>	
+
+	<runnable create="ClockEventSender" clock="1000" empty="false" string="blubb">
+	</runnable>
+	
+	<object create="ssi_events_AnJSensors"  >
+		<listen address="@" />
+	</object>
+	
+	<object create="FileEventWriter" path="./record/events.events" >
+		<listen address="@"/>
+	</object>
+	
+
+</pipeline>
