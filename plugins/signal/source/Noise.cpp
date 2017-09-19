@@ -44,8 +44,8 @@ Noise::Noise (const ssi_char_t *file)
 : _file (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -54,7 +54,7 @@ Noise::Noise (const ssi_char_t *file)
 Noise::~Noise () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }
@@ -63,8 +63,6 @@ void Noise::transform_enter (ssi_stream_t &stream_in,
 	ssi_stream_t &stream_out,
 	ssi_size_t xtra_stream_in_num,
 	ssi_stream_t xtra_stream_in[]) {
-
-	ssi_random_seed ();
 }
 
 void Noise::transform (ITransformer::info info,

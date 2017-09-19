@@ -28,13 +28,8 @@
 #include "base/Factory.h"
 
 #ifndef DLLEXP
-#if _WIN32|_WIN64
 #define DLLEXP extern "C" __declspec( dllexport )
-#else
-#define DLLEXP extern "C" __attribute__((visibility("default")))
 #endif
-#endif
-
 
 DLLEXP bool Register (ssi::Factory *factory, FILE *logfile, ssi::IMessage *message) {
 
@@ -55,7 +50,7 @@ DLLEXP bool Register (ssi::Factory *factory, FILE *logfile, ssi::IMessage *messa
 	result = ssi::Factory::Register (ssi::CVSave::GetCreateName (), ssi::CVSave::Create) && result;	
 	result = ssi::Factory::Register (ssi::CVCrop::GetCreateName (), ssi::CVCrop::Create) && result;	
 	result = ssi::Factory::Register (ssi::CVFlip::GetCreateName (), ssi::CVFlip::Create) && result;	
-    result = ssi::Factory::Register (ssi::CVLuminance::GetCreateName (), ssi::CVLuminance::Create) && result;
+	result = ssi::Factory::Register (ssi::CVMean::GetCreateName(), ssi::CVMean::Create) && result;
 
 	return result;
 }

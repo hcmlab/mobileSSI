@@ -64,7 +64,7 @@ public:
 
 public:
 
-        static const ssi_char_t *GetCreateName () { return "AudioPortaudioPlayer"; };
+	static const ssi_char_t *GetCreateName () { return "AudioPortaudioPlayer"; };
 	static IObject *Create (const ssi_char_t *file) { return new AudioPortaudioPlayer (file); };
 	~AudioPortaudioPlayer ();
 

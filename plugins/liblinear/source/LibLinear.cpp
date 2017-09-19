@@ -28,6 +28,7 @@
 #include "ISUnderSample.h"
 #include "ISOverSample.h"
 #include "linear.h"
+#include "base/Random.h"
 
 namespace ssi {
 
@@ -38,8 +39,8 @@ namespace ssi {
 		ssi_log_level(SSI_LOG_LEVEL_DEFAULT) {
 
 		if (file) {
-			if (!OptionList::LoadXML(file, _options)) {
-				OptionList::SaveXML(file, _options);
+			if (!OptionList::LoadXML(file, &_options)) {
+				OptionList::SaveXML(file, &_options);
 			}
 			_file = ssi_strcpy(file);
 		}
@@ -50,7 +51,7 @@ namespace ssi {
 	LibLinear::~LibLinear() {
 
 		if (_file) {
-			OptionList::SaveXML(_file, _options);
+			OptionList::SaveXML(_file, &_options);
 			delete[] _file;
 		}	
 	}
@@ -264,11 +265,12 @@ namespace ssi {
 			return false;
 		}
 
+		ssi_size_t seed = 0;
 		if (_options.seed > 0) {
-			ssi_random_seed(_options.seed);
+			seed = _options.seed;
 		}
 		else {
-			ssi_random_seed(ssi_time_ms());
+			seed = Random::Seed();
 		}
 
 		ISamples *s_balance = 0;
@@ -279,12 +281,14 @@ namespace ssi {
 		}
 		case BALANCE::OVER: {
 			s_balance = new ISOverSample(&samples);
+			ssi_pcast(ISOverSample, s_balance)->setSeed(seed);
 			ssi_pcast(ISOverSample, s_balance)->setOver(ISOverSample::RANDOM);
 			ssi_msg(SSI_LOG_LEVEL_BASIC, "balance training set '%u' -> '%u'", samples.getSize(), s_balance->getSize());
 			break;
 		}
 		case BALANCE::UNDER: {
 			s_balance = new ISUnderSample(&samples);
+			ssi_pcast(ISUnderSample, s_balance)->setSeed(seed);
 			ssi_pcast(ISUnderSample, s_balance)->setUnder(ISUnderSample::RANDOM);
 			ssi_msg(SSI_LOG_LEVEL_BASIC, "balance training set '%u' -> '%u'", samples.getSize(), s_balance->getSize());
 			break;
@@ -424,8 +428,7 @@ namespace ssi {
 		ssi_size_t index = 0;
 		for (; index < _n_features; index++) {
 			x[index].index = index + 1;
-            x[index].value = *ptr;
-            ptr++;
+			x[index].value = *ptr++;
 		}
 		if (bias >= 0)
 		{

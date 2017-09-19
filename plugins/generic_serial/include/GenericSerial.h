@@ -33,13 +33,19 @@
 #include "base/ISensor.h"
 #include "base/IProvider.h"
 #include "thread/Thread.h"
-#include "serial/serial.h"
 #include "ioput/option/OptionList.h"
 
 #include <map>
 #include <sstream>
 
 
+// see for linux implementation
+// https://github.com/voodootikigod/node-serialport
+
+
+#include <Windows.h>
+
+#include "listComPorts.h"
 
 
 class Serial;
@@ -79,9 +85,9 @@ public:
 
 	public:
 		Options ()
-                        : port (""), baud (9600), sr (50), dim(3), separator(','), size(0.2), skipLinesAfterStart(0), skipLinesAfterStartCMD(0), useId(false), showDebugSR(false) {
+			: port (1), baud (9600), sr (50), dim(3), separator(','), size(0.2), skipLinesAfterStart(0), skipLinesAfterStartCMD(0), useId(false), showDebugSR(false) {
 
-                        addOption ("port", &port, SSI_MAX_CHAR, SSI_CHAR, "port");
+			addOption ("port", &port, 1, SSI_SIZE, "port number");
 			addOption ("useId", &useId, 1, SSI_BOOL, "use device instance id instead of port number");
 			addOption ("deviceInstanceId", &deviceInstanceId, SSI_MAX_CHAR, SSI_CHAR, "device instance id");
 
@@ -121,7 +127,7 @@ public:
 			}
 		};
 
-                ssi_char_t port[SSI_MAX_CHAR];
+		ssi_size_t port;
 		ssi_size_t baud;
 		ssi_char_t separator;
 		ssi_size_t sr;
@@ -195,11 +201,11 @@ protected:
 	ssi_size_t _counter;
 	ssi_size_t _frame_size;
 
-	std::map<int, uint64_t> baudRates;
+	std::map<int, unsigned long> baudRates;
 
 
-	int64_t lastCall;
-	int64_t fpsValuecount;
+	_int64 lastCall;
+	_int64 fpsValuecount;
 	double avgFps;
 };
 

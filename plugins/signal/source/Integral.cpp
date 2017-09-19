@@ -91,7 +91,7 @@ ssi_bitmask_t IIntegral::Name2Format (const ssi_char_t *name) {
 
 	for (ssi_size_t i = 0; i < FORMAT_SIZE; i++) {
 		if (strcmp (name, FORMAT_NAMES[i]) == 0) {
-			#if __MINGW32__|__gnu_linux__|__APPLE__
+			#if __MINGW32__|__gnu_linux__
             format = ((uint64_t)1) << i;
 			#else
 			format = 1i64 << i;
@@ -107,7 +107,7 @@ ssi_bitmask_t IIntegral::Name2Format (const ssi_char_t *name) {
 void Integral::Options::set (ssi_bitmask_t format) {
 	names[0] = '\0';
 	for (ssi_bitmask_t i = 0; i < FORMAT_SIZE; i++) {
-        #if __MINGW32__|__gnu_linux__|__APPLE__
+        #if __MINGW32__|__gnu_linux__
 		if (format & (((uint64_t)1) << i)) {
 		#else
 		if (format & (1i64 << i)) {
@@ -131,8 +131,8 @@ Integral::Integral (const ssi_char_t *file)
 	_store_value (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -141,7 +141,7 @@ Integral::Integral (const ssi_char_t *file)
 Integral::~Integral () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }
@@ -255,7 +255,7 @@ const ssi_char_t *Integral::getName (ssi_size_t index) {
 	ssi_bitmask_t format = Names2Format (_options.names);
 
 	for (ssi_size_t i = 0; i < FORMAT_SIZE; i++) {
-		#if __MINGW32__|__gnu_linux__|__APPLE__
+		#if __MINGW32__|__gnu_linux__
 		if (format & (((uint64_t)1) << i)) {
 		#else
 		if (format & (1i64 << i)) {

@@ -64,8 +64,6 @@
 #include "base/Factory.h"
 #include <fftXg.h>  // fft4g include
 
-#include "ssistdMinMaxWrapper.h"
-
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG
@@ -73,6 +71,11 @@
 		#undef THIS_FILE
 		static char THIS_FILE[] = __FILE__;
 	#endif
+#endif
+
+#if __gnu_linux__
+using std::min;
+using std::max;
 #endif
 
 namespace ssi {
@@ -87,8 +90,8 @@ OSTransformFFT::OSTransformFFT (const ssi_char_t *file)
 	_src_win (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 		_file_win = ssi_strcat (_file, ".win");
@@ -100,9 +103,9 @@ OSTransformFFT::OSTransformFFT (const ssi_char_t *file)
 OSTransformFFT::~OSTransformFFT () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
-		OptionList::SaveXML (_file_win, *_window->getOptions ());
+		OptionList::SaveXML (_file_win, _window->getOptions ());
 		delete[] _file_win;
 	}
 

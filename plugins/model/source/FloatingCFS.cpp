@@ -25,8 +25,8 @@
 //*************************************************************************************************
 
 #include "FloatingCFS.h"
-#include "Evaluation.h"
-#include "Trainer.h"
+#include "ssiml/include/Evaluation.h"
+#include "ssiml/include/Trainer.h"
 
 namespace ssi {
 
@@ -51,8 +51,8 @@ FloatingCFS::FloatingCFS (const ssi_char_t *file) :
 	ssi_log_name = ssi_strcpy ("fselect___");
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -62,7 +62,7 @@ FloatingCFS::~FloatingCFS () {
 
 	release ();
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 	delete[] ssi_log_name;

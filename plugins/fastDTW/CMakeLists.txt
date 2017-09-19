@@ -42,8 +42,8 @@ IF(SSI_GUI STREQUAL "SDL")
 
 endif(SSI_GUI STREQUAL "SDL")
 
-#add_subdirectory(test)
-#add_dependencies(ssifastDTW_test ssi)
+add_subdirectory(test)
+add_dependencies(ssifastDTW_test ssi)
 
 include_directories(include ../../core/include/ioput/socket ../../core/include/ioput ../../core/include ../ ../../libs/build/ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 

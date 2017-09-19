@@ -25,7 +25,7 @@
 //*************************************************************************************************
 
 #include "KNearestNeighbors.h"
-#include "FindNN.h"
+#include "ssiml/include/FindNN.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -46,8 +46,8 @@ KNearestNeighbors::KNearestNeighbors (const ssi_char_t *file)
 	_file (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -57,7 +57,7 @@ KNearestNeighbors::~KNearestNeighbors () {
 
 	release ();
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }

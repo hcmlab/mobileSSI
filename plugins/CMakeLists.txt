@@ -50,7 +50,7 @@ option(OPENSSI_BUILD_OPENFACE "Build Openface plugin" OFF)
 option(OPENSSI_BUILD_IMAGE "Build Image plugin" OFF)
 option(OPENSSI_BUILD_DLIBSVM "Build Dlib SVM plugin" OFF)
 option(OPENSSI_BUILD_LIBLINEARINCDEC "Build liblinear incremental plugin" OFF)
-option(OPENSSI_BUILD_TENSORFLOW "Build Tensorflow plugin" ON)
+option(OPENSSI_BUILD_TENSORFLOW "Build Tensorflow plugin" OFF)
 option(OPENSSI_BUILD_FFTW "Build FFTW plugin" ON)
 
 
@@ -223,10 +223,10 @@ if(OPENSSI_BUILD_DLIBSVM)
         add_dependencies(ssidlibSvm ssi )
 endif(OPENSSI_BUILD_DLIBSVM)
 
-	if(OPENSSI_BUILD_TENSORFLOW)
-		add_subdirectory(tensorflow)
-		add_dependencies(ssitensorflow ssi )
-	endif(OPENSSI_BUILD_TENSORFLOW)
+if(OPENSSI_BUILD_TENSORFLOW)
+        add_subdirectory(tensorflow)
+        add_dependencies(ssitensorflow ssi )
+endif(OPENSSI_BUILD_TENSORFLOW)
 	
 if(OPENSSI_BUILD_FFTW)
 	add_subdirectory(fftw-android)

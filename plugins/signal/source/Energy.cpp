@@ -42,8 +42,8 @@ Energy::Energy (const ssi_char_t *file)
 	: _file (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -52,7 +52,7 @@ Energy::Energy (const ssi_char_t *file)
 Energy::~Energy () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }
@@ -75,8 +75,7 @@ void Energy::transform (ITransformer::info info,
 		ssi_size_t elems = sample_number * sample_dimension;
 		ssi_real_t value;
 		for (ssi_size_t i = 0; i < elems; i++) {
-            value = *srcptr;
-            srcptr++;
+			value = *srcptr++;
 			sum += value * value;
 		}
 		*dstptr = sqrt (sum / elems);
@@ -86,24 +85,20 @@ void Energy::transform (ITransformer::info info,
 		ssi_real_t *dstptr_tmp = dstptr;
 		ssi_real_t value;
 		for (ssi_size_t i = 0; i < sample_dimension; i++) {
-            value = *srcptr;
-            srcptr++;
+			value = *srcptr++;
 			*dstptr++ = value * value;
 		}
 		for (ssi_size_t i = 1; i < sample_number; i++) {
 			dstptr = dstptr_tmp;	
 			for (ssi_size_t j = 0; j < sample_dimension; j++) {
-                value = *srcptr;
-                srcptr++;
-                *dstptr += value * value;
-                dstptr++;
+				value = *srcptr++;
+				*dstptr++ += value * value;
 			}
 		}
 		dstptr = dstptr_tmp;
 		for (ssi_size_t i = 0; i < sample_dimension; i++) {
 			value = *dstptr;
-            *dstptr = sqrt (value / sample_number);
-            dstptr++;
+			*dstptr++ = sqrt (value / sample_number);
 		}
 	}
 }

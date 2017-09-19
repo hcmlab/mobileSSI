@@ -35,6 +35,7 @@
 #include "thread/Thread.h"
 #include <serial/serial.h>
 
+
 namespace ssi {
 
 	class MyBeaconScanner : public IObject, public Thread {

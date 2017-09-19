@@ -33,8 +33,6 @@
 #include "thread/Timer.h"
 #include "graphic/Monitor.h"
 
-#include "ssistdMinMaxWrapper.h"
-
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG
@@ -44,6 +42,10 @@
 	#endif
 #endif
 
+#if __gnu_linux__
+using std::min;
+using std::max;
+#endif
 namespace ssi {
 
 ssi_char_t *XMLEventHelper::ssi_log_name = "xmleventh_";
@@ -371,8 +373,8 @@ bool XMLEventHelper::parseField(Mapping &map, const ssi_char_t *string) {
 		map.field = Field::TIME;
 	} else if (ssi_strcmp(string, FieldName(Field::TIME_SYSTEM), false)) {
 		map.field = Field::TIME_SYSTEM;
-	} else if (ssi_strcmp(string, FieldName(Field::TIME_RELATIVE2), false)) {
-		map.field = Field::TIME_RELATIVE2;
+	} else if (ssi_strcmp(string, FieldName(Field::TIME_RELATIVE), false)) {
+		map.field = Field::TIME_RELATIVE;
 	} else if (ssi_strcmp(string, FieldName(Field::DURATION), false)) {
 		map.field = Field::DURATION;
 	} else if (ssi_strcmp(string, FieldName(Field::STATE), false)) {
@@ -708,7 +710,7 @@ bool XMLEventHelper::applyEvent(Mapping &map, ssi_event_t &e) {
 			break;
 		}
 
-		case Field::TIME_RELATIVE2: {
+		case Field::TIME_RELATIVE: {
 
 			ssi_size_t time = Factory::GetFramework()->GetElapsedTimeMs() - e.time;
 			ssi_sprint(_strbuf, "%d", time);
@@ -964,6 +966,14 @@ void XMLEventHelper::enter() {
 void XMLEventHelper::flush() {
 
 	delete _timer; _timer = 0;
+}
+
+void XMLEventHelper::setEventTimeDur(ssi_size_t time, ssi_size_t dur)
+{
+	Lock lock(*_mutex);
+
+	_sender->_event.time = time;
+	_sender->_event.dur = dur;
 }
 
 void XMLEventHelper::run() {

@@ -29,6 +29,7 @@
 #include "ioput/file/FileTools.h"
 #include "event/EventAddress.h"
 #include "PythonChannel.h"
+#include "ssiml/include/ssiml.h"
 extern "C"
 {
 #include "ssipy.h"
@@ -82,7 +83,8 @@ namespace ssi {
 	PythonHelper::PythonHelper(ssi_char_t *script_name,
 		const ssi_char_t *optsfile,
 		const ssi_char_t *optsstr,
-		const ssi_char_t *syspath)
+		const ssi_char_t *syspath,
+		const ssi_char_t *workdir)
 		: _pModule(0),
 		_pBoard(0),
 		_pOptions(0),
@@ -103,7 +105,7 @@ namespace ssi {
 
 		GIL gil;
 
-		add_sys_path(syspath);
+		add_sys_path(syspath, workdir);
 
 		ssi_msg(SSI_LOG_LEVEL_BASIC, "loading script '%s.py'", _script_name);
 		_pModule = PyImport_ImportModule(_script_name);
@@ -171,12 +173,23 @@ namespace ssi {
 		return 0;
 	}
 
-	void PythonHelper::add_sys_path(const ssi_char_t *path)
+	void PythonHelper::add_sys_path(const ssi_char_t *path, const ssi_char_t *workdir)
 	{
 		if (!path || path[0] == '\0')
 		{
 			return;
 		}
+
+		// change working directory
+
+		ssi_char_t workdir_old[SSI_MAX_CHAR];
+		if (workdir != 0)
+		{		
+			ssi_getcwd(SSI_MAX_CHAR, workdir_old);			
+			ssi_setcwd(workdir);
+		}
+
+		// populate system path
 
 		PyObject* sysPath = PySys_GetObject((char*)"path");
 		bool changed = false;
@@ -190,7 +203,7 @@ namespace ssi {
 			for (ssi_size_t i = 0; i < n_tokens; i++)
 			{
 				ssi_char_t *full = ssi_fullpath(tokens[i]);
-				PyObject *pPath = PyUnicode_FromString(full);
+				PyObject *pPath = PyUnicode_DecodeLocale(full, NULL);
 
 				bool found = false;
 				PyObject *item;
@@ -223,6 +236,13 @@ namespace ssi {
 			ssi_msg(SSI_LOG_LEVEL_BASIC, "new sys path '%s'", PyUnicode_AsUTF8(pSysPathStr));
 			Py_DECREF(pSysPathStr);
 		}
+
+		// reset working directory
+		if (workdir != 0)
+		{
+			ssi_setcwd(workdir_old);
+		}
+
 	}
 
 	PyObject *PythonHelper::call_function(function_t function, PyObject *pArgs)
@@ -277,6 +297,28 @@ namespace ssi {
 
 		return pList_stream;
 	}
+
+
+	PyObject *PythonHelper::score_to_object(ISamples &samples, ssi_size_t stream_index)
+	{
+
+		PyObject *pList_score = PyTuple_New(samples.getSize());
+
+		ssi_real_t score;
+
+		samples.reset();
+		ssi_sample_t *sample = 0;
+		int sample_counter = 0;
+		while (sample = samples.next())
+		{
+			score = sample->score;
+			PyTuple_SetItem(pList_score, sample_counter, PyFloat_FromDouble(score));
+			sample_counter++;
+		}
+
+		return pList_score;
+	}
+
 
 	PyObject *PythonHelper::labels_to_object(ISamples &samples, ssi_size_t stream_index)
 	{
@@ -1521,15 +1563,23 @@ namespace ssi {
 			return false;
 		}
 
+		SampleList samples_c;
+		ModelTools::CopySampleList(samples, samples_c);
+
 		GIL gil;
 
 		bool result = false;
 
-		PyObject *pArgs = PyTuple_New(2);
+		PyObject *pArgs = PyTuple_New(5);
 		int valcount = 0;
 
-		PyTuple_SetItem(pArgs, valcount++, samplelist_to_object(samples, stream_index));
-		PyTuple_SetItem(pArgs, valcount++, labels_to_object(samples, stream_index));
+		PyTuple_SetItem(pArgs, valcount++, samplelist_to_object(samples_c, stream_index));
+		PyTuple_SetItem(pArgs, valcount++, labels_to_object(samples_c, stream_index));
+		PyTuple_SetItem(pArgs, valcount++, score_to_object(samples_c, stream_index));
+		PyTuple_SetItem(pArgs, valcount++, _pOptions);
+		Py_INCREF(_pOptions);
+		PyTuple_SetItem(pArgs, valcount++, _pVariables);
+		Py_INCREF(_pVariables);
 
 		PyObject *pValue = call_function(FUNCTIONS::TRAIN, pArgs);
 		Py_DECREF(pArgs);
@@ -1554,12 +1604,16 @@ namespace ssi {
 
 		bool result = false;
 
-		PyObject *pArgs = PyTuple_New(2);
+		PyObject *pArgs = PyTuple_New(4);
 		int valcount = 0;
 		PyTuple_SetItem(pArgs, valcount++, stream_to_object(&stream));
 		//PyTuple_SetItem(pArgs, valcount++, PyLong_FromLong(n_probs));
 		PyObject * arr = (PyObject *)ssipyarray_From(n_probs, probs);
 		PyTuple_SetItem(pArgs, valcount++, arr);
+		PyTuple_SetItem(pArgs, valcount++, _pOptions);
+		Py_INCREF(_pOptions);
+		PyTuple_SetItem(pArgs, valcount++, _pVariables);
+		Py_INCREF(_pVariables);
 
 		PyObject *pValue = call_function(FUNCTIONS::FORWARD, pArgs);
 		Py_DECREF(pArgs);
@@ -1584,10 +1638,15 @@ namespace ssi {
 
 		bool result = false;
 
-		PyObject *pArgs = PyTuple_New(1);
+		PyObject *pArgs = PyTuple_New(3);
 		PyObject *pFilePath = PyUnicode_FromString(filepath);
 
 		PyTuple_SetItem(pArgs, 0, pFilePath);
+		PyTuple_SetItem(pArgs, 1, _pOptions);
+		Py_INCREF(_pOptions);
+		PyTuple_SetItem(pArgs, 2, _pVariables);
+		Py_INCREF(_pVariables);
+
 		PyObject *pValue = call_function(FUNCTIONS::SAVE, pArgs);
 		Py_DECREF(pArgs);
 
@@ -1612,10 +1671,14 @@ namespace ssi {
 
 		bool result = false;
 
-		PyObject *pArgs = PyTuple_New(1);
+		PyObject *pArgs = PyTuple_New(3);
 		PyObject *pFilePath = PyUnicode_FromString(filepath);
 
 		PyTuple_SetItem(pArgs, 0, pFilePath);
+		PyTuple_SetItem(pArgs, 1, _pOptions);
+		Py_INCREF(_pOptions);
+		PyTuple_SetItem(pArgs, 2, _pVariables);
+		Py_INCREF(_pVariables);
 
 		PyObject *pValue = call_function(FUNCTIONS::LOAD, pArgs);
 		Py_DECREF(pArgs);

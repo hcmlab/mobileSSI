@@ -30,7 +30,10 @@
 #include "thread/RunAsThread.h"
 #include "thread/Timer.h"
 
-#include "ssistdMinMaxWrapper.h"
+#if __gnu_linux__
+using std::min;
+using std::max;
+#endif
 
 namespace ssi {
 
@@ -52,8 +55,8 @@ DecisionSmoother::DecisionSmoother (const ssi_char_t *file)
 	_timer(0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -289,9 +292,13 @@ bool DecisionSmoother::update (IEvents &events, ssi_size_t n_new_events, ssi_siz
 			}
 		}
 
+		if (!_thread) {
+			_event.dur = time_ms - _last_decision_time;
+		}
+
 		_last_decision_time = time_ms;
 
-		if (!_thread) {
+		if (!_thread) {			
 			send(this);
 		}
 	}
@@ -314,7 +321,7 @@ void DecisionSmoother::listen_flush (){
 	ssi_event_reset(_event);
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 

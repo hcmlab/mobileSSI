@@ -29,9 +29,7 @@
 #include "TimeServer.h"
 #include "thread/Mutex.h"
 #include "Decorator.h"
-#if __APPLE__
 
-#endif
 #include <fstream>
 #include <iomanip>
 //#define FRAMEWORK_LOG 1
@@ -129,8 +127,8 @@ TheFramework::TheFramework (const ssi_char_t *file)
 	component_counter = 0;
 	
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -147,7 +145,7 @@ TheFramework::TheFramework (const ssi_char_t *file)
 TheFramework::~TheFramework () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }
@@ -271,8 +269,6 @@ void TheFramework::Start () {
 	}
 
 	// start monitor
-#if __APPLE__
-#else
 	if (_options.monitor) {
 		ssi_rect_t rect;
 		rect.left = _options.mpos[0];
@@ -285,8 +281,7 @@ void TheFramework::Start () {
 		#endif
 		_monitor->start ();
 	}
-#endif
-    
+
 	// move console
 	if (_options.console) {
         #if _WIN32|_WIN64
@@ -2116,44 +2111,6 @@ ITransformable *TheFramework::AddTransformer (ITransformable *source,
 
 	   return ch;
 	}
-#elif  __APPLE__
-int _kbhit(void) {
-    
-    
-	   struct termios term, oterm;
-	   int fd = 0;
-	   int c = 0;
-    /*
-	   tcgetattr(fd, &oterm);
-	   memcpy(&term, &oterm, sizeof(term));
-	   term.c_lflag = term.c_lflag & (!ICANON);
-	   term.c_cc[VMIN] = 0;
-	   term.c_cc[VTIME] = 1;
-	   tcsetattr(fd, TCSANOW, &term);*/
-	   c = getchar();
-	   //tcsetattr(fd, TCSANOW, &oterm);
-    
-	   if (c != -1)
-           ungetc(c, stdin);
-
-	   return ((c != -1) ? 1 : 0);
-}
-
-int _getch()
-{
-    
-    struct termios oldt, newt;
-    int ch;
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    ch = getchar();
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    
-    return ch;
-	   
-}
 #endif
 
 #endif

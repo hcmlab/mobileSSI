@@ -25,10 +25,10 @@
 //*************************************************************************************************
 
 #include "HierarchicalModel.h"
-#include "ISHotClass.h"
-#include "ISSelectClass.h"
-#include "ISSelectDim.h"
-#include "Trainer.h"
+#include "ssiml/include/ISHotClass.h"
+#include "ssiml/include/ISSelectClass.h"
+#include "ssiml/include/ISSelectDim.h"
+#include "ssiml/include/Trainer.h"
 
 namespace ssi {
 
@@ -43,8 +43,8 @@ HierarchicalModel::HierarchicalModel(const ssi_char_t *file)
 	_is_trained (false) {
 
 	/*if (file) {
-		if (!OptionList::LoadXML(file, _options)) {
-			OptionList::SaveXML(file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy(file);
 	}*/
@@ -53,7 +53,7 @@ HierarchicalModel::HierarchicalModel(const ssi_char_t *file)
 HierarchicalModel::~HierarchicalModel() {
 
 	/*if (_file) {
-		OptionList::SaveXML(_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 		}*/
 

@@ -25,7 +25,7 @@
 //*************************************************************************************************
 
 #include "ssi.h"
-#include "ssibrowser.h"
+#include "browser/include/ssibrowser.h"
 using namespace ssi;
 
 #ifdef USE_SSI_LEAK_DETECTOR
@@ -56,7 +56,9 @@ int main () {
 	Factory::RegisterDLL("ssibrowser.dll");
 	Factory::RegisterDLL("ssiioput.dll");
 	
+#if SSI_RANDOM_LEGACY_FLAG
 	ssi_random_seed();
+#endif
 
 	Exsemble ex;
 	ex.add(&browser, 0, "BROWSER", "How to browse web pages.");
@@ -184,7 +186,6 @@ bool stimuli(void *arg) {
 
 	stimuli = ssi_create(Stimuli, 0, true);
 	stimuli->getOptions()->setSender("stimuliFromUrl");
-	stimuli->getOptions()->setTitle("http://hcm-lab.de;http://openssi.net");
 	stimuli->getOptions()->setLabels("lab;ssi");	
 	stimuli->getOptions()->setStartName("stimuli/start.html");
 	stimuli->getOptions()->setEndName("stimuli/end.html");
@@ -286,10 +287,13 @@ bool tuple(void *arg) {
 	ssi_event_init(e, SSI_ETYPE_MAP, Factory::AddString(ea.getSender(0)), Factory::AddString(ea.getEvent(0)), 0, 0, 5 * sizeof(ssi_event_map_t));
 	ssi_event_map_t *ptr = ssi_pcast(ssi_event_map_t, e.ptr);
 	ssi_char_t string[10];
+
+	Randomf random(0, 1);
+
 	for (ssi_size_t i = 0; i < 5; i++) {
 		ssi_sprint(string, "%02u", i + 1);
 		ptr[i].id = Factory::AddString(string);
-		ptr[i].value = ssi_cast(ssi_real_t, ssi_random());
+		ptr[i].value = random.next();
 	}
 	
 	ImageViewer *viewer = ssi_create(ImageViewer, 0, true);

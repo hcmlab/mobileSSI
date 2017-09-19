@@ -27,8 +27,6 @@
 #include "ThresEventSender.h"
 #include "base/Factory.h"
 
-#include "ssistdMinMaxWrapper.h"
-
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG
@@ -38,6 +36,10 @@
 	#endif
 #endif
 
+#if __gnu_linux__
+using std::min;
+using std::max;
+#endif
 
 namespace ssi {
 
@@ -59,8 +61,8 @@ ThresEventSender::ThresEventSender (const ssi_char_t *file)
 	ssi_log_level (SSI_LOG_LEVEL_DEFAULT) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -71,7 +73,7 @@ ThresEventSender::ThresEventSender (const ssi_char_t *file)
 ThresEventSender::~ThresEventSender () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 
@@ -253,6 +255,8 @@ void ThresEventSender::set_thresout (double thresout, ssi_type_t type) {
 
 void ThresEventSender::consume_enter (ssi_size_t stream_in_num,
 	ssi_stream_t stream_in[]) {
+
+	ssi_wrn("deprecated, use 'TriggerEventSender' instead");
 
 	_trigger_on = false;
 	_hangover_in = _options.hangin;

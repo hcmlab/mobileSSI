@@ -35,7 +35,7 @@ endif(SSI_GUI STREQUAL "SDL")
 
 	IF(UNIX)
 		INCLUDE(FindPkgConfig)
-                pkg_check_modules(PYTHON REQUIRED python-3.6)
+		pkg_check_modules(PYTHON REQUIRED python-3.5)
 	endif(UNIX)
 
 include_directories(
@@ -45,6 +45,8 @@ include_directories(
 					../../core/include/ioput/socket
 					../../core/include/ioput
 					../../core/include
+                                        ../../libs/build/
+                                        ..
 					${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS}
 					)
 

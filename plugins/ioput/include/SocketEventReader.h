@@ -45,7 +45,7 @@ class SocketEventReader :  public SSI_IRunnableObject, public Thread, public Soc
 	public:
 
 		Options ()
-                        : port (-1), type (Socket::UDP), size (Socket::DEFAULT_MTU_SIZE), timeout (1000), osc (false), reltime(false), xml(false) {
+			: port (-1), type (Socket::UDP), size (Socket::DEFAULT_MTU_SIZE), timeout (1000), osc (false), reltime(false) {
 
 			strcpy (sname, "socketreceiver");
 			strcpy (ename, "socketevent");
@@ -61,7 +61,6 @@ class SocketEventReader :  public SSI_IRunnableObject, public Thread, public Soc
 			addOption ("timeout", &timeout, 1, SSI_UINT, "time out in milliseconds");
 			addOption ("osc", &osc, 1, SSI_BOOL, "use osc format");
 			addOption ("reltime", &reltime, 1, SSI_BOOL, "send relative time stamps (osc or xml)");
-                        addOption ("xml", &xml, 1,  SSI_BOOL, "parse xml event");
 
 			addOption ("sname", sname, SSI_MAX_CHAR, SSI_CHAR, "sender name [deprecated use address]");
 			addOption ("ename", ename, SSI_MAX_CHAR, SSI_CHAR, "event name [deprecated use address]");
@@ -95,7 +94,6 @@ class SocketEventReader :  public SSI_IRunnableObject, public Thread, public Soc
 		ssi_size_t timeout;
 		bool osc;
 		bool reltime;
-                bool xml;
 		ssi_char_t sname[SSI_MAX_CHAR];
 		ssi_char_t ename[SSI_MAX_CHAR];
 		ssi_char_t address[SSI_MAX_CHAR];

@@ -70,7 +70,7 @@ public:
 			NAME,
 			TIME,
 			TIME_SYSTEM,
-			TIME_RELATIVE2,
+			TIME_RELATIVE,
 			DURATION,
 			STATE,
 			EVENT,
@@ -85,7 +85,7 @@ public:
 			case Field::NAME: return "name";
 			case Field::TIME: return "time";
 			case Field::TIME_SYSTEM: return "time_system";
-			case Field::TIME_RELATIVE2: return "time_relative";
+			case Field::TIME_RELATIVE: return "time_relative";
 			case Field::DURATION: return "duration";
 			case Field::STATE: return "state";
 			case Field::EVENT: return "event";
@@ -160,6 +160,7 @@ public:
 		ssi_size_t time);
 	void send(ssi_size_t time, 
 		ssi_size_t dur);
+	void setEventTimeDur(ssi_size_t time, ssi_size_t dur);
 
 	void enter();
 	void run();
@@ -194,12 +195,13 @@ protected:
 	bool parseSelect(Mapping &map, const ssi_char_t *string, ssi_size_t multiples);
 	bool parseField(Mapping &map, const ssi_char_t *string);	
 	bool parseFunction(Mapping &map, const ssi_char_t *string);
-	bool parsePrecision(Mapping &map, const ssi_char_t *string);
+	bool parsePrecision(Mapping &map, const ssi_char_t *string);	
 
 	std::vector < Mapping > mapping;
 	void resetMapping(ssi_size_t time);
 	void initMapping(Mapping &map);
 	void clearMapping();
+	
 	
 };
 

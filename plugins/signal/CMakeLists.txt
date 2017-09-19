@@ -91,7 +91,6 @@ source/Pulse.cpp
 source/Spectrogram.cpp
 source/Statistics.cpp
 source/Sum.cpp
-source/Mean.cpp
 source/Relative.cpp
 
 )

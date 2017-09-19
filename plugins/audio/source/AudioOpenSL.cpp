@@ -29,7 +29,7 @@
 
 #include "base/IProvider.h"
 #include "thread/Lock.h"
-#include "ioput/file/StringList.h"
+#include "base/StringList.h"
 #include "WavProvider.h"
 
 #include <sstream>
@@ -60,8 +60,8 @@ AudioOpenSL::AudioOpenSL(const ssi_char_t* file)
 
 	if(file)
 	{
-		if(!OptionList::LoadXML(file, _options))
-			OptionList::SaveXML(file, _options);
+		if(!OptionList::LoadXML(file, &_options))
+			OptionList::SaveXML(file, &_options);
 		_file = ssi_strcpy(file);
 	}
 }
@@ -70,7 +70,7 @@ AudioOpenSL::~AudioOpenSL()
 {
 	if(_file)
 	{
-		OptionList::SaveXML(_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
         if(_options.scale)

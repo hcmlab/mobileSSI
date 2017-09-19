@@ -27,8 +27,6 @@
 #include "ZeroEventSender.h"
 #include "base/Factory.h"
 
-#include "ssistdMinMaxWrapper.h"
-
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG
@@ -36,6 +34,12 @@
 		#undef THIS_FILE
 		static char THIS_FILE[] = __FILE__;
 	#endif
+#endif
+
+
+#if __gnu_linux__
+using std::min;
+using std::max;
 #endif
 
 
@@ -61,8 +65,8 @@ ZeroEventSender::ZeroEventSender (const ssi_char_t *file)
 	ssi_log_level (SSI_LOG_LEVEL_DEFAULT) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -73,7 +77,7 @@ ZeroEventSender::ZeroEventSender (const ssi_char_t *file)
 ZeroEventSender::~ZeroEventSender () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 
@@ -103,6 +107,8 @@ void ZeroEventSender::readOptions() {
 
 void ZeroEventSender::consume_enter (ssi_size_t stream_in_num,
 	ssi_stream_t stream_in[]) {
+
+	ssi_wrn("deprecated, use 'TriggerEventSender' instead");
 
 	_sample_rate = stream_in[0].sr;
 	_trigger_on = false;

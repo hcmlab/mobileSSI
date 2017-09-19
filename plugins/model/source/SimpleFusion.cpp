@@ -25,7 +25,7 @@
 //*************************************************************************************************
 
 #include "SimpleFusion.h"
-#include "ISMissingData.h"
+#include "ssiml/include/ISMissingData.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -43,8 +43,8 @@ SimpleFusion::SimpleFusion (const ssi_char_t *file)
 	_is_trained (false) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 	}
 }
@@ -53,7 +53,7 @@ SimpleFusion::~SimpleFusion () {
 
 	release ();
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }

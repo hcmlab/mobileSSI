@@ -49,8 +49,8 @@ EventSerializer::EventSerializer (const ssi_char_t *file)
 	_listener(0) {	
 			
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -60,7 +60,7 @@ EventSerializer::EventSerializer (const ssi_char_t *file)
 EventSerializer::~EventSerializer () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }

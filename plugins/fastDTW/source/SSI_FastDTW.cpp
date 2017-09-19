@@ -37,8 +37,8 @@ namespace ssi {
 		: _file(0), _elistener(0), inputdim(0){
 
 		if (file) {
-			if (!OptionList::LoadXML(file, _options)) {
-				OptionList::SaveXML(file, _options);
+			if (!OptionList::LoadXML(file, &_options)) {
+				OptionList::SaveXML(file, &_options);
 			}
 			_file = ssi_strcpy(file);
 		}
@@ -51,7 +51,7 @@ namespace ssi {
 	SSI_FastDTW::~SSI_FastDTW() {
 
 		if (_file) {
-			OptionList::SaveXML(_file, _options);
+			OptionList::SaveXML(_file, &_options);
 			delete[] _file;
 		}
 
@@ -96,7 +96,7 @@ namespace ssi {
 
 				ssi_stream_t **stream = sample->streams;
 
-                inputdim = stream[j]->dim;
+				inputdim = stream[j]->dim;
 				if (stream[j]->dim < 1 || stream[j]->dim > 3)
 				{
 					ssi_err("Sample list: Unsupported count of dimensions!");
@@ -147,8 +147,8 @@ namespace ssi {
 	void SSI_FastDTW::consume(IConsumer::info consume_info, ssi_size_t stream_in_num, ssi_stream_t stream_in[])
 	{
 
-        if (inputdim != stream_in[0].dim)
-            ssi_err("Dimension of sample list differs from input stream!");
+		if (inputdim != stream_in[0].dim)
+			ssi_err("Dimension of sample list differs from input stream!");
 
 		if  (stream_in_num == 1 && stream_in[0].dim > 0 && stream_in[0].dim < 4) {
 

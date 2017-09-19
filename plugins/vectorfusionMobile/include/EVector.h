@@ -95,7 +95,6 @@ protected:
 	ssi_real_t *_param;
 	ssi_real_t _starting_weight;
 	ssi_real_t _current_weight;
-        bool first_update;
 
 	bool _decay_weight;
 		

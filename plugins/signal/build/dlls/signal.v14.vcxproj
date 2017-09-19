@@ -232,6 +232,7 @@
     <ClCompile Include="..\..\source\ExportMain.cpp" />
     <ClCompile Include="..\..\source\Expression.cpp" />
     <ClCompile Include="..\..\source\FFTfeat.cpp" />
+    <ClCompile Include="..\..\source\FilterTools.cpp" />
     <ClCompile Include="..\..\source\Functionals.cpp" />
     <ClCompile Include="..\..\source\FunctionalsEventSender.cpp" />
     <ClCompile Include="..\..\source\Gate.cpp" />
@@ -267,6 +268,7 @@
     <ClInclude Include="..\..\include\Energy.h" />
     <ClInclude Include="..\..\include\Expression.h" />
     <ClInclude Include="..\..\include\FFTfeat.h" />
+    <ClInclude Include="..\..\include\FilterTools.h" />
     <ClInclude Include="..\..\include\Functionals.h" />
     <ClInclude Include="..\..\include\FunctionalsEventSender.h" />
     <ClInclude Include="..\..\include\Gate.h" />

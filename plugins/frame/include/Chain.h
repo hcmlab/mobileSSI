@@ -122,6 +122,8 @@ public:
 		_features = features;
 		_load_from_file = false;
 	}
+	virtual void parse();
+	virtual void release();
 
 	const void *getMetaData (ssi_size_t &size) {
 		size = _meta_size;
@@ -131,6 +133,9 @@ public:
 	void setMetaData (ssi_size_t size, const void *meta) {
 		ssi_size_t meta_size = size;
 		const void *meta_data = meta;
+
+		parse();
+
 		for (ssi_size_t i = 0; i < _n_filters; i++) {
 			_filters[i]->setMetaData (meta_size, meta_data);
 			meta_data = _filters[i]->getMetaData (meta_size);
@@ -153,6 +158,14 @@ protected:
 	Options _options;
 	ssi_char_t *_file;
 
+	bool getPath();	
+	ssi_char_t *_chain_path;
+	ssi_char_t *_chain_dir;
+	ssi_char_t *_work_dir;
+
+	void changeWorkDir();
+	void resetWorkDir();
+
 	ssi_size_t calc_sample_dimension_out (ssi_size_t sample_dimension_in);
 	ssi_size_t calc_sample_number_out (ssi_size_t sample_number_in);
 	ssi_size_t calc_sample_bytes_out (ssi_size_t sample_bytes_in);
@@ -160,8 +173,6 @@ protected:
 
 	static ssi_char_t *ssi_log_name;
 
-	void parse ();
-	void release ();
 	bool parseFilter (TiXmlElement *element);
 	bool parseFeature (TiXmlElement *element);
 
@@ -178,9 +189,7 @@ protected:
 	ssi_size_t _feature_dim_out_tot;
 
 	ssi_size_t _meta_size;
-	ssi_byte_t *_meta_data;
-
-	IXMLPipeline *_xmlpipe;
+	ssi_byte_t *_meta_data;	
 };
 
 }

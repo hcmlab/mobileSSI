@@ -35,6 +35,6 @@
 #include "CVSave.h"
 #include "CVCrop.h"
 #include "CVFlip.h"
-#include "CVLuminance.h"
+#include "CVMean.h"
 
 #endif

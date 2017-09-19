@@ -25,8 +25,8 @@
 //*************************************************************************************************
 
 #include "SVM.h"
-#include "ISUnderSample.h"
-#include "ISOverSample.h"
+#include "ssiml/include/ISUnderSample.h"
+#include "ssiml/include/ISOverSample.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -53,8 +53,8 @@ SVM::SVM (const ssi_char_t *file)
 	_n_samples (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -64,7 +64,7 @@ SVM::~SVM () {
 
 	release ();
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }

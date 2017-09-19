@@ -92,7 +92,11 @@ static ssi_char_t *FUNCTION_NAMES[FUNCTIONS::NUM];
 
 public:
 
-	PythonHelper(ssi_char_t *script_name, const ssi_char_t *optsfile, const ssi_char_t *optsstr, const ssi_char_t *syspath);
+	PythonHelper(ssi_char_t *script_name, 
+		const ssi_char_t *optsfile, 
+		const ssi_char_t *optsstr, 
+		const ssi_char_t *syspath,
+		const ssi_char_t *workdir = 0);
 	~PythonHelper();
 
 	ssi_size_t getSampleNumberOut(ssi_size_t sample_number_in);
@@ -145,7 +149,7 @@ protected:
 	int register_function(const ssi_char_t *name, PyObject **function);
 	PyObject *call_function(function_t function, PyObject *args);
 
-	void add_sys_path(const ssi_char_t *path);
+	void add_sys_path(const ssi_char_t *path, const ssi_char_t *workdir);
 
 	void options_get(function_t function, const ssi_char_t *optsfile, const ssi_char_t *optsstr);
 	void options_parse(const ssi_char_t *string, char delim);
@@ -154,6 +158,8 @@ protected:
 	PyObject *stream_to_imageobject(ssi_stream_t *stream, ssi_video_params_t params);
 	PyObject *samplelist_to_object(ISamples &samples, ssi_size_t stream_index);
 	PyObject *labels_to_object(ISamples &samples, ssi_size_t stream_index);
+	PyObject *score_to_object(ISamples &samples, ssi_size_t stream_index);
+
 
 	bool transform_get_help(function_t function, ssi_size_t in, ssi_size_t &out);
 	bool transform_help(function_t function, ssi_stream_t &stream_in, ssi_stream_t &stream_out, ssi_size_t xtra_stream_in_num, ssi_stream_t xtra_stream_in[], ITransformer::info *info = 0);

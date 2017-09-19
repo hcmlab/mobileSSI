@@ -26,6 +26,7 @@
 
 #include "PythonModel.h"
 #include "PythonHelper.h"
+#include "ioput/file/FilePath.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -47,8 +48,8 @@ PythonModel::PythonModel(const ssi_char_t *file)
 {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -57,7 +58,7 @@ PythonModel::PythonModel(const ssi_char_t *file)
 PythonModel::~PythonModel() {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 	
@@ -66,9 +67,18 @@ PythonModel::~PythonModel() {
 
 void PythonModel::initHelper()
 {
-	_helper = new PythonHelper(_options.script, _options.optsfile, _options.optsstr, _options.syspath);
+	ssi_char_t *workdir = 0;
+	if (_file)
+	{
+		FilePath fp(_file);
+		workdir = ssi_strcpy(fp.getDir());
+	}
+
+	_helper = new PythonHelper(_options.script, _options.optsfile, _options.optsstr, _options.syspath, workdir);
 
 	ssi_msg(SSI_LOG_LEVEL_DETAIL, "python is ready");
+
+	delete[] workdir;
 }
 
 

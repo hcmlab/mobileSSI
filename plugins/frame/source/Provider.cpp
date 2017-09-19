@@ -28,8 +28,6 @@
 #include "TheFramework.h"
 #include "base/Factory.h"
 
-#include "ssistdMinMaxWrapper.h"
-
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG
@@ -38,7 +36,10 @@
 		static char THIS_FILE[] = __FILE__;
 	#endif
 #endif
-
+#if __gnu_linux__
+using std::min;
+using std::max;
+#endif
 namespace ssi {
 
 int Provider::ssi_log_level = SSI_LOG_LEVEL_DEFAULT;

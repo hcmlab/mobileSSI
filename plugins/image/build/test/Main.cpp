@@ -86,7 +86,7 @@ bool main_online (void *args) {
 	ITransformable *camera_p = frame->AddProvider(camera, SSI_CAMERA_PROVIDER_NAME, 0, "2.0s");
 	camera->setLogLevel(SSI_LOG_LEVEL_DEBUG);
 	frame->AddSensor(camera);
-
+	
 	Mouse *mouse = ssi_create (Mouse, 0, true);
 	mouse->getOptions()->scale = true;
 	ITransformable *cursor_p = frame->AddProvider(mouse, SSI_MOUSE_CURSOR_PROVIDER_NAME);
@@ -124,6 +124,10 @@ bool main_online (void *args) {
 	cv_resize->getOptions()->scaled = true;
 	ITransformable *cv_resize_t = frame->AddTransformer(camera_p, cv_resize, "1");
 
+	CVMean *cv_mean = ssi_create(CVMean, 0, true);	
+	cv_mean->getOptions()->scale = true;
+	ITransformable *cv_mean_t = frame->AddTransformer(camera_p, cv_mean, "1");
+
 	// save
 
 	CVSave *cv_save = ssi_create (CVSave, 0, true);
@@ -153,8 +157,17 @@ bool main_online (void *args) {
 
 	vidplot = ssi_create_id (VideoPainter, 0, "plot");
 	vidplot->getOptions()->setTitle("resize");
-	vidplot->getOptions()->scale = false;	
+	vidplot->getOptions()->scale = false;		
 	frame->AddConsumer(cv_resize_t, vidplot, "1");
+
+	SignalPainter *sigplot = 0;
+
+	sigplot = ssi_create_id(SignalPainter, 0, "plot");
+	sigplot->getOptions()->setTitle("mean");
+	sigplot->getOptions()->size = 10;
+	sigplot->getOptions()->fix[0] = 0;
+	sigplot->getOptions()->fix[1] = 1;
+	frame->AddConsumer(cv_mean_t, sigplot, "1");
 
 	// run
 

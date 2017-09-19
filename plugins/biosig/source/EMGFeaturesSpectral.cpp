@@ -46,8 +46,8 @@ EMGFeaturesSpectral::EMGFeaturesSpectral (const ssi_char_t *file)
 	ssi_log_level (SSI_LOG_LEVEL_DEFAULT) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -58,7 +58,7 @@ EMGFeaturesSpectral::~EMGFeaturesSpectral () {
 
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }
@@ -109,7 +109,6 @@ void EMGFeaturesSpectral::transform(ITransformer::info info, ssi_stream_t &strea
 	ptr_out++;
 
 	delete sf_ar_coeffs;
-	
 
 }
 
@@ -127,7 +126,7 @@ float EMGFeaturesSpectral::calcFrequencyMedian(ssi_real_t* in, ssi_size_t num, b
 	ssi_real_t sum1 = 0;
 	
 	ssi_real_t sum_total = 0;
-	for (int i = 0; i < num; i++) sum_total += (modified ? in[i] : std::powf(in[i], 2));
+    for (int i = 0; i < num; i++) sum_total += (modified ? in[i] : std::pow(in[i], 2));
 	ssi_real_t sum_total_half = sum_total/2;
 
 	//int it = 0;
@@ -135,7 +134,7 @@ float EMGFeaturesSpectral::calcFrequencyMedian(ssi_real_t* in, ssi_size_t num, b
 	while (true){
 
 		sum1 = 0;
-		for (int i = 0; i < split; i++) sum1 += (modified ? in[i] : std::powf(in[i], 2));
+        for (int i = 0; i < split; i++) sum1 += (modified ? in[i] : std::pow(in[i], 2));
 
 		//ssi_print("[EFS] median it: %i, split: %i (%.1f to %.1f)\n", it, split, sum1, sum_total_half);
 		//it++;
@@ -159,8 +158,8 @@ float EMGFeaturesSpectral::calcFrequencyMean(ssi_real_t* in, ssi_size_t num, boo
 	ssi_real_t sum2 = 0;
 
 	for (int i = 0; i < num; i++){
-		sum1 += (i + 1) * (modified ? in[i] : std::powf(in[i], 2));
-		sum2 += (modified ? in[i] : std::powf(in[i], 2));
+        sum1 += (i + 1) * (modified ? in[i] : std::pow(in[i], 2));
+        sum2 += (modified ? in[i] : std::pow(in[i], 2));
 	}
 
 	if (sum2 > 0){
@@ -179,11 +178,11 @@ float EMGFeaturesSpectral::calcFrequencyRatio(ssi_real_t* in, ssi_size_t num, bo
 
 
 	for (int i = 0; i < t; i++){
-		sum1 += (modified ? in[i] : std::powf(in[i], 2));
+        sum1 += (modified ? in[i] : std::pow(in[i], 2));
 	}
 
 	for (int i = t; i < num; i++){
-		sum2 += (modified ? in[i] : std::powf(in[i], 2));
+        sum2 += (modified ? in[i] : std::pow(in[i], 2));
 	}
 
 	if (sum2 > 0){
@@ -273,7 +272,7 @@ int EMGFeaturesSpectral::calcARcoefficients(float *inputseries, int length, int 
 		delete ar;
 	}
 
-	return(TRUE);
+    return(true);
 }
 
 /*
@@ -331,7 +330,7 @@ int EMGFeaturesSpectral::arMaxEntropy(float *inputseries, int length, int degree
 			ar[nn - 1][j - 1] = g[j];
 	}
 
-	return(TRUE);
+    return(true);
 }
 
 /*
@@ -378,7 +377,7 @@ int EMGFeaturesSpectral::arLeastSquare(float *inputseries, int length, int degre
 	}
 	
 	if (mat) delete mat;
-	return(TRUE);
+    return(true);
 }
 
 /*
@@ -414,7 +413,7 @@ int EMGFeaturesSpectral::arSolveLE(float **mat, float *vec, unsigned int n)
 		if (fabs(pivot) == 0.0) {
 			ssi_wrn("Singular matrix - fatal!\n");
 			getchar();
-			return(FALSE);
+            return(false);
 		}
 		for (j = i + 1; j<n; j++) {
 			q = -mat[j][i] / pivot;
@@ -432,7 +431,7 @@ int EMGFeaturesSpectral::arSolveLE(float **mat, float *vec, unsigned int n)
 		vec[i] /= hvec[i];
 	}
 
-	return(TRUE);
+    return(true);
 }
 
 }

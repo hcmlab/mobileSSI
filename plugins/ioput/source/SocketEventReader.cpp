@@ -50,8 +50,8 @@ SocketEventReader::SocketEventReader (const ssi_char_t *file)
 	_buffer (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -62,7 +62,7 @@ SocketEventReader::SocketEventReader (const ssi_char_t *file)
 SocketEventReader::~SocketEventReader () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 	
@@ -197,13 +197,13 @@ void SocketEventReader::run () {
 			if (_elistener) {
 				_event_string.time = _frame->GetElapsedTimeMs ();
 				_event_string.dur = 0;
-                if (has_null_byte) {
+				if (has_null_byte) {
 					ssi_event_adjust(_event_string, ssi_strlen(_buffer) + 1);
 					strcpy(_event_string.ptr, _buffer);					
 				} else {
-                    ssi_event_adjust(_event_string, result + 1);
-                    memcpy(_event_string.ptr, _buffer, result * sizeof(ssi_byte_t));
-                    _event_string.ptr[result] = '\0';
+					ssi_event_adjust(_event_string, result + 1);
+					memcpy(_event_string.ptr, _buffer, result * sizeof(ssi_byte_t));
+					_event_string.ptr[result] = '\0';
 				}				
 				_elistener->update (_event_string);
 			}	

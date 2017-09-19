@@ -19,7 +19,7 @@ namespace ssi{
 		}
 
 		if (_file) {
-			OptionList::SaveXML(_file, _options);
+			OptionList::SaveXML(_file, &_options);
 			delete[] _file; _file = 0;
 		}
 	}
@@ -36,8 +36,8 @@ namespace ssi{
 
 	{
 		if (file) {
-			if (!OptionList::LoadXML(file, _options)) {
-				OptionList::SaveXML(file, _options);
+			if (!OptionList::LoadXML(file, &_options)) {
+				OptionList::SaveXML(file, &_options);
 			}
 			_file = ssi_strcpy(file);
 		}
@@ -47,8 +47,10 @@ namespace ssi{
 	{
 		if (_options.beep)
 		{
+#if _WIN32||_WIN64
 			Beep(1000, 250);
-		}
+#endif
+        }
 
 		if (!_elistener) {
 			return;

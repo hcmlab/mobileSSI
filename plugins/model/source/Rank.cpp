@@ -25,9 +25,9 @@
 //*************************************************************************************************
 
 #include "Rank.h"
-#include "Trainer.h"
-#include "Evaluation.h"
-#include "ISSelectDim.h"
+#include "ssiml/include/Trainer.h"
+#include "ssiml/include/Evaluation.h"
+#include "ssiml/include/ISSelectDim.h"
 
 namespace ssi {
 
@@ -41,8 +41,8 @@ Rank::Rank (const ssi_char_t *file) :
 	_file (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -52,7 +52,7 @@ Rank::~Rank () {
 
 	release ();
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }

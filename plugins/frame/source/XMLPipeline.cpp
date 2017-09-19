@@ -49,13 +49,13 @@ XMLPipeline::VERSION XMLPipeline::DEFAULT_VERSION = XMLPipeline::V1;
 const ssi_char_t *XMLPipeline::DATE_VARIABLE_NAME = "$(date)";
 
 XMLPipeline::XMLPipeline ()
-: _register_fptr (Factory::RegisterDLL),
+: _register_fptr (Factory::RegisterXML),
 	_start_eboard (false),
 	_eboard (0),
 	_n_global_confpaths (0),
 	_global_confpaths (0),
 	_savepipe (false),
-	ssi_log_level (SSI_LOG_LEVEL_DEFAULT) {
+	ssi_log_level (SSI_LOG_LEVEL_DEFAULT) {	
 
 	_frame = Factory::GetFramework ();
 	_eboard = Factory::GetEventBoard ();
@@ -168,20 +168,35 @@ bool XMLPipeline::parse (const ssi_char_t *filepath, ssi_size_t n_confs, ssi_cha
 		_n_global_confpaths = n_confs;
 		_global_confpaths = new ssi_char_t *[_n_global_confpaths];
 		ssi_char_t *global_confpath_with_ext = 0;
+		ssi_char_t *key, *value;
 		for (ssi_size_t i = 0; i < _n_global_confpaths; i++) {
 			if (confpaths[i] != 0) {
-				FilePath fpc (confpaths[i]);
-				if (strcmp (fpc.getExtension (), SSI_FILE_TYPE_PCONFIG) != 0) {
-					global_confpath_with_ext = ssi_strcat (confpaths[i], SSI_FILE_TYPE_PCONFIG);
-				} else {
-					global_confpath_with_ext = ssi_strcpy (confpaths[i]);
-				}
-				if (ssi_exists (global_confpath_with_ext)) {
-					_global_confpaths[i] = global_confpath_with_ext;
-				} else {
-					ssi_wrn ("could not find config file '%s'", confpaths[i]);
+
+				if (ssi_parse_option(confpaths[i], &key, &value))
+				{
+					_variables[String(key)] = String(value);
 					_global_confpaths[i] = 0;
-					delete[] global_confpath_with_ext;
+
+					delete[] key;
+					delete[] value;
+				}
+				else
+				{
+					FilePath fpc(confpaths[i]);
+					if (strcmp(fpc.getExtension(), SSI_FILE_TYPE_PCONFIG) != 0) {
+						global_confpath_with_ext = ssi_strcat(confpaths[i], SSI_FILE_TYPE_PCONFIG);
+					}
+					else {
+						global_confpath_with_ext = ssi_strcpy(confpaths[i]);
+					}
+					if (ssi_exists(global_confpath_with_ext)) {
+						_global_confpaths[i] = global_confpath_with_ext;
+					}
+					else {
+						ssi_wrn("could not find config file '%s'", confpaths[i]);
+						_global_confpaths[i] = 0;
+						delete[] global_confpath_with_ext;
+					}
 				}
 			}
 		}
@@ -200,6 +215,16 @@ bool XMLPipeline::parse (const ssi_char_t *filepath, ssi_size_t n_confs, ssi_cha
 		if (!pipestr) {
 			ssi_wrn("failed reading pipeline '%s'", filepath_with_ext);
 			return false;
+		}
+
+		// apply global variables
+		for (variables_map_t::iterator it = _variables.begin(); it != _variables.end(); it++)
+		{
+			ssi_char_t *old = pipestr;
+			ssi_char_t *search = ssi_strcat("$(", it->first.str(), ")");
+			pipestr = ssi_strrepl(pipestr, search, it->second.str());
+			delete[] search;
+			delete[] old;
 		}
 
 		// apply global config files
@@ -548,54 +573,8 @@ bool XMLPipeline::parseGate (TiXmlElement *element) {
 
 IObject *XMLPipeline::parseObject (TiXmlElement *element, bool auto_free) {
 
-	const ssi_char_t *create = element->Attribute ("create");
-	if (!create) {
-		ssi_wrn ("%s: attribute 'create' is missing", element->Value ());
-		return 0;
-	}
-	const ssi_char_t *option = element->Attribute ("option");
-	if (!option || option[0] == '\0') {
-		option = 0;
-	}
-
-	SSI_DBG (SSI_LOG_LEVEL_DEBUG, "%s: <create='%s' option='%s'>", element->Value (), create, option);
-
-	IObject *object = Factory::Create (create, option, auto_free);
-	if (!object) {
-
-		// check for old format
-		ssi_size_t n_tokens = ssi_split_string_count(create, '_');
-		if (n_tokens == 3) {
-
-			ssi_char_t **tokens = new ssi_char_t *[n_tokens];
-			ssi_split_string(n_tokens, tokens, create, '_');
-
-			ssi_wrn("deprecated: use '%s' instead of '%s'", tokens[2], create);
-
-			object = Factory::Create(tokens[2], option, auto_free);
-
-			for (ssi_size_t i = 0; i < n_tokens; i++) {
-				delete[] tokens[i];
-			}
-			delete[] tokens;
-		}
-
-		if (!object) {
-			ssi_wrn("%s: could not create object '%s'", element->Value(), create);
-			return 0;
-		}
-	}
-
-	TiXmlAttribute *attribute = element->FirstAttribute ();
-	while (attribute)
-	{
-		if (strcmp (attribute->Name(), "create") != 0 && strcmp (attribute->Name(), "option") != 0) {
-			if (object->getOptions ()->setOptionValueFromString (attribute->Name (), attribute->Value ())) {
-				SSI_DBG (SSI_LOG_LEVEL_DEBUG, "%s: set option <'%s'='%s'>", element->Value (), attribute->Name(), attribute->Value ());
-			}
-		}
-		attribute = attribute->Next();
-	}
+	const ssi_char_t *create = element->Attribute("create");
+	IObject *object = Factory::CreateXML (element, auto_free);
 
 	if (_eboard && _eboard->RegisterSender (*object)) {
 		_start_eboard = true;
@@ -664,22 +643,7 @@ bool XMLPipeline::parseRunnable(TiXmlElement *element) {
 
 bool XMLPipeline::parseRegister (TiXmlElement *element) {
 
-	TiXmlElement *load = element->FirstChildElement ("load");
-	const ssi_char_t *name = 0;
-	do {
-		name = load->Attribute ("name");
-		if (!name) {
-			ssi_wrn ("register->load: attribute 'name' is missing");
-			return false;
-		}
-
-		SSI_DBG (SSI_LOG_LEVEL_DEBUG, "register->load: <name='%s'>", name);
-
-		_register_fptr (name, ssiout, ssimsg);
-
-	} while (load = load->NextSiblingElement ("load"));
-
-	return true;
+	return _register_fptr (element, ssiout, ssimsg);
 }
 
 bool XMLPipeline::parseListener (TiXmlElement *element) {
@@ -1255,6 +1219,8 @@ IConsumer *XMLPipeline::getConsumer (const ssi_char_t *name) {
 
 void XMLPipeline::clear () {
 
+	_variables.clear();
+	_consumer_map.clear();
 	_transformable_map.clear ();
 	_start_eboard = false;
 	for (ssi_size_t i = 0; i < _n_global_confpaths; i++) {

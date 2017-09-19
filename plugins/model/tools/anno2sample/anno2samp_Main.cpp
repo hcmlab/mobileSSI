@@ -141,7 +141,7 @@ int main (int argc, char **argv) {
                 {
                     // no delta with new annos?
                     anno.convertToFrames(frame,strlen(label) == 0 ? 0 : label,0.0 /*duration*/,percent);
-                    anno.extractSamples(n_streams, *streams, &samples, username);
+                    anno.extractSamples( *streams[0], &samples, username);
                 }
             }
         else
@@ -151,7 +151,7 @@ int main (int argc, char **argv) {
                 }
                 else
                 {
-                    anno.extractSamples(n_streams, *streams, &samples, username);
+                    anno.extractSamples( *streams[0], &samples, username);
                 }
             }
 

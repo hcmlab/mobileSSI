@@ -82,7 +82,9 @@ int main () {
 	Factory::Register(MyPrinter::GetCreateName(), MyPrinter::Create);
 	Factory::Register(PrintTime::GetCreateName(), PrintTime::Create);
 
-	ssi_random_seed ();
+#if SSI_RANDOM_LEGACY_FLAG	
+	ssi_random_seed();
+#endif
 
 	Exsemble ex;
 	ex.console(0, 0, CONSOLE_WIDTH, CONSOLE_HEIGHT);
@@ -737,12 +739,14 @@ bool ex_timeserver (void *arg) {
 
 bool ex_xml(void *arg) {
 
-	XMLPipeline *xmlpipe = ssi_create(XMLPipeline, 0, false);
-	xmlpipe->SetRegisterDllFptr(Factory::RegisterDLL);
+	Factory::SetDownloadDirs("file:///E:/openssi/bin/x64/vc140", ".\\");
+
+	XMLPipeline *xmlpipe = ssi_create(XMLPipeline, 0, false);	
+	xmlpipe->SetRegisterXMLFptr(Factory::RegisterXML);
 	xmlpipe->setLogLevel(SSI_LOG_LEVEL_DEBUG);
-	ssi_size_t n_confs = 3;
-	ssi_char_t *confs[] = { "global", "global2", "global3" };
-	xmlpipe->parse("my", 3, confs, true);
+	xmlpipe->addVariable("jobtime", "4");
+	ssi_char_t *confs[] = { "global", "global2", "global3", "title=CURSOR" };	
+	xmlpipe->parse("my", 4, confs, true);
 
 	ITheFramework *frame = Factory::GetFramework();
 
@@ -750,21 +754,27 @@ bool ex_xml(void *arg) {
 	frame->AddDecorator(decorator);
 
 	ITheEventBoard *eboard = 0;
-	if (xmlpipe->startEventBoard()) {
+	if (xmlpipe->startEventBoard()) 
+	{
 		eboard = Factory::GetEventBoard();
 	}
 
-	if (eboard) {
+	if (eboard) 
+	{
 		eboard->Start();
 	}
 	frame->Start();
 	frame->Wait();	
 	frame->Stop();
-	if (eboard) {
+	if (eboard) 
+	{
 		eboard->Stop();
 	}
 	frame->Clear();	
-	eboard->Clear();
+	if (eboard)
+	{
+		eboard->Clear();
+	}
 
 	delete xmlpipe;
 

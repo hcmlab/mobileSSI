@@ -26,8 +26,6 @@
 
 #include "Selector.h"
 
-#include "ssistdMinMaxWrapper.h"
-
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG
@@ -36,7 +34,10 @@
 		static char THIS_FILE[] = __FILE__;
 	#endif
 #endif
-
+#if __gnu_linux__
+using std::min;
+using std::max;
+#endif
 namespace ssi {
 
 Selector::Selector (const ssi_char_t *file) 
@@ -46,8 +47,8 @@ Selector::Selector (const ssi_char_t *file)
 	_file (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -56,7 +57,7 @@ Selector::Selector (const ssi_char_t *file)
 Selector::~Selector () {
 
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }

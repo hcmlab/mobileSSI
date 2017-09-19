@@ -38,6 +38,7 @@ using namespace ssi;
 	#endif
 #endif
 
+bool ex_binary(void *arg);
 bool ex_multiclass(void *arg);
 bool ex_regression(void *arg);
 
@@ -51,12 +52,15 @@ int main () {
 
 	Factory::RegisterDLL ("liblinear");
 
+#if SSI_RANDOM_LEGACY_FLAG
 	ssi_random_seed();
+#endif
 	
 	Exsemble ex;
 	ex.console(0, 0, 650, 800);
-	ex.add(ex_multiclass, 0, "MULTICLASS", "Simple multi-classification task");
-	ex.add(ex_regression, 0, "REGRESSION", "Simple regression task");
+	ex.add(ex_binary, 0, "BINARY", "Binary classification task");
+	ex.add(ex_multiclass, 0, "MULTICLASS", "Multi-classification task");
+	ex.add(ex_regression, 0, "REGRESSION", "Regression task");
 	ex.show();
 
 	Factory::Clear ();
@@ -67,6 +71,63 @@ int main () {
 #endif
 	
 	return 0;
+}
+
+bool ex_binary(void *arg) {
+
+	Trainer::SetLogLevel(SSI_LOG_LEVEL_DEBUG);
+
+	ssi_size_t n_classes = 2;
+	ssi_size_t n_samples = 1000;
+	ssi_size_t n_streams = 1;
+	ssi_real_t train_distr[][3] = { 0.25f, 0.25f, 0.1f, 0.75f, 0.75f, 0.1f };
+	ssi_real_t test_distr[][3] = { 0.5f, 0.5f, 0.5f };
+	SampleList strain;
+	SampleList sdevel;
+	SampleList stest;
+	ModelTools::CreateTestSamples(strain, n_classes, n_samples, n_streams, train_distr, "user");
+	ModelTools::CreateTestSamples(sdevel, n_classes, n_samples, n_streams, train_distr, "user");
+	ModelTools::CreateTestSamples(stest, 1, n_samples * n_classes, n_streams, test_distr, "user");
+	ssi_char_t string[SSI_MAX_CHAR];
+	for (ssi_size_t n_class = 1; n_class < n_classes; n_class++) {
+		ssi_sprint(string, "CL%u", n_class);
+		stest.addClassName(string);
+	}
+
+	// train
+	{
+		LibLinear *model = ssi_create(LibLinear, 0, true);
+		model->getOptions()->seed = 1234;
+		model->getOptions()->silent = false;
+		model->getOptions()->setParams("-s 0 -C -e 0.1 -B 0.1");
+
+		Trainer trainer(model);
+		ISNorm::Params params;
+		ISNorm::ZeroParams(params, ISNorm::METHOD::SCALE);
+		params.limits[0] = -1.0f;
+		params.limits[1] = 1.0f;
+		trainer.setNormalization(&params);
+		ModelTools::PlotSamples(strain, "TRAINING DATA", ssi_rect(640, 0, 400, 400));
+		ssi_tic();
+		trainer.train(strain);
+		ssi_print("\nELAPSED: ")
+			ssi_toc_print();
+		ssi_print("\n\n")
+			trainer.save("multiclass");
+		ISNorm::ReleaseParams(params);
+	}
+
+	// eval
+	{
+		Trainer trainer;
+		Trainer::Load(trainer, "multiclass");
+		trainer.eval(sdevel);
+		ModelTools::PlotSamples(stest, "TEST DATA", ssi_rect(640, 0, 400, 400));
+		trainer.cluster(stest);
+		ModelTools::PlotSamples(stest, "LABELED DATA", ssi_rect(640, 0, 400, 400));
+	}
+
+	return true;
 }
 
 bool ex_multiclass(void *arg) {

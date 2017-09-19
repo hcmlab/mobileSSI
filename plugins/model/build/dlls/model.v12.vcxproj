@@ -103,7 +103,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build\ssiml\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -127,7 +127,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build\ssiml\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -153,7 +153,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build\ssiml\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -180,7 +180,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build\ssiml\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\..\..\core\include;..\..\..\..\libs\build\alglib\include;..\..\..\..\libs\build;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -225,6 +225,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\AlgLibTools.h" />
     <ClInclude Include="..\..\include\Classifier.h" />
+    <ClInclude Include="..\..\include\ClassifierHelper.h" />
     <ClInclude Include="..\..\include\ClassifierT.h" />
     <ClInclude Include="..\..\include\Collector.h" />
     <ClInclude Include="..\..\include\DecisionSmoother.h" />
@@ -255,6 +256,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\source\AlgLibTools.cpp" />
     <ClCompile Include="..\..\source\Classifier.cpp" />
+    <ClCompile Include="..\..\source\ClassifierHelper.cpp" />
     <ClCompile Include="..\..\source\ClassifierT.cpp" />
     <ClCompile Include="..\..\source\Collector.cpp" />
     <ClCompile Include="..\..\source\DecisionSmoother.cpp" />

@@ -56,8 +56,8 @@ TheEventBoard::TheEventBoard (const ssi_char_t *file)
 	_file (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -77,7 +77,7 @@ TheEventBoard::~TheEventBoard () {
 	release ();
 	
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }
@@ -177,7 +177,7 @@ bool TheEventBoard::process (ssi_size_t n) {
 		for (ssi_size_t i = 0; i < n; i++) {			
 			if (e = _events->next ()) {
 				for (ssi_size_t j = 0; j < _listener.count (); j++) {
-					if (_ieselect[j]->check2 (*e, false)) {
+					if (_ieselect[j]->check (*e, false)) {
 						_concerns_listener[j]++;
 					}
 				}

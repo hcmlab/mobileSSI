@@ -61,7 +61,8 @@ public:
 	const ssi_char_t *getInfo () { return "Handles the interpretation and execution of a xml pipeline."; }
 	static IObject *Create (const char *file) {	return new XMLPipeline (); }
 
-	virtual void SetRegisterDllFptr (Factory::register_dll_fptr_t register_fptr) {
+	virtual void SetRegisterXMLFptr (Factory::register_xml_fptr_t register_fptr)
+	{
 		_register_fptr = register_fptr;
 	}
 	bool parse (const ssi_char_t *filepath, ssi_size_t n_confs = 0, ssi_char_t **confpaths = 0, bool savepipe = false, bool included = false);
@@ -71,11 +72,18 @@ public:
 	IConsumer *getConsumer (const ssi_char_t *name);
 	void clear ();
 
-	virtual void setExeDir (const ssi_char_t *exepath) {
-		ssi_strcpy (_dir_exe, exepath);
+	virtual void addTransformable(const ssi_char_t *pin, ITransformable *transformable)
+	{
+		_transformable_map[String(pin)] = transformable;
 	}
 
-	virtual bool startEventBoard () {
+	virtual void addVariable(const ssi_char_t *key, const ssi_char_t *value)
+	{
+		_variables[String(key)] = String(value);
+	}
+
+	virtual bool startEventBoard () 
+	{
 		return _start_eboard;
 	}
 
@@ -118,17 +126,16 @@ protected:
 	consumer_map_t _consumer_map;
 
 	ITheFramework *_frame;
-	Factory::register_dll_fptr_t *_register_fptr;
+	Factory::register_xml_fptr_t *_register_fptr;
 	ITheEventBoard *_eboard;
 	bool _start_eboard;
 
+	typedef std::map<String, String> variables_map_t;
+	typedef std::pair<String, String> variables_pair_t;
+	variables_map_t _variables;
 	ssi_size_t _n_global_confpaths;
 	ssi_char_t **_global_confpaths;
 	bool _savepipe;
-
-	ssi_char_t _dir_pipe[SSI_MAX_CHAR];
-	ssi_char_t _dir_exe[SSI_MAX_CHAR];
-	ssi_char_t _dir_work[SSI_MAX_CHAR];
 
 	ssi_char_t _date[ssi_time_size_friendly];
 
