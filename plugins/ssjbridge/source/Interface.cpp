@@ -80,7 +80,12 @@ DLLEXP long JNICALL Java_hcm_ssj_mobileSSI_SSI_create(JNIEnv *env, jobject thisO
     env->ReleaseStringUTFChars(libname, libname_cstr);
     env->ReleaseStringUTFChars(libpath, libpath_cstr);
 
-	return (long) obj;
+    if(obj == 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "SSJ_SSI_BRIDGE", "error creating SSI object");
+        return 0;
+    } else {
+        return (long) obj;
+    }
 }
 
 DLLEXP jboolean JNICALL Java_hcm_ssj_mobileSSI_SSI_setOption(JNIEnv *env, jobject thisObj, jlong ssiobj, jstring name, jstring value) {
