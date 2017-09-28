@@ -47,9 +47,11 @@ ELSEIF(UNIX)
   set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SSI_LD_FLAG}" )
   set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SSI_LD_FLAG}" )
   if(ANDROID)
-  set(MINGW_PTHREAD "")
+	set(MINGW_PTHREAD "")
+  	find_library (LOG log)
   else(ANDROID)
-  find_library (MINGW_PTHREAD "pthread" HINTS "/usr/lib" )
+	find_library (MINGW_PTHREAD "pthread" HINTS "/usr/lib" )
+  	set(LOG "")
   endif(ANDROID)
 ELSE(MINGW)
   SET(MINGW_WSOCKET "")
@@ -59,12 +61,11 @@ ELSE(MINGW)
 ENDIF(MINGW)
 
 add_library(ssissjbridge SHARED ${SRC_FILES} )
-target_link_libraries(ssissjbridge ssi ${MINGW_WSOCKET} ${MINGW_WMM} ${MINGW_WSOCKET2} ${MINGW_PTHREAD})
+target_link_libraries(ssissjbridge ssi ${MINGW_WSOCKET} ${MINGW_WMM} ${MINGW_WSOCKET2} ${MINGW_PTHREAD} ${LOG})
 
 
 #rename targets if debug
 if(ANDROID)
-
 else(ANDROID)
   set_target_properties(ssissjbridge PROPERTIES DEBUG_POSTFIX "d" PREFIX "")
 endif(ANDROID)

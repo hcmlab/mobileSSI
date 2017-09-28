@@ -7,6 +7,7 @@
 #endif
 
 #include <jni.h>
+#include <android/log.h>
 #include "ssi.h"
 
 DLLEXP long JNICALL Java_hcm_ssj_mobileSSI_SSI_clear(JNIEnv *env, jobject thisObj)
@@ -141,6 +142,7 @@ DLLEXP void JNICALL Java_hcm_ssj_mobileSSI_SSI_transform(JNIEnv *env, jobject th
     {
         default:
         case SSI_UNDEF:
+            __android_log_print(ANDROID_LOG_WARN, "SSJ_SSI_BRIDGE", "unsupported stream out type");
             break;
         case SSI_CHAR:
         {
@@ -151,11 +153,46 @@ DLLEXP void JNICALL Java_hcm_ssj_mobileSSI_SSI_transform(JNIEnv *env, jobject th
             ssi_stream_in.type = SSI_CHAR;
             break;
         }
+        case SSI_SHORT:
+        {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrS", "()[S");
+            jobject data = env->CallObjectMethod(ssj_stream_in, method_stream_ptr);
+            jshortArray arr = reinterpret_cast<jshortArray>(&data);
+            ssi_stream_in.ptr = (ssi_byte_t *) env->GetShortArrayElements(arr, NULL);
+            ssi_stream_in.type = SSI_SHORT;
+            break;
+        }
+        case SSI_INT:
+        {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrI", "()[I");
+            jobject data = env->CallObjectMethod(ssj_stream_in, method_stream_ptr);
+            jintArray arr = reinterpret_cast<jintArray>(&data);
+            ssi_stream_in.ptr = (ssi_byte_t *) env->GetIntArrayElements(arr, NULL);
+            ssi_stream_in.type = SSI_INT;
+            break;
+        }
+        case SSI_LONG:
+        {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrL", "()[J");
+            jobject data = env->CallObjectMethod(ssj_stream_in, method_stream_ptr);
+            jlongArray arr = reinterpret_cast<jlongArray>(&data);
+            ssi_stream_in.ptr = (ssi_byte_t *) env->GetLongArrayElements(arr, NULL);
+            ssi_stream_in.type = SSI_LONG;
+            break;
+        }
         case SSI_FLOAT: {
             jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrF", "()[F");
             jobject data = env->CallObjectMethod(ssj_stream_in, method_stream_ptr);
             jfloatArray arr = reinterpret_cast<jfloatArray>(data);
             ssi_stream_in.ptr = (ssi_byte_t *) env->GetFloatArrayElements(arr, NULL);
+            ssi_stream_in.type = SSI_FLOAT;
+            break;
+        }
+        case SSI_DOUBLE: {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrD", "()[D");
+            jobject data = env->CallObjectMethod(ssj_stream_in, method_stream_ptr);
+            jdoubleArray arr = reinterpret_cast<jdoubleArray>(data);
+            ssi_stream_in.ptr = (ssi_byte_t *) env->GetDoubleArrayElements(arr, NULL);
             ssi_stream_in.type = SSI_FLOAT;
             break;
         }
@@ -177,9 +214,9 @@ DLLEXP void JNICALL Java_hcm_ssj_mobileSSI_SSI_transform(JNIEnv *env, jobject th
     /*
      * TRANSFORM THE DATA
      */
-    ITransformer::info tinfo; //todo
-    tinfo.delta_num = 0;
-    tinfo.frame_num = 0;
+    ITransformer::info tinfo;
+    tinfo.frame_num = (ssi_size_t)env->GetIntField(ssj_stream_in, env->GetFieldID(class_stream, "num_frame", "I"));
+    tinfo.delta_num = (ssi_size_t)env->GetIntField(ssj_stream_in, env->GetFieldID(class_stream, "num_delta", "I"));
     tinfo.time = ssi_stream_in.time;
 
     transformer->transform(tinfo, ssi_stream_in, ssi_stream_out);
@@ -191,6 +228,7 @@ DLLEXP void JNICALL Java_hcm_ssj_mobileSSI_SSI_transform(JNIEnv *env, jobject th
     {
         default:
         case SSI_UNDEF:
+            __android_log_print(ANDROID_LOG_WARN, "SSJ_SSI_BRIDGE", "unsupported stream in type");
             break;
         case SSI_CHAR:
         {
@@ -200,12 +238,42 @@ DLLEXP void JNICALL Java_hcm_ssj_mobileSSI_SSI_transform(JNIEnv *env, jobject th
             env->SetByteArrayRegion(arr, 0, ssi_stream_out.num * ssi_stream_out.dim, (jbyte*)ssi_stream_out.ptr);
             break;
         }
+        case SSI_SHORT:
+        {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrS", "()[S");
+            jobject data = env->CallObjectMethod(ssj_stream_out, method_stream_ptr);
+            jshortArray arr = reinterpret_cast<jshortArray>(&data);
+            env->SetShortArrayRegion(arr, 0, ssi_stream_out.num * ssi_stream_out.dim, (jshort*)ssi_stream_out.ptr);
+            break;
+        }
+        case SSI_INT:
+        {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrI", "()[I");
+            jobject data = env->CallObjectMethod(ssj_stream_out, method_stream_ptr);
+            jintArray arr = reinterpret_cast<jintArray>(&data);
+            env->SetIntArrayRegion(arr, 0, ssi_stream_out.num * ssi_stream_out.dim, (jint*)ssi_stream_out.ptr);
+            break;
+        }
+        case SSI_LONG:
+        {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrL", "()[J");
+            jobject data = env->CallObjectMethod(ssj_stream_out, method_stream_ptr);
+            jlongArray arr = reinterpret_cast<jlongArray>(&data);
+            env->SetLongArrayRegion(arr, 0, ssi_stream_out.num * ssi_stream_out.dim, (jlong*)ssi_stream_out.ptr);
+            break;
+        }
         case SSI_FLOAT: {
             jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrF", "()[F");
             jobject data = env->CallObjectMethod(ssj_stream_out, method_stream_ptr);
             jfloatArray arr = reinterpret_cast<jfloatArray>(data);
             env->SetFloatArrayRegion(arr, 0, ssi_stream_out.num * ssi_stream_out.dim, (float*)ssi_stream_out.ptr);
-
+            break;
+        }
+        case SSI_DOUBLE: {
+            jmethodID method_stream_ptr = env->GetMethodID(class_stream, "ptrD", "()[D");
+            jobject data = env->CallObjectMethod(ssj_stream_out, method_stream_ptr);
+            jdoubleArray arr = reinterpret_cast<jdoubleArray>(data);
+            env->SetDoubleArrayRegion(arr, 0, ssi_stream_out.num * ssi_stream_out.dim, (double*)ssi_stream_out.ptr);
             break;
         }
     }
