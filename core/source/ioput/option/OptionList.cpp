@@ -32,8 +32,7 @@ namespace ssi {
 ssi_char_t *OptionList::ssi_log_name = "options___";
 const ssi_char_t OptionList::SEPARATOR = ',';
 
-OptionList::OptionList () 
-: _readOnly(false) {
+OptionList::OptionList () {
 }
 
 OptionList::~OptionList () {
@@ -205,7 +204,7 @@ FILE *OptionList::OpenXML (const ssi_char_t *filepath) {
 	return file;
 }
 
-bool OptionList::LoadXML (const ssi_char_t *filepath, IOptions *list) {
+bool OptionList::LoadXML (const ssi_char_t *filepath, IOptions &list) {
 
 	FILE *file = OpenXML (filepath);
 	bool success = false;
@@ -216,13 +215,7 @@ bool OptionList::LoadXML (const ssi_char_t *filepath, IOptions *list) {
 	return success;
 }
 
-bool OptionList::SaveXML (const ssi_char_t *filepath, IOptions *list) {
-
-	if (list->isReadOnly())
-	{
-		ssi_msg(SSI_LOG_LEVEL_WARNING, "skip save, list is readonly '%s'", filepath);
-		return false;
-	}
+bool OptionList::SaveXML (const ssi_char_t *filepath, IOptions &list) {
 
 	FilePath fp (filepath);
 	ssi_char_t *filepath_with_ext = 0;
@@ -269,7 +262,7 @@ bool OptionList::SetOptionValueInPlace (const ssi_char_t *filepath,
 	if (file) {
 		
 		TiXmlDocument doc;
-		doc.LoadFile (file, false);
+		doc.LoadFile (file);
 
 		TiXmlElement *body = doc.FirstChildElement();	
 		if (body && strcmp (body->Value (), "options") == 0) {
@@ -296,27 +289,16 @@ bool OptionList::SetOptionValueInPlace (const ssi_char_t *filepath,
 	return success;
 }
 
-bool OptionList::LoadXML (FILE *file, IOptions *list) {
+bool OptionList::LoadXML (FILE *file, IOptions &list) {
 
 	TiXmlDocument doc;
-	doc.LoadFile (file, false);
+	doc.LoadFile (file);
 
 	TiXmlElement *body = doc.FirstChildElement();	
 	if (!body || strcmp (body->Value (), "options") != 0) {
 		ssi_wrn ("tag <options> missing");
 		return false;	
 	}
-
-	bool readOnly = false;
-	const ssi_char_t *readOnlyStr = 0;
-	if (readOnlyStr = body->Attribute("readOnly"))
-	{
-		if (ssi_strcmp(readOnlyStr, "true", false))
-		{
-			readOnly = true;
-		}
-	}
-	list->setReadOnly(readOnly);
 
 	TiXmlElement *item = body->FirstChildElement ();
 	for ( item; item; item = item->NextSiblingElement()) {
@@ -327,7 +309,7 @@ bool OptionList::LoadXML (FILE *file, IOptions *list) {
 		}
 
 		const ssi_char_t *name = item->Attribute ("name");
-		ssi_option_t *o = list->getOption (name);
+		ssi_option_t *o = list.getOption (name);
 		if (o) {						
 			ssi_type_t type = SSI_UNDEF;
 			ssi_name2type (item->Attribute ("type"), type);
@@ -358,12 +340,12 @@ bool OptionList::LoadXML (FILE *file, IOptions *list) {
 	return true;
 }
 
-bool OptionList::LoadBinary (FILE *file, IOptions *list) {
+bool OptionList::LoadBinary (FILE *file, IOptions &list) {
 
 	std::vector<ssi_option_t *>::iterator iter;
-	for (ssi_size_t i = 0; i < list->getSize (); i++) {
+	for (ssi_size_t i = 0; i < list.getSize (); i++) {
 
-		ssi_option_t &option = *list->getOption (i);
+		ssi_option_t &option = *list.getOption (i);
 		ssi_size_t res = ssi_cast (ssi_size_t, fread (option.ptr, ssi_type2bytes(option.type), option.num, file));
 		if(res != option.num)
 			ssi_wrn ("fread() failed");
@@ -371,7 +353,7 @@ bool OptionList::LoadBinary (FILE *file, IOptions *list) {
 	return true;
 }
 
-bool OptionList::SaveXML (FILE *file, IOptions *list) {
+bool OptionList::SaveXML (FILE *file, IOptions &list) {
 
 	TiXmlDocument doc;
 
@@ -379,9 +361,9 @@ bool OptionList::SaveXML (FILE *file, IOptions *list) {
 	doc.InsertEndChild (head);
 	TiXmlElement body ("options");	
 	std::vector<ssi_option_t *>::iterator iter;
-	for (ssi_size_t i = 0; i < list->getSize (); i++) {
+	for (ssi_size_t i = 0; i < list.getSize (); i++) {
 		TiXmlElement item ("item" );
-		ssi_option_t &option = *list->getOption (i);
+		ssi_option_t &option = *list.getOption (i);
 		item.SetAttribute ("name", option.name);								
 		item.SetAttribute ("type", SSI_TYPE_NAMES[option.type]);		
 		item.SetAttribute ("num", option.num);
@@ -398,12 +380,12 @@ bool OptionList::SaveXML (FILE *file, IOptions *list) {
 	return true;
 }
 
-bool OptionList::SaveBinary (FILE *file, IOptions *list) {
+bool OptionList::SaveBinary (FILE *file, IOptions &list) {
 
 	std::vector<ssi_option_t *>::iterator iter;
-	for (ssi_size_t i = 0; i < list->getSize (); i++) {
+	for (ssi_size_t i = 0; i < list.getSize (); i++) {
 
-		ssi_option_t &option = *list->getOption (i);
+		ssi_option_t &option = *list.getOption (i);
 		ssi_size_t res = ssi_cast (ssi_size_t, fwrite (option.ptr, ssi_type2bytes(option.type), option.num, file));
 		if(res != option.num)
 			ssi_wrn ("fwrite() failed");
@@ -524,6 +506,11 @@ bool OptionList::FromString (const ssi_char_t *str, ssi_option_t &option) {
 		}
 
 		++token_end;
+
+		if ((*token_end == '\0' && i != option.num-1) || (i == option.num-1 && *token_end != '\0'))  {
+			ssi_wrn ("number of tokens does not match");
+			return false;
+		}
 	}
 
 	return true;
@@ -688,16 +675,6 @@ void OptionList::lock(){
 
 void OptionList::unlock(){
 	_mutex.release();
-}
-
-bool OptionList::isReadOnly()
-{
-	return _readOnly;
-}
-
-void OptionList::setReadOnly(bool toggle)
-{
-	_readOnly = toggle;
 }
 
 }
