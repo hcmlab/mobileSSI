@@ -59,7 +59,8 @@ void createStream(JNIEnv *env, jobject ssj_stream, ssi_stream_t& ssi_stream)
     jdouble time = env->GetDoubleField(ssj_stream, env->GetFieldID(class_stream, "time", "D"));
 
     ssi_stream_init(ssi_stream, 0, (ssi_size_t)dim, (ssi_size_t)bytes, SSI_UNDEF, sr, time);
-    ssi_stream.num = (ssi_size_t)num;
+    ssi_stream.num_real = ssi_stream.num = (ssi_size_t)num;
+    ssi_stream.tot_real = ssi_stream.tot = (ssi_size_t)(num*dim*bytes);
 
     jfieldID field_stream_type = env->GetFieldID(class_stream, "type", "Lhcm/ssj/core/Cons$Type;");
     jobject ssj_type = env->GetObjectField(ssj_stream, field_stream_type);
