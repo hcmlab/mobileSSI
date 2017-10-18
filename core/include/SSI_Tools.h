@@ -1029,7 +1029,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			ssi_char_t *ptr = ssi_pcast (ssi_char_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr++));
+					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr));
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1039,7 +1040,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			ssi_uchar_t *ptr = ssi_pcast (ssi_uchar_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr++));
+					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr));
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 				}
@@ -1049,7 +1051,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			int16_t *ptr = ssi_pcast (int16_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr++));
+					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr));
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1059,7 +1062,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			uint16_t *ptr = ssi_pcast (uint16_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%u ", ssi_cast (uint32_t, *ptr++));
+					ssi_fprint (file, "%u ", ssi_cast (uint32_t, *ptr));
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1069,7 +1073,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			int32_t *ptr = ssi_pcast (int32_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", *ptr++);
+					ssi_fprint (file, "%d ", *ptr);
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1079,7 +1084,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			uint32_t *ptr = ssi_pcast (uint32_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%u ", *ptr++);
+					ssi_fprint (file, "%u ", *ptr);
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1089,7 +1095,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			int64_t *ptr = ssi_pcast (int64_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%I64d ", *ptr++);
+					ssi_fprint (file, "%jd ", *ptr);
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1100,7 +1107,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
 #if __gnu_linux__
-					ssi_fprint (file, "%llu ", *ptr++);
+					ssi_fprint (file, "%llu ", *ptr);
+					ptr++;
 #else
 					ssi_fprint(file, "%I64u ", *ptr++);
 #endif
@@ -1113,7 +1121,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			float *ptr = ssi_pcast (float, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%f ", *ptr++);
+					ssi_fprint (file, "%f ", *ptr);
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1123,7 +1132,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			double *ptr = ssi_pcast (double, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%lf ", *ptr++);
+					ssi_fprint (file, "%lf ", *ptr);
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1133,7 +1143,8 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			bool *ptr = ssi_pcast (bool, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%s ", *ptr++ ? "true" : "false");
+					ssi_fprint (file, "%s ", *ptr ? "true" : "false");
+					ptr++;
 				}
 				ssi_fprint (file, "\n");
 			}

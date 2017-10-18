@@ -67,7 +67,7 @@ add_subdirectory(frame)
 add_dependencies(ssiframe ssi )
 
 add_subdirectory(ioput)
-add_dependencies(ssiioput ssi )
+add_dependencies(ssiioput ssi ssiml)
 
 if(ANDROID)
 	add_subdirectory(androidSensors)

@@ -60,6 +60,7 @@ set(COMMON_SRC_FILES
 source/AlgLibTools.cpp
 #source/BufferWriter.cpp
 source/Classifier.cpp
+source/ClassifierHelper.cpp
 source/ClassifierT.cpp
 source/DecisionSmoother.cpp
 source/Collector.cpp

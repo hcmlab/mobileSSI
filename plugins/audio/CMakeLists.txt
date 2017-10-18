@@ -69,6 +69,7 @@ source/VoiceActivityVerifier.cpp
 source/AudioLpc.cpp
 source/AudioConvert.cpp
 source/AudioIntensity.cpp
+source/AudioNoiseGate.cpp
 source/ExportMain.cpp
 source/PreEmphasis.cpp
 source/SNRatio.cpp

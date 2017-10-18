@@ -352,7 +352,7 @@ __android_log_print(ANDROID_LOG_INFO, APPNAME, "#########5.1#######");
 		return;
 		
 	}
-	xmlpipe->SetRegisterDllFptr (Factory::RegisterDLL);
+	xmlpipe->SetRegisterXMLFptr (Factory::RegisterXML);
         __android_log_print(ANDROID_LOG_INFO, APPNAME, "#########5.5#######");
         __android_log_print(ANDROID_LOG_INFO, APPNAME, "%s", pipepath);
         __android_log_print(ANDROID_LOG_INFO, APPNAME, "%s", filepath);

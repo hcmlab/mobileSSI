@@ -26,6 +26,7 @@ include_directories()
 
 add_subdirectory(ExpressionParser)
 add_subdirectory(kissfft)
+add_dependencies(kissFFT ssi)
 add_subdirectory(AlgLib)
 add_subdirectory(ssiml)
 add_subdirectory(MlpXml)
