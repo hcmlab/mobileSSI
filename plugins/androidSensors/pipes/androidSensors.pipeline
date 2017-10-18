@@ -4,27 +4,19 @@
 	<register>
 		<load name="ssisignal"/>
 		<load name="ssiioput"/>
-		<load name="ssiaudio"/>
 		<load name="ssiandroidsensors"/>
+		<load name="ssiframe"/>
 	</register>
 	
-	
-	
-	<!-- audio sensor -->
+	<sensor create="AndSensors" sr="25">
+		<output channel="accelerometer" pin="acc"/>
+	</sensor>	
 
-	
-	<thread create="s_AndSensors" ></thread>
 
-	
-	<object create="FileEventWriter" >
-		<listen address="@"/>
-	</object>
-	
-	<!-- decoration -->
-	<object create="Decorator" icon="true" title="Pipeline">
-		<area pos="0,0,400,600">console</area>
-		<area pos="400,0,400,600">plot*</area>
-		<area pos="800,0,400,600">monitor*</area>
-	</object>
+	<consumer create="FileWriter" type="1" path="./record/streams/acc_raw">
+		<input pin="acc" frame="2.0s"/>			
+	</consumer>
+
+
 
 </pipeline>
