@@ -62,6 +62,7 @@ source/AlgLibTools.cpp
 source/Classifier.cpp
 source/ClassifierHelper.cpp
 source/ClassifierT.cpp
+source/OnlineClassifier.cpp
 source/DecisionSmoother.cpp
 source/Collector.cpp
 source/Dollar1.cpp
@@ -82,6 +83,7 @@ source/LDA.cpp
 #source/MlpXmlExportMain.cpp
 #source/MlpXmlTrain.cpp
 source/NaiveBayes.cpp
+source/OnlineNaiveBayes.cpp
 source/PCA.cpp
 source/RandomFusion.cpp
 source/Rank.cpp
