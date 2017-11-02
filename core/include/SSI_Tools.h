@@ -391,7 +391,7 @@ SSI_INLINE static void  ssi_sleep(int32_t ms)
 #else
 SSI_INLINE static void  ssi_sleep(int32_t ms)
 {
-    std::this_thread::sleep_for(std::chrono::microseconds(ms));
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 #endif
 
