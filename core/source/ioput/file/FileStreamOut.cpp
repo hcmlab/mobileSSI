@@ -28,6 +28,7 @@
 #include "ioput/xml/tinyxml.h"
 #include "ioput/file/FilePath.h"
 #include "SSI_SkeletonCons.h"
+#include <inttypes.h>
 
 namespace ssi {
 
@@ -233,11 +234,20 @@ bool FileStreamOut::write (ssi_stream_t &data,
 		
 		if (!continued) {
 			if (_sample_count == 0) {
+    #if _WIN32||_WIN64
 				ssi_sprint (_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%I64u\" num=\"%u\"/>", data.time, data.time + data.num * (1.0/data.sr), _file_data->tell (), data.num);					
-			} else {			
+    #else
+                ssi_sprint (_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%"PRId64"\" num=\"%u\"/>", data.time, data.time + data.num * (1.0/data.sr), _file_data->tell (), data.num);
+    #endif
+
+            } else {
 				_sample_count += data.num;
+    #if _WIN32||_WIN64
 				ssi_sprint (_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%I64u\" num=\"%u\"/>", _last_time, _last_time + _sample_count * (1.0/data.sr), _last_byte,_sample_count);					
-				_sample_count = 0;
+    #else
+                ssi_sprint (_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%"PRId64"\" num=\"%u\"/>", _last_time, _last_time + _sample_count * (1.0/data.sr), _last_byte,_sample_count);
+    #endif
+                _sample_count = 0;
 			}
 			_file_info->writeLine (_string);		
 		} else {
