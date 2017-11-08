@@ -31,6 +31,7 @@
 
 #include "Collector.h"
 #include "Classifier.h"
+#include "OnlineClassifier.h"
 #include "ClassifierT.h"
 #include "SimpleKNN.h"
 #include "KNearestNeighbors.h"
@@ -38,6 +39,7 @@
 #include "SimpleFusion.h"
 #include "SVM.h"
 #include "NaiveBayes.h"
+#include "OnlineNaiveBayes.h"
 #include "Relief.h"
 #include "Rank.h"
 #include "FloatingSearch.h"
