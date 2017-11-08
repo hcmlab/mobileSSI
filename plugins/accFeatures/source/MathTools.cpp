@@ -25,8 +25,8 @@
 //*************************************************************************************************
 
 #include "MathTools.h"
-#include <math.h>
-#include <float.h>
+#include <cmath>
+#include <cfloat>
 
 namespace ssi {
 	
@@ -111,22 +111,25 @@ namespace ssi {
 	*/
 	float MathTools::GetMedian(std::vector<float> values)
 	{
-		float median;
+		float median = 0;
+        std::vector<float> values2;
+        for(float x: values)
+            values2.push_back(x);
 
-		std::sort(values.begin(), values.end());
-		int n = static_cast<int>(values.size());
+        std::sort(values2.begin(), values2.end());
+        int n = static_cast<int>(values2.size());
 
 		if (n > 0)
 		{
 			if (n % 2 == 0)
 			{
 				// Even
-				median = (values[n / 2 - 1] + values[n / 2]) / 2.0f;
+                median = (values2[n / 2 - 1] + values2[n / 2]) / 2.0f;
 			}
 			else
 			{
-				// odd
-				median = values[(n - 1) / 2];
+				// Odd
+                median = values2[(n - 1) / 2];
 			}
 		}
 
@@ -204,5 +207,158 @@ namespace ssi {
 	float MathTools::GetRange(std::vector<float> values)
 	{
 		return MathTools::GetMax(values) - MathTools::GetMin(values);
+	}
+
+	/*
+	* Calculates the variance of all values
+	*/
+	float MathTools::GetVariance(std::vector<float> values)
+	{
+		float variance = 0;
+		float mean = MathTools::GetMean(values);
+
+		if (values.size() > 0)
+		{
+			for (size_t i = 0; i < values.size(); i++)
+			{
+				variance += pow(values[i] - mean, 2);
+			}
+
+			variance = variance / static_cast<float>(values.size());
+		}
+
+		return variance;
+	}
+
+	/*
+	* Calculates the root mean square
+	*/
+	float MathTools::GetRMS(std::vector<float> values)
+	{
+		float rms = 0;
+
+		if (values.size() > 0)
+		{
+			for (size_t i = 0; i < values.size(); i++)
+			{
+				rms += pow(values[i], 2);
+			}
+
+			rms = sqrt(rms / static_cast<float>(values.size()));
+		}
+
+		return rms;
+	}
+
+	/*
+	* Calculates the mean absolute deviation of all values
+	*/
+	float MathTools::GetMAD(std::vector<float> values)
+	{
+		float mad = 0;
+		float mean = MathTools::GetMean(values);
+
+		if (values.size() > 0)
+		{
+			for (size_t i = 0; i < values.size(); i++)
+			{
+#if __ANDROID_API__
+                mad += fabs(values[i] - mean);
+#else
+				mad += abs(values[i] - mean);
+#endif
+			}
+
+			mad = sqrt(mad / static_cast<float>(values.size()));
+		}
+
+		return mad;
+	}
+
+	/*
+	* Calculates the interquartile range
+	*/
+	float MathTools::GetIQR(std::vector<float> values)
+	{
+		float iqr = 0;
+
+		std::sort(values.begin(), values.end());
+		int n = static_cast<int>(values.size());
+
+		std::vector<float> lowerPercentile;
+		std::vector<float> upperPercentile;
+
+		if (n > 0)
+		{
+			if (n % 2 == 0)
+			{
+				// Even
+				for (size_t i = 0; i < n; i++)
+				{
+					if (i < n / 2)
+					{
+						lowerPercentile.push_back(values[i]);
+					}
+					else
+					{
+						upperPercentile.push_back(values[i]);
+					}
+				}
+			}
+			else
+			{
+				// Odd
+				for (size_t i = 0; i < n; i++)
+				{
+					if (i < (n - 1) / 2)
+					{
+						lowerPercentile.push_back(values[i]);
+					}
+
+					// Exclude median
+					
+					if (i > (n - 1) / 2)
+					{
+						upperPercentile.push_back(values[i]);
+					}
+				}
+			}
+
+			iqr = GetMedian(upperPercentile) - GetMedian(lowerPercentile);
+		}
+
+		return iqr;
+	}
+
+	/*
+	* Calculates the crest factor
+	*/
+	float MathTools::GetCrest(std::vector<float> values)
+	{
+		float crest = 0;
+		float peak = 0;
+		float rms = MathTools::GetRMS(values);
+
+		for (size_t i = 0; i < values.size(); i++)
+		{
+#if __ANDROID_API__
+            if (fabs(values[i]) > peak)
+            {
+                peak = fabs(values[i]);
+            }
+#else
+			if (abs(values[i]) > peak)
+			{
+				peak = abs(values[i]);
+			}
+#endif
+		}
+
+		if (rms > 0)
+		{
+			crest = peak / rms;
+		}
+
+		return crest;
 	}
 }

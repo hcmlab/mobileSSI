@@ -45,7 +45,11 @@ public:
 	static float GetSkew(const std::vector<float> values);
 	static float GetKurtosis(const std::vector<float> values);
 	static float GetRange(const std::vector<float> values);
-	
+	static float GetVariance(const std::vector<float> values);
+	static float GetRMS(const std::vector<float> values);
+	static float GetMAD(const std::vector<float> values);
+	static float GetIQR(const std::vector<float> values);
+	static float GetCrest(const std::vector<float> values);
 };
 
 }

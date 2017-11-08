@@ -43,7 +43,11 @@ IF(SSI_GUI STREQUAL "SDL")
 	endif(UNIX)
 endif(SSI_GUI STREQUAL "SDL")
 
-include_directories(include ../../core/include/ioput/socket ../../core/include/ioput ../../core/include ../ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
+include_directories(include
+                    ../../core/include/ioput/socket
+                    ../../core/include/ioput
+                    ../../core/include/
+                    ../ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 
 set(COMMON_SRC_FILES
 
@@ -51,7 +55,7 @@ set(COMMON_SRC_FILES
 source/ExportMain.cpp
 source/MathTools.cpp
 source/SearchFeaturesHead.cpp
-
+source/StreamTransformer.cpp
 
 )
  IF(SSI_GUI STREQUAL "SDL")

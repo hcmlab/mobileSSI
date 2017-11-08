@@ -54,7 +54,6 @@ namespace ssi {
             OptionList::SaveXML(_file, &_options);
 			delete[] _file;
 		}
-
 	}
 
 	void StreamTransformer::transform_enter(ssi_stream_t &stream_in,
