@@ -219,7 +219,7 @@ ELSE(MINGW)
 ENDIF(MINGW)
 
 
-add_library(ssi STATIC ${SRC_FILES})
+add_library(ssi SHARED ${SRC_FILES})
 IF(UNIX)
    IF(SSI_GUI STREQUAL "SDL")
         target_link_libraries(ssi ${MINGW_PTHREAD} ${SDL2TTF_LIBRARIES} ${SDL2_LIBRARIES} -ldl)

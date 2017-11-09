@@ -201,7 +201,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *pjvm, void *reserved) {
         if (jVM->GetEnv( (void**) env, JNI_VERSION_1_4) != JNI_OK)
         {
 
-            jVM->AttachCurrentThread( (void**) env, NULL);
+            jVM->AttachCurrentThread(env, NULL);
 
             if (jVM->GetEnv( (void**) env, JNI_VERSION_1_4) != JNI_OK)
             {
