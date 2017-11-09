@@ -311,7 +311,7 @@ namespace ssi
 		if (_elistener)
 		{
 
-                if(_options.activeSensors[0]||_options.activeSensors[1]||_options.activeSensors[2])
+                //if(_options.activeSensors[0]||_options.activeSensors[1]||_options.activeSensors[2])
                     _elistener->update(_event_batt);
 				
 		}
