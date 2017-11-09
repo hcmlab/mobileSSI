@@ -111,10 +111,23 @@ ENDIF(MINGW)
 #link_directories(../staticLib/)
 add_library(ssifftw-android SHARED ${SRC_FILES} )
 if(ANDROID)
-target_link_libraries(ssifftw-android  ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/fftw-android/staticLib/libfftw3.a
-				      android log zip ssiml ssi ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
+
+    if( CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a" )
+
+        target_link_libraries(ssifftw-android  ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/fftw-android/staticLib/libfftw3.a
+                              android log zip ssiml ssi ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
+
+        elseif( CMAKE_ANDROID_ARCH_ABI STREQUAL "x86" )
+
+        target_link_libraries(ssifftw-android  ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/fftw-android/staticLibx86/libfftw3.a
+                              android log zip ssiml ssi ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
+
+    endif( CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a" )
+
 else(ANDROID)
+
 target_link_libraries(ssifftw-android ssi -lfftw3 ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
+
 endif(ANDROID)
 
 #add_executable(myapp main.c)
