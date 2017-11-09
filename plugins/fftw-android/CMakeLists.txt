@@ -114,12 +114,12 @@ if(ANDROID)
 
     if( CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a" )
 
-        target_link_libraries(ssifftw-android  ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/fftw-android/staticLib/libfftw3.a
+        target_link_libraries(ssifftw-android  ${CMAKE_SOURCE_DIR}/plugins/fftw-android/staticLib/libfftw3.a
                               android log zip ssiml ssi ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
 
         elseif( CMAKE_ANDROID_ARCH_ABI STREQUAL "x86" )
 
-        target_link_libraries(ssifftw-android  ${CMAKE_SOURCE_DIR}/mobileSSI/plugins/fftw-android/staticLibx86/libfftw3.a
+        target_link_libraries(ssifftw-android  ${CMAKE_SOURCE_DIR}/plugins/fftw-android/staticLibx86/libfftw3.a
                               android log zip ssiml ssi ${MINGW_WSOCKET}  ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} )
 
     endif( CMAKE_ANDROID_ARCH_ABI STREQUAL "armeabi-v7a" )
