@@ -79,6 +79,11 @@ if(ANDROID)
 	add_subdirectory(ssjbridge)
 	add_dependencies(ssissjbridge ssi )
 
+	if(OPENSSI_BUILD_FFTW)
+		add_subdirectory(fftw-android)
+		add_dependencies(ssifftw-android ssi )
+	endif(OPENSSI_BUILD_FFTW)
+
 else(ANDROID)
 
 	IF(WIN32)
@@ -88,10 +93,6 @@ else(ANDROID)
 		add_subdirectory(graphic)
 		add_dependencies(ssigraphic ssi )
 	endif(SSI_GUI STREQUAL "SDL")
-
-
-        add_subdirectory(androidJavaSensors)
-        add_dependencies(ssiandroidjavasensors ssiframe ssi )
 
 
 	if(OPENSSI_BUILD_MOUSE)
@@ -227,11 +228,6 @@ if(OPENSSI_BUILD_TENSORFLOW)
         add_subdirectory(tensorflow)
         add_dependencies(ssitensorflow ssi )
 endif(OPENSSI_BUILD_TENSORFLOW)
-	
-if(OPENSSI_BUILD_FFTW)
-	add_subdirectory(fftw-android)
-	add_dependencies(ssifftw-android ssi )
-endif(OPENSSI_BUILD_FFTW)
 
 IF(SSI_GUI STREQUAL "SDL")
 else(SSI_GUI STREQUAL "SDL")
