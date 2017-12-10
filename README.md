@@ -16,7 +16,7 @@ mobileSSI is a port of the [Social Signal Interpretation (SSI) framework](http:/
 Please see our [Github Wiki](https://github.com/hcmlab/mobileSSI/wiki) to get started with mobileSSI.
 
 ## Simple setup with Docker
-If you just want to try mobileSSI on your Linux PC oder Raspberry Pi you can also try our Docker images that can also be used for compiling mobileSSI: [Wiki](https://github.com/hcmlab/mobileSSI/wiki/mobileSSI-with-Docker%3A-run)
+If you just want to try mobileSSI on your Linux PC oder Raspberry Pi you can try our Docker images that can also be used for compiling mobileSSI: [Wiki](https://github.com/hcmlab/mobileSSI/wiki/mobileSSI-with-Docker%3A-run)
 
 ## About
 The mobileSSI framework is beeing developed at the [Lab for Human Centered Multimedia](http://www.hcm-lab.de/) of the [University of Augsburg](http://www.uni-augsburg.de/).
