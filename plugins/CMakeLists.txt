@@ -53,6 +53,8 @@ option(OPENSSI_BUILD_LIBLINEARINCDEC "Build liblinear incremental plugin" OFF)
 option(OPENSSI_BUILD_TENSORFLOW "Build Tensorflow plugin" OFF)
 option(OPENSSI_BUILD_FFTW "Build FFTW plugin" ON)
 
+option(OPENSSI_BUILD_BIOSIG "Build Biosig plugin" OFF)
+
 
 
 include_directories()
@@ -127,18 +129,26 @@ else(ANDROID)
 	endif(OPENSSI_BUILD_IMAGE)
 	
 
-if(OPENSSI_BUILD_SENSINGTEX)
-    add_subdirectory(sensingtex)
-    add_dependencies(ssisensingtex ssi serial)
-endif(OPENSSI_BUILD_SENSINGTEX)
+	if(OPENSSI_BUILD_SENSINGTEX)
+	    add_subdirectory(sensingtex)
+	    add_dependencies(ssisensingtex ssi serial)
+	endif(OPENSSI_BUILD_SENSINGTEX)
 
-if(OPENSSI_BUILD_PRESSUREMATRIX)
-    add_subdirectory(pressurematrix)
-    add_dependencies(ssipressurematrix ssi serial)
-endif(OPENSSI_BUILD_PRESSUREMATRIX)
+
+	if(OPENSSI_BUILD_PRESSUREMATRIX)
+	    add_subdirectory(pressurematrix)
+	    add_dependencies(ssipressurematrix ssi serial)
+	endif(OPENSSI_BUILD_PRESSUREMATRIX)
 
 
 endif(ANDROID)
+
+
+
+if(OPENSSI_BUILD_BIOSIG)
+	add_subdirectory(biosig)
+	add_dependencies(ssibiosig ssi )
+endif(OPENSSI_BUILD_BIOSIG)
 
 
 if(OPENSSI_BUILD_WEBSOCKET)
