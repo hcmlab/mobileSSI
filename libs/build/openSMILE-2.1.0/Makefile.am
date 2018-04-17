@@ -121,13 +121,15 @@ SMILELIB_SOURCES=\
 	src/rnn/rnnVad2.cpp \
 	src/smileutil/smileUtil.cpp \
 	src/smileutil/smileUtilSpline.cpp \
-	src/video/openCVSource.cpp
+	src/video/openCVSource.cpp\
+	src/ssi/ssi/ssiSink.cpp\
+	src/ssi/ssi/ssiSource.cpp
 	
 
 
   SMILE_SOURCES=$(SMILELIB_SOURCES)
 
-  SMILE_CPPFLAGS = -Isrc/include -Iprogsrc/include $(SEMAINEAPI_CPPFLAGS) $(PORTAUDIO_CPPFLAGS) $(OPENCV_CPPFLAGS) -ggdb $(PTHREAD_CFLAGS)
+  SMILE_CPPFLAGS = -Isrc/include -Isrc/ssi/ -Iprogsrc/include $(SEMAINEAPI_CPPFLAGS) $(PORTAUDIO_CPPFLAGS) $(OPENCV_CPPFLAGS) -ggdb $(PTHREAD_CFLAGS)
   SMILE_LIBS =  $(PORTAUDIO_LDFLAGS) $(OPENCV_LDFLAGS) -lm $(SEMAINEAPI_LDFLAGS) $(PTHREAD_LIBS) $(DLIB)
    
   SMILExtract_SOURCES = progsrc/smilextract/SMILExtract.cpp 
