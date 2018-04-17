@@ -25,10 +25,9 @@
 //*************************************************************************************************
 
 #include "ssi.h"
+#include "curl/ssicurl.h"
 #include "MyOscListener.h"
 using namespace ssi;
-
-#include "curl/ssicurl.h"
 
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
@@ -50,6 +49,7 @@ bool ex_stream(void *arg);
 bool ex_event(void *arg);
 bool ex_samples(void *arg);
 bool ex_annotation(void *arg);
+bool ex_annotation_offline(void *arg);
 bool ex_socket(void *arg);
 bool ex_tcp2way(void *arg);
 bool ex_sender(void *arg);
@@ -57,6 +57,7 @@ bool ex_sender_events(void *arg);
 bool ex_sender_video(void *arg);
 bool ex_sender_file(void *arg);
 bool ex_download_file(void *arg);
+bool ex_send_notifications(void *arg);
 
 void test (File &file, int *data_out, ssi_size_t size);
 
@@ -71,18 +72,19 @@ int main () {
 
 	ssi_print ("%s\n\nbuild version: %s\n\n", SSI_COPYRIGHT, SSI_VERSION);
 
-	Factory::RegisterDLL ("ssievent");
-	Factory::RegisterDLL ("ssiframe");
-	Factory::RegisterDLL ("ssiioput");
-	Factory::RegisterDLL ("ssimouse");
-	Factory::RegisterDLL ("ssigraphic");
+	Factory::RegisterDLL ("event");
+	Factory::RegisterDLL ("frame");
+	Factory::RegisterDLL ("ioput");
+	Factory::RegisterDLL ("mouse");
+	Factory::RegisterDLL ("graphic");
+	Factory::RegisterDLL ("control");
 
 #if SSI_RANDOM_LEGACY_FLAG	
 	ssi_random_seed();
 #endif
 
-	Socket::TYPE type_udp = Socket::UDP; 
-	Socket::TYPE type_tcp = Socket::TCP;	
+	Socket::TYPE::List type_udp = Socket::TYPE::UDP; 
+	Socket::TYPE::List type_tcp = Socket::TYPE::TCP;
 
 	Exsemble ex;
 	ex.console(0, 0, CONSOLE_WIDTH, CONSOLE_HEIGHT);
@@ -90,12 +92,13 @@ int main () {
 	ex.add(&ex_file, 0, "FILE", "How to use 'File' to write to an ascii/binary file.");
 	ex.add(&ex_lz4, 0, "FILE-LZ4", "How to use 'File' to write to a compressed file.");
 	ex.add(&ex_memory, 0, "MEMORY", "How to use 'FileMem' to write into memory.");
-	ex.add(&ex_writer, 0, "WRITER", "How to use 'FileWriter' to store a stream to a file from a pipeline.");
+	ex.add(&ex_writer, 0, "WRITER", "How to use 'MemoryWriter' and 'FileWriter' to store a stream to memory / to a file.");
 	ex.add(&ex_stream, 0, "STREAM", "How to write/read a stream to a file.");
 	ex.add(&ex_event, 0, "EVENT", "How to write/read events to a file.");
 	ex.add(&ex_csv, 0, "CSV", "How to read a comma separated file.");
 	ex.add(&ex_simulator, 0, "SIMULATOR", "How to use 'FileReader' to feed a stream from a file into a pipeline.");
 	ex.add(&ex_annotation, 0, "ANNOTATION", "How to use 'FileAnnotationWriter' to create annotations from events.");
+	ex.add(&ex_annotation_offline, 0, "ANNOTATION OFFLINE", "How to use 'FileAnnotationWriter' offline.");
 	ex.add(&ex_samples, 0, "SAMPLES", "How to use 'FileSampleWriter' to store samples to a file from a pipeline.");
 	ex.add(&ex_socket, 0, "BASICS", "How to send/receive socket messages.");
 	ex.add(&ex_tcp2way, 0, "TCP2WAY", "How to establish a two way tcp connection.");
@@ -104,6 +107,9 @@ int main () {
 	ex.add(&ex_sender, &type_tcp, "STREAM TCP", "How to stream a signal from a pipeline using TCP.");
 	ex.add(&ex_sender_events, &type_tcp, "SEND EVENTS TCP", "How to send events from a pipeline using TCP.");
 	ex.add(&ex_sender_video, 0, "STREAM VIDEO", "How to stream a video from a pipeline.");
+#ifndef SSI_USE_SDL
+	ex.add(&ex_send_notifications, 0, "SEND NOTIFICATIONS", "How to send notifications using a socket connection.");
+#endif
 	//ex.add(&ex_sender_file, 0, "FILE", "How to transfer the content of a file.");
 	ex.add(&ex_download_file, 0, "DOWNLOAD FILE", "How to donwload a file.");
 	ex.show();
@@ -144,6 +150,43 @@ bool ex_filepath (void *arg) {
 		ssi_char_t *filepath = "C:/.myfile";
 		FilePath fp (filepath);
 		fp.print ();
+	}
+
+	{
+		ssi_char_t *filepath = "unique/path/test.txt";
+		FilePath fp(filepath);			
+		ssi_char_t *unique = 0;
+		for (ssi_size_t i = 0; i < 3; i++)
+		{
+			unique = fp.getUnique(true);
+			fclose(ssi_fopen(unique, "w"));
+			delete[] unique;
+		}		
+	}
+
+	{
+		ssi_char_t *filepath = "unique/path/test$(num)test.txt";
+		FilePath fp(filepath);
+		ssi_mkdir_r(fp.getDir());
+		ssi_char_t *unique = 0;
+		for (ssi_size_t i = 0; i < 3; i++)
+		{
+			unique = fp.getUnique();
+			fclose(ssi_fopen(unique, "w"));
+			delete[] unique;
+		}
+	}
+
+	{
+		ssi_char_t *filepath = "unique/path/$(num,3)/test.txt";		
+		FilePath fp(filepath);
+		ssi_char_t *unique = 0;
+		for (ssi_size_t i = 0; i < 3; i++)
+		{				
+			unique = fp.getUnique(true);
+			fclose(ssi_fopen(unique, "w"));
+			delete[] unique;
+		}
 	}
 
 	return true;
@@ -432,6 +475,12 @@ bool ex_writer(void *arg) {
 
 	bool continuous = true;
 
+	MemoryWriter *memory;
+
+	memory = ssi_create(MemoryWriter, 0, true);
+	memory->getOptions()->setSize("10.0s");
+	frame->AddConsumer(cursor_p, memory, "0.5s");
+
 	FileWriter *writer;
 
 	writer = ssi_create(FileWriter, 0, true);
@@ -469,6 +518,8 @@ bool ex_writer(void *arg) {
 	frame->Wait();
 	frame->Stop();
 	frame->Clear();
+
+	ssi_stream_print(memory->getStream(), stdout);
 
 	return true;
 }
@@ -522,19 +573,21 @@ bool ex_annotation(void *arg) {
 	ITransformable *button_p = frame->AddProvider(mouse, SSI_MOUSE_BUTTON_PROVIDER_NAME);
 	frame->AddSensor(mouse);
 
-	ZeroEventSender *ezero = 0;
+	TriggerEventSender *ezero = 0;
 	
-	ezero = ssi_create(ZeroEventSender, 0, true);
+	ezero = ssi_create(TriggerEventSender, 0, true);
+	ezero->getOptions()->triggerType = TriggerEventSender::TRIGGER::NOT_EQUAL;
 	ezero->getOptions()->setAddress("click@mouse");
-	ezero->getOptions()->mindur = 0.2;
+	ezero->getOptions()->minDuration = 0.2;
 	frame->AddConsumer(button_p, ezero, "0.25s");
 	board->RegisterSender(*ezero);
 
-	ezero = ssi_create(ZeroEventSender, 0, true);
+	ezero = ssi_create(TriggerEventSender, 0, true);
+	ezero->getOptions()->triggerType = TriggerEventSender::TRIGGER::NOT_EQUAL;
 	ezero->getOptions()->setAddress("click@mouse");
-	ezero->getOptions()->mindur = 0.2;
-	ezero->getOptions()->empty = false;
-	ezero->getOptions()->setString("string");
+	ezero->getOptions()->minDuration = 0.2;
+	ezero->getOptions()->eventType = SSI_ETYPE_STRING;
+	ezero->getOptions()->setEventString("string");
 	frame->AddConsumer(button_p, ezero, "0.25s");
 	board->RegisterSender(*ezero);
 
@@ -607,6 +660,40 @@ bool ex_annotation(void *arg) {
 	board->Stop();
 	frame->Clear();
 	board->Clear();
+
+	return true;
+}
+
+bool ex_annotation_offline(void *arg) {
+
+	ssi_stream_t button, cursor;
+
+	FileTools::ReadStreamFile("button", button);
+	FileTools::ReadStreamFile("cursor", cursor);
+
+	FileAnnotationWriter *annotation = 0;
+
+	annotation = ssi_create(FileAnnotationWriter, 0, true);
+	annotation->getOptions()->setAnnoPath("offline_annotation");
+	annotation->getOptions()->setSchemePath("scheme_discrete.annotation");
+	annotation->getOptions()->setDefaultLabel("empty");
+	annotation->getOptions()->defaultConfidence = 1.0f;
+	annotation->getOptions()->setMeta("annotator=hans;role=wurscht");
+
+	TriggerEventSender *ezero = 0;
+
+	ezero = ssi_create(TriggerEventSender, 0, true);
+	ezero->getOptions()->triggerType = TriggerEventSender::TRIGGER::NOT_EQUAL;
+	ezero->getOptions()->setAddress("click@mouse");
+	ezero->getOptions()->minDuration = 0.2;
+	ezero->setEventListener(annotation);
+
+	annotation->listen_enter();
+	SignalTools::Consume(button, *ezero, "0.25s");
+	annotation->listen_flush();
+	
+	ssi_stream_destroy(button);
+	ssi_stream_destroy(cursor);
 
 	return true;
 }
@@ -728,9 +815,11 @@ bool ex_socket(void *arg) {
 
 	Socket::SetLogLevel(SSI_LOG_LEVEL_DEBUG);
 
+	ssi_char_t *url = "udp://localhost:1111";
+
 	{
-		Socket *sender = Socket::CreateAndConnect(Socket::UDP, Socket::CLIENT, 1111, "localhost");
-		Socket *receiver = Socket::CreateAndConnect(Socket::UDP, Socket::SERVER, 1111, "localhost");
+		Socket *sender = Socket::CreateAndConnect(url, Socket::MODE::CLIENT);
+		Socket *receiver = Socket::CreateAndConnect(url, Socket::MODE::SERVER);
 
 		ssi_char_t msg[] = "hello world!";
 		sender->send(msg, ssi_cast(ssi_size_t, strlen(msg) + 1));
@@ -765,9 +854,9 @@ bool ex_socket(void *arg) {
 
 	{
 
-		Socket *sender_socket = Socket::Create(Socket::UDP, Socket::CLIENT, 1111, "localhost");
+		Socket *sender_socket = Socket::Create(url, Socket::MODE::CLIENT);
 		SocketOsc sender(*sender_socket, 2000);
-		Socket *receiver_socket = Socket::Create(Socket::UDP, Socket::SERVER, 1111);
+		Socket *receiver_socket = Socket::Create(url, Socket::MODE::SERVER);
 		SocketOsc receiver(*receiver_socket, 2000);
 
 		sender.connect();
@@ -825,10 +914,9 @@ bool ex_socket(void *arg) {
 		memset(image, 0, n_image);
 		ssi_byte_t *check = new ssi_byte_t[n_image];
 		memset(check, 1, n_image);
-
-		int port = 9999;
-		Socket *socksend = Socket::CreateAndConnect(Socket::UDP, Socket::CLIENT, port, "localhost");
-		Socket *sockrecv = Socket::CreateAndConnect(Socket::UDP, Socket::SERVER, port);
+		
+		Socket *socksend = Socket::CreateAndConnect(url, Socket::MODE::CLIENT);
+		Socket *sockrecv = Socket::CreateAndConnect(url, Socket::MODE::SERVER);
 
 		SocketImage imgsend(*socksend);
 		imgsend.setLogLevel(SSI_LOG_LEVEL_DEBUG);
@@ -841,6 +929,8 @@ bool ex_socket(void *arg) {
 		delete socksend;
 		delete sockrecv;
 
+		delete[] check;
+		delete[] image;
 	}
 
 	return true;
@@ -851,10 +941,10 @@ bool ex_tcp2way(void *arg) {
 	Socket::SetLogLevel(SSI_LOG_LEVEL_DEBUG);
 
 	{
-		Socket *server = Socket::CreateAndConnect(Socket::TCP, Socket::SERVER, 1234, "localhost");
+		Socket *server = Socket::CreateAndConnect(Socket::TYPE::TCP, Socket::MODE::SERVER, 1234, "localhost");
 		::Sleep(1000);
 
-		Socket *client = Socket::CreateAndConnect(Socket::TCP, Socket::CLIENT, 1234, "localhost");
+		Socket *client = Socket::CreateAndConnect(Socket::TYPE::TCP, Socket::MODE::CLIENT, 1234, "localhost");
 		::Sleep(1000);
 
 		// client to server
@@ -894,7 +984,7 @@ bool ex_tcp2way(void *arg) {
 
 bool ex_sender(void *arg) {
 
-	Socket::TYPE *type = ssi_pcast(Socket::TYPE, arg);
+	Socket::TYPE::List *type = ssi_pcast(Socket::TYPE::List, arg);
 
 	ITheFramework *frame = Factory::GetFramework();
 
@@ -909,48 +999,39 @@ bool ex_sender(void *arg) {
 	frame->AddSensor(mouse);
 
 	// start sender and receiver
-
-	SocketWriter *socket_writer_bin = ssi_create (SocketWriter, 0, true);
-	socket_writer_bin->getOptions()->port = 1111;
-	socket_writer_bin->getOptions()->setHost("localhost");
-	socket_writer_bin->getOptions()->type = *type;
+	
+	SocketWriter *socket_writer_bin = ssi_create (SocketWriter, 0, true);	
+	socket_writer_bin->getOptions()->setUrl(*type, "localhost", 1111);
 	socket_writer_bin->getOptions()->format = SocketWriter::Options::FORMAT::BINARY;
 	frame->AddConsumer(cursor_p, socket_writer_bin, "0.25s");
 
 	SocketReader *socket_reader_bin = ssi_create (SocketReader, 0, true);
-	socket_reader_bin->getOptions()->port = 1111;
-	socket_reader_bin->getOptions()->type = *type;
+	socket_reader_bin->getOptions()->setUrl(*type, "localhost", 1111);
 	socket_reader_bin->getOptions()->format = SocketReader::Options::FORMAT::BINARY;
 	socket_reader_bin->getOptions()->setSampleInfo(cursor_p->getSampleRate(), cursor_p->getSampleDimension(), cursor_p->getSampleBytes(), cursor_p->getSampleType());
 	ITransformable *socket_reader_bin_p = frame->AddProvider(socket_reader_bin, SSI_SOCKETREADER_PROVIDER_NAME);
 	frame->AddSensor(socket_reader_bin);
 
-	SocketWriter *socket_writer_asc = ssi_create (SocketWriter, 0, true);
-	socket_writer_asc->getOptions()->port = 2222;
-	socket_writer_asc->getOptions()->setHost("localhost");
-	socket_writer_asc->getOptions()->type = *type;
+	SocketWriter *socket_writer_asc = ssi_create (SocketWriter, 0, true);	
+	socket_writer_asc->getOptions()->setUrl(*type, "localhost", 2222);
 	socket_writer_asc->getOptions()->format = SocketWriter::Options::FORMAT::ASCII;
 	frame->AddConsumer(cursor_p, socket_writer_asc, "0.25s");
 
 	SocketReader *socket_reader_asc = ssi_create (SocketReader, 0, true);
-	socket_reader_asc->getOptions()->port = 2222;
-	socket_reader_asc->getOptions()->type = *type;
+	socket_reader_asc->getOptions()->setUrl(*type, "localhost", 2222);
 	socket_reader_asc->getOptions()->format = SocketReader::Options::FORMAT::ASCII;
 	socket_reader_asc->getOptions()->setSampleInfo(cursor_p->getSampleRate(), cursor_p->getSampleDimension(), cursor_p->getSampleBytes(), cursor_p->getSampleType());
 	ITransformable *socket_reader_asc_p = frame->AddProvider(socket_reader_asc, SSI_SOCKETREADER_PROVIDER_NAME);
 	frame->AddSensor(socket_reader_asc);
 
 	SocketWriter *socket_writer_osc = ssi_create (SocketWriter, 0, true);
-	socket_writer_osc->getOptions()->port = 3333;
-	socket_writer_osc->getOptions()->setHost("localhost");
-	socket_writer_osc->getOptions()->type = *type;
+	socket_writer_osc->getOptions()->setUrl(*type, "localhost", 3333);
 	socket_writer_osc->getOptions()->format = SocketWriter::Options::FORMAT::OSC;
 	socket_writer_osc->getOptions()->setId("mouse");
 	frame->AddConsumer(cursor_p, socket_writer_osc, "0.25s");
 
 	SocketReader *socket_reader_osc = ssi_create (SocketReader, 0, true);
-	socket_reader_osc->getOptions()->port = 3333;
-	socket_reader_osc->getOptions()->type = *type;
+	socket_reader_osc->getOptions()->setUrl(*type, "localhost", 3333);
 	socket_reader_osc->getOptions()->format = SocketReader::Options::FORMAT::OSC;
 	socket_reader_osc->getOptions()->setSampleInfo(cursor_p->getSampleRate(), cursor_p->getSampleDimension(), cursor_p->getSampleBytes(), cursor_p->getSampleType());
 	ITransformable *socket_reader_osc_p = frame->AddProvider(socket_reader_osc, SSI_SOCKETREADER_PROVIDER_NAME);
@@ -990,7 +1071,7 @@ bool ex_sender(void *arg) {
 
 bool ex_sender_events (void *arg) {
 
-	Socket::TYPE *type = ssi_pcast(Socket::TYPE, arg);
+	Socket::TYPE::List *type = ssi_pcast(Socket::TYPE::List, arg);
 
 	ITheFramework *frame = Factory::GetFramework();
 	ITheEventBoard *board = Factory::GetEventBoard();
@@ -999,40 +1080,48 @@ bool ex_sender_events (void *arg) {
 
 	Mouse *mouse = ssi_create(Mouse, 0, true);
 	mouse->getOptions()->mask = Mouse::LEFT;
-	ITransformable *cursor_p = frame->AddProvider(mouse, SSI_MOUSE_CURSOR_PROVIDER_NAME);
-	ITransformable *button_p = frame->AddProvider(mouse, SSI_MOUSE_BUTTON_PROVIDER_NAME);
+	mouse->getOptions()->sendEvent = true;
+	mouse->getOptions()->setAddress("click@mouse");
+	ITransformable *cursor_p = frame->AddProvider(mouse, SSI_MOUSE_CURSOR_PROVIDER_NAME);	
 	frame->AddSensor(mouse);
-
-	ZeroEventSender *ezero = ssi_create(ZeroEventSender, 0, true);
-	ezero->getOptions()->setAddress("click@mouse");
-	ezero->getOptions()->mindur = 0.2;
-	frame->AddConsumer(button_p, ezero, "0.25s");
-	board->RegisterSender(*ezero);
-
+	board->RegisterSender(*mouse);
+	
 	MapEventSender *msender = ssi_create(MapEventSender, 0, true);
 	msender->getOptions()->setAddress("cursor@mouse");
 	msender->getOptions()->setKeys("x,y");
-	frame->AddEventConsumer(cursor_p, msender, board, ezero->getEventAddress());
+	frame->AddEventConsumer(cursor_p, msender, board, mouse->getEventAddress());
 	board->RegisterSender(*msender);
 
 	// start sender and receiver
 
-	SocketEventWriter *socket_event_writer = ssi_create(SocketEventWriter, 0, true);
-	socket_event_writer->getOptions()->port = 1234;
-	socket_event_writer->getOptions()->setHost("localhost");
-	socket_event_writer->getOptions()->type = *type;
-	socket_event_writer->getOptions()->osc = true;
+	SocketEventWriter *socket_event_writer = 0;
+	
+	socket_event_writer = ssi_create(SocketEventWriter, 0, true);
+	socket_event_writer->getOptions()->setUrl(*type, "localhost", 1111);	
 	board->RegisterListener(*socket_event_writer, msender->getEventAddress());
 
-	SocketEventReader *socket_event_reader = ssi_create(SocketEventReader, 0, true);
-	socket_event_reader->getOptions()->port = 1234;
-	socket_event_reader->getOptions()->type = *type;
+	socket_event_writer = ssi_create(SocketEventWriter, 0, true);
+	socket_event_writer->getOptions()->setUrl(*type, "localhost", 2222);
+	socket_event_writer->getOptions()->osc = true;
+	socket_event_writer->getOptions()->xml = false;
+	board->RegisterListener(*socket_event_writer, msender->getEventAddress());
+
+	SocketEventReader *socket_event_reader = 0;
+	
+	socket_event_reader = ssi_create(SocketEventReader, 0, true);
+	socket_event_reader->getOptions()->setUrl(*type, "localhost", 1111);	
+	socket_event_reader->getOptions()->setAddress("click@remote");
+	board->RegisterSender(*socket_event_reader);
+
+	socket_event_reader = ssi_create(SocketEventReader, 0, true);
+	socket_event_reader->getOptions()->setUrl(*type, "localhost", 2222);
 	socket_event_reader->getOptions()->osc = true;
+	socket_event_reader->getOptions()->setAddress("click@remote");
 	board->RegisterSender(*socket_event_reader);
 
 	EventMonitor *monitor = ssi_create_id (EventMonitor, 0, "monitor");
-	monitor->getOptions()->setPos(CONSOLE_WIDTH, 0, 600, 300);
-	board->RegisterListener(*monitor, 0, 60000);
+	monitor->getOptions()->setPos(CONSOLE_WIDTH, 0, 600, CONSOLE_HEIGHT);
+	board->RegisterListener(*monitor, socket_event_reader->getEventAddress(), 60000);
 
 	board->Start();
 	frame->Start();
@@ -1065,13 +1154,13 @@ bool ex_sender_video(void *arg) {
 	SocketWriter *socket_writer_img = ssi_create (SocketWriter, 0, true);
 	socket_writer_img->getOptions()->port = 4444;
 	socket_writer_img->getOptions()->setHost("localhost");
-	socket_writer_img->getOptions()->type = Socket::UDP;
+	socket_writer_img->getOptions()->type = Socket::TYPE::UDP;
 	socket_writer_img->getOptions()->format = SocketWriter::Options::FORMAT::IMAGE;
 	frame->AddConsumer(camera_p, socket_writer_img, "1");
 
 	SocketReader *socket_reader_img = ssi_create (SocketReader, 0, true);
 	socket_reader_img->getOptions()->port = 4444;
-	socket_reader_img->getOptions()->type = Socket::UDP;
+	socket_reader_img->getOptions()->type = Socket::TYPE::UDP;
 	socket_reader_img->getOptions()->format = SocketReader::Options::FORMAT::IMAGE;
 	socket_reader_img->getOptions()->setSampleInfo(camera->getFormat());
 	ITransformable *socket_reader_img_p = frame->AddProvider(socket_reader_img, SSI_SOCKETREADER_PROVIDER_NAME);
@@ -1098,14 +1187,14 @@ bool ex_sender_video(void *arg) {
 }
 
 void recvFile(void *ptr) {
-	Socket *s = Socket::CreateAndConnect(Socket::UDP, Socket::SERVER, 1112);
+	Socket *s = Socket::CreateAndConnect(Socket::TYPE::UDP, Socket::MODE::SERVER, 1112);
 	ssi_char_t *filepath = 0;
 	s->recvFile(&filepath, 2000);
 	delete[] filepath;
 }
 
 void sendFile(void *ptr) {
-	Socket *s = Socket::CreateAndConnect(Socket::UDP, Socket::CLIENT, 1112, "localhost");
+	Socket *s = Socket::CreateAndConnect(Socket::TYPE::UDP, Socket::MODE::CLIENT, 1112, "localhost");
 	ssi_char_t *filepath = ssi_pcast(ssi_char_t, ptr);
 	s->sendFile(filepath);
 }
@@ -1123,6 +1212,65 @@ bool ex_sender_file(void *arg) {
 	send.stop();
 
 	return true;
+}
+
+bool ex_send_notifications(void *arg)
+{
+	ITheFramework *frame = Factory::GetFramework();
+	
+	Decorator *decorator = ssi_create(Decorator, 0, true);
+	decorator->getOptions()->setOrigin(CONSOLE_WIDTH, 0);
+	frame->AddDecorator(decorator);
+
+	// start mouse
+
+	Mouse *mouse = ssi_create(Mouse, 0, true);
+	ITransformable *cursor_p = frame->AddProvider(mouse, SSI_MOUSE_CURSOR_PROVIDER_NAME);
+	frame->AddSensor(mouse);
+
+	// sender + receiver
+
+	NotifySender *sender = ssi_create_id(NotifySender, 0, "sender");
+	sender->setLogLevel(SSI_LOG_LEVEL_DEBUG);
+	sender->getOptions()->setUrl("udp://localhost:1111");
+	frame->AddRunnable(sender);	
+
+	NotifyReceiver *receiver = ssi_create_id(NotifyReceiver, 0, "receiver");
+	receiver->setLogLevel(SSI_LOG_LEVEL_DEBUG);
+	receiver->getOptions()->setUrl("udp://localhost:1111");
+	receiver->getOptions()->setId("plot");
+	frame->AddRunnable((SSI_IRunnableObject*)receiver);
+
+	// control (place after sender!)
+
+	ControlCheckBox *checkbox = 0;
+
+	checkbox = ssi_create_id(ControlCheckBox, 0, "checkbox");
+	checkbox->getOptions()->setId("sender");
+	checkbox->getOptions()->setTitle("VISUALIZATION");
+	checkbox->getOptions()->setLabel("SHOW");
+	checkbox->getOptions()->value = false;
+	frame->AddRunnable(checkbox);
+
+	// plot
+
+	SignalPainter *plot;
+
+	plot = ssi_create_id(SignalPainter, 0, "plot");
+	plot->getOptions()->size = 10;
+	plot->getOptions()->setTitle("cursor");
+	frame->AddConsumer(cursor_p, plot, "0.2s");
+
+	decorator->add("plot*", 0, 0, 400, CONSOLE_HEIGHT - 200);
+	decorator->add("checkbox*", 0, CONSOLE_HEIGHT - 200, 400, 200);
+
+	frame->Start();
+	frame->Wait();
+	frame->Stop();
+	frame->Clear();
+
+	return true;
+
 }
 
 bool ex_download_file(void *arg)

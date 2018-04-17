@@ -29,6 +29,7 @@
 #include "TimeServer.h"
 #include "thread/Mutex.h"
 #include "Decorator.h"
+#include "base/Factory.h"
 
 #include <fstream>
 #include <iomanip>
@@ -96,6 +97,8 @@ TheFramework::TheFramework (const ssi_char_t *file)
 	 _sync_socket (0),
 	 _sync_msg_id(SYNC_MSG_ID::RUN_AND_QUIT),
 	 _cancel_wait(false),
+	 _waitable (0),
+	_start_message(0),
 	 ssi_log_level (SSI_LOG_LEVEL_DEFAULT) {
 #if _WIN32|_WIN64
 	memset (&_system_time, 0, sizeof (_system_time));
@@ -238,6 +241,47 @@ void TheFramework::countdown(ssi_size_t n_seconds)
 	}
 }
 
+void TheFramework::message()
+{
+	if (_start_message)
+	{
+		ssi_size_t n_lines = ssi_split_string_count(_start_message, '\n', true);
+		if (n_lines > 0)
+		{
+			ssi_char_t **lines = new ssi_char_t *[n_lines];
+			ssi_split_string(n_lines, lines, _start_message, '\n', true);
+
+			ssi_size_t max_line = 0;
+			for (ssi_size_t i = 0; i < n_lines; i++)
+			{
+				max_line = max(max_line, ssi_strlen(lines[i]));
+			}
+
+			ssi_print("\n");
+			ssi_print_off("");
+			for (ssi_size_t i = 0; i < max_line; i++)
+			{
+				ssi_print("%c", 205);
+			}
+			ssi_print("\n");
+
+			for (ssi_size_t i = 0; i < n_lines; i++)
+			{
+				ssi_print_off("%s\n", lines[i]);
+				delete[] lines[i];
+			}
+			delete[] lines;
+
+			ssi_print_off("");
+			for (ssi_size_t i = 0; i < max_line; i++)
+			{
+				ssi_print("%c", 205);
+			}
+			ssi_print("\n");
+		}
+	}
+}
+
 void TheFramework::Start () {
 
 #ifdef FRAMEWORK_LOG
@@ -300,6 +344,8 @@ void TheFramework::Start () {
 
 	_sync_msg_id = SYNC_MSG_ID::RUN_AND_QUIT;
 
+	message();
+
 	// send sync signal
 	if (_options.sync)
 	{
@@ -309,7 +355,7 @@ void TheFramework::Start () {
 		// client
 		if (_options.slisten)
 		{
-			_sync_socket = Socket::CreateAndConnect(_options.stype, Socket::SERVER, _options.sport, _options.shost);
+			_sync_socket = Socket::CreateAndConnect(_options.stype, Socket::MODE::SERVER, _options.sport, _options.shost);
 			ssi_print("\n");
 			ssi_print_off("waiting for sync message to start\n\n\n");
 			SYNC_MSG_TYPE::List type;
@@ -347,7 +393,7 @@ void TheFramework::Start () {
 			{
 				countdown(_options.countdown);
 			}
-			_sync_socket = Socket::CreateAndConnect(_options.stype, Socket::CLIENT, _options.sport, _options.shost);
+			_sync_socket = Socket::CreateAndConnect(_options.stype, Socket::MODE::CLIENT, _options.sport, _options.shost);
 		}
 	}
 	else
@@ -406,6 +452,11 @@ void TheFramework::Start () {
 	}
 }
 
+void TheFramework::SetWaitable(IWaitable *waitable)
+{
+	_waitable = waitable;
+}
+
 void TheFramework::Wait () {
 
 #ifdef FRAMEWORK_LOG
@@ -423,7 +474,7 @@ void TheFramework::Wait () {
 	if (_options.sync && _options.slisten) 
 	{
 		ssi_print("\n");
-		ssi_print_off("waiting for sync message to stop\n\n\n");
+		ssi_print_off("waiting for stop message\n\n\n");
 		SYNC_MSG_TYPE::List type;
 		SYNC_MSG_ID::List id;
 		do
@@ -435,12 +486,32 @@ void TheFramework::Wait () {
 	} 
 	else 
 	{
-		if (_options.runtime > 0)
+		if (_options.waitid[0] != '\0')
+		{
+			IObject *object = Factory::GetObjectFromId(_options.waitid);
+			if (object)
+			{
+				_waitable = (IRunAndWaitableObject*) object;
+			}
+			else
+			{
+				ssi_wrn("invalid wait id '%s'", _options.waitid);
+			}
+		}
+
+		if (_waitable)
+		{
+			ssi_print("\n");
+			ssi_print_off("waiting for stop signal\n\n");
+
+			_waitable->wait();
+		}
+		else if (_options.runtime > 0)
 		{
 			int32_t runtime_ms = (int32_t) (_options.runtime * 1000);
 
 			ssi_print("\n");
-			ssi_print_off("pipeline stops after %d ms\n\n", runtime_ms);
+			ssi_print_off("pipeline will stop after %d ms\n\n", runtime_ms);
 
 			ssi_sleep(runtime_ms);
 		} 
@@ -467,7 +538,17 @@ void TheFramework::Wait () {
 }
 
 void TheFramework::CancelWait () {
-	_cancel_wait = true;
+
+	ssi_print_off("force pipeline to stop");
+
+	if (_waitable)
+	{
+		_waitable->cancel();
+	}
+	else
+	{
+		_cancel_wait = true;
+	}
 }
 
 void TheFramework::Stop () {
@@ -1847,6 +1928,15 @@ void TheFramework::AddDecorator(IObject *decorator) {
 	_decorators.push_back(ssi_pcast(Decorator, decorator));
 }
 
+void TheFramework::SetStartMessage(const ssi_char_t *text)
+{
+	delete[] _start_message; _start_message = 0;
+	if (text)
+	{
+		_start_message = ssi_strcpy(text);
+	}
+}
+
 void TheFramework::AddExeJob (const ssi_char_t *exe, const ssi_char_t *args, EXECUTE::list type, int wait) {
 
 	if (type == EXECUTE::NOW) {
@@ -2069,6 +2159,8 @@ ITransformable *TheFramework::AddTransformer (ITransformable *source,
 
 	return transformer;
 };
+
+
 
 }
 #if __ANDROID__

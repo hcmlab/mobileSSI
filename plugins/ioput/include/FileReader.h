@@ -42,7 +42,7 @@
 
 namespace ssi {
 
-class FileReader : public ISensor, public Thread {
+class FileReader : public IWaitableSensor, public Thread {
 	
 	class FileChannel : public IChannel {
 
@@ -126,9 +126,8 @@ public:
 	};
 
 	// waits either for a key (loop == true) or blocks until data is processed
-	void wait () {
-		if (_options.loop) { getchar (); } else { _event.wait (); }
-	}
+	bool wait();
+	bool cancel();
 
 	void setLogLevel (int level) {
 		ssi_log_level = level;
@@ -144,7 +143,7 @@ protected:
 	int ssi_log_level;
 
 	bool prepare_file ();
-	void setProvider (IProvider *provider);
+	bool setProvider (IProvider *provider);
 
 	FileChannel _file_channel;
 	IProvider *_provider;
@@ -164,6 +163,7 @@ protected:
 	Timer *_timer;
 	Event _event;
 	bool _stopped;
+	bool _interrupted;
 };
 
 }

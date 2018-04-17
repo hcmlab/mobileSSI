@@ -40,7 +40,7 @@
 #define SSI_MODEL_DOLLAR$1_H
 
 #include "base/IModel.h"
-#include "ModelTools.h"
+#include "ssiml/include/ModelTools.h"
 #include "ioput/file/FileBinary.h"
 #include "ioput/option/OptionList.h"
 #include "GeometricRecognizer.h"
@@ -82,11 +82,13 @@ public:
 	bool isTrained () { return _dollar1.templates.size () > 0; };
 	bool forward (ssi_stream_t &stream,
 		ssi_size_t n_probs,
-		ssi_real_t *probs);	
+		ssi_real_t *probs,
+		ssi_real_t &confidence);
 	void release ();
 	bool save (const ssi_char_t *filepath);
 	bool load (const ssi_char_t *filepath);
 
+	IModel::TYPE::List getModelType() { return IModel::TYPE::CLASSIFICATION; }
 	ssi_size_t getClassSize () { return _n_classes; };
 	ssi_size_t getStreamDim () { return _n_features; };
 	ssi_size_t getStreamByte () { return sizeof (ssi_real_t); };

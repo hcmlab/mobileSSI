@@ -48,6 +48,7 @@ DLLEXP bool Register (ssi::Factory *factory, FILE *logfile, ssi::IMessage *messa
 
 	bool result = true;
 	
+	result = ssi::Factory::Register (ssi::MemoryWriter::GetCreateName(), ssi::MemoryWriter::Create) && result;
 	result = ssi::Factory::Register (ssi::FileReader::GetCreateName (),ssi::FileReader::Create) && result;	
 	result = ssi::Factory::Register (ssi::FileWriter::GetCreateName (),ssi::FileWriter::Create) && result;	
 	result = ssi::Factory::Register (ssi::FileEventWriter::GetCreateName(), ssi::FileEventWriter::Create) && result;	
@@ -58,6 +59,8 @@ DLLEXP bool Register (ssi::Factory *factory, FILE *logfile, ssi::IMessage *messa
 	result = ssi::Factory::Register (ssi::FileSampleWriter::GetCreateName(), ssi::FileSampleWriter::Create) && result;
 	result = ssi::Factory::Register (ssi::FileAnnotationWriter::GetCreateName(), ssi::FileAnnotationWriter::Create) && result;
 	result = ssi::Factory::Register (ssi::FakeSignal::GetCreateName(), ssi::FakeSignal::Create) && result;
+	result = ssi::Factory::Register (ssi::NotifyReceiver::GetCreateName(), ssi::NotifyReceiver::Create) && result;
+	result = ssi::Factory::Register (ssi::NotifySender::GetCreateName(), ssi::NotifySender::Create) && result;
 	
 	return result;
 }

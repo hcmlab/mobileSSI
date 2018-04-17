@@ -160,9 +160,12 @@ bool FileTools::ReadRawFile (File &file,
 		}
 		case File::BINARY: {
 
-			int64_t pos = file.tell ();
+			int64_t pos = file.tell();
+			file.seek(0, File::END);
+			int64_t size = file.tell ();
+			file.seek(pos, File::BEGIN);
 			
-			ssi_size_t n_samples = ssi_size_t(pos / (data.dim * data.byte));
+			ssi_size_t n_samples = ssi_size_t(size / (data.dim * data.byte));
 			ssi_stream_adjust (data, n_samples);
 
 			fread (data.ptr, data.tot, 1, file.getFile ());
@@ -171,7 +174,7 @@ bool FileTools::ReadRawFile (File &file,
 		}
 	}
 
-	return false;
+	return true;
 }
 
 bool FileTools::ReadStreamHeader (File &file,
@@ -201,6 +204,7 @@ bool FileTools::ReadStreamHeader (File &file,
 			int64_t pos = file.tell ();
 			if (!file.readLine (256, string)) {
 				ssi_err ("could not read <id>");
+				return false;
 			}
 			if (! (string[0] == 'S' && string[1] == 'S' && string[2] == 'I')) {		
 				file.seek (pos, File::BEGIN);
@@ -215,12 +219,14 @@ bool FileTools::ReadStreamHeader (File &file,
 		case File::BINARY: {
 			if (!file.read (id, 1, 3)) {
 				ssi_err ("could not read <id>");
+				return false;
 			}
 			if (! (id[0] == 'S' && id[1] == 'S' && id[2] == 'I')) {		
 				file.seek (-3, File::CURRENT);
 			} else {
 				if (!file.read (&version, sizeof (version), 1)) {
 					ssi_err ("could not read <version>");
+					return false;
 				}
 			}
 			break;
@@ -228,6 +234,7 @@ bool FileTools::ReadStreamHeader (File &file,
 
 		default:
 			ssi_err ("type not supported");
+			return false;
 	}
 
 	// read remaining header
@@ -248,6 +255,7 @@ bool FileTools::ReadStreamHeader (File &file,
 					ssi_char_t string[1024];
 					if (!file.readLine (1024, string)) {
 						ssi_err ("could not read <sample_rate> <sample_dimension> <sample_bytes>");
+						return false;
 					}
 					sscanf (string, "%lf %u %u", &sample_rate, &sample_dimension, &sample_bytes);
 
@@ -259,6 +267,7 @@ bool FileTools::ReadStreamHeader (File &file,
 					ssi_char_t string[1024];
 					if (!file.readLine (1024, string)) {
 						ssi_err ("could not read <sample_rate> <sample_dimension> <sample_bytes> <sample_type>");
+						return false;
 					}
 					int value = 0;
 					sscanf (string, "%lf %u %u %d", &sample_rate, &sample_dimension, &sample_bytes, &value);
@@ -279,14 +288,17 @@ bool FileTools::ReadStreamHeader (File &file,
 
 					if (!file.read (&sample_rate, sizeof (sample_rate), 1)) {
 						ssi_err ("could not read <sample_rate>");
+						return false;
 					}
 
 					if (!file.read (&sample_dimension, sizeof (sample_dimension), 1)) {
 						ssi_err ("could not read <sample_dimension>");
+						return false;
 					}
 
 					if (!file.read (&sample_bytes, sizeof (sample_bytes), 1)) {
 						ssi_err ("could not read <sample_bytes>");
+						return false;
 					}
 
 					break;
@@ -296,18 +308,22 @@ bool FileTools::ReadStreamHeader (File &file,
 
 					if (!file.read (&sample_rate, sizeof (sample_rate), 1)) {
 						ssi_err ("could not read <sample_rate>");
+						return false;
 					}
 
 					if (!file.read (&sample_dimension, sizeof (sample_dimension), 1)) {
 						ssi_err ("could not read <sample_dimension>");
+						return false;
 					}
 
 					if (!file.read (&sample_bytes, sizeof (sample_bytes), 1)) {
 						ssi_err ("could not read <sample_bytes>");
+						return false;
 					}
 
 					if (!file.read (&sample_type, sizeof (sample_type), 1)) {
 						ssi_err ("could not read <sample_type>");
+						return false;
 					}
 
 					break;
@@ -319,6 +335,7 @@ bool FileTools::ReadStreamHeader (File &file,
 
 		default:
 			ssi_err ("type not supported");
+			return false;
 	}
 
 	ssi_stream_init (data, 0, sample_dimension, sample_bytes, sample_type, sample_rate, 0);
@@ -349,6 +366,7 @@ ssi_size_t FileTools::CountStreamHeader (File &file) {
 				ssi_char_t string[1024];
 				if (!file.readLine (1024, string)) {
 					ssi_err ("could not read <time> <sample_number>");
+					return 0;
 				}
 				sscanf (string, "%lf %u", &time, &sample_number);
 
@@ -363,10 +381,12 @@ ssi_size_t FileTools::CountStreamHeader (File &file) {
 
 				if (!file.read (&time, sizeof (ssi_time_t), 1)) {
 					ssi_err ("could not read <time>");
+					return 0;
 				}
 
 				if (!file.read (&sample_number, sizeof (ssi_size_t), 1)) {
 					ssi_err ("could not read <sample_number>");
+					return 0;
 				}
 
 				file.seek (sample_number * data.byte * data.dim, File::CURRENT);
@@ -376,6 +396,7 @@ ssi_size_t FileTools::CountStreamHeader (File &file) {
 
 			default:
 				ssi_err ("type not supported");
+				return 0;
 		}
 		
 		// increment counter
@@ -416,6 +437,7 @@ ssi_size_t FileTools::CountDataHeader (File &file, ssi_size_t &tot_sample_number
 				ssi_char_t string[1024];
 				if (!file.readLine (1024, string)) {
 					ssi_err ("could not read <time> <sample_number>");
+					return 0;
 				}
 				sscanf (string, "%lf %u", &time, &sample_number);
 
@@ -431,10 +453,12 @@ ssi_size_t FileTools::CountDataHeader (File &file, ssi_size_t &tot_sample_number
 
 				if (!file.read (&time, sizeof (ssi_time_t), 1)) {
 					ssi_err ("could not read <time>");
+					return 0;
 				}
 
 				if (!file.read (&sample_number, sizeof (ssi_size_t), 1)) {
 					ssi_err ("could not read <sample_number>");
+					return 0;
 				}
 
 				file.seek (sample_number * data.byte * data.dim, File::CURRENT);
@@ -444,6 +468,7 @@ ssi_size_t FileTools::CountDataHeader (File &file, ssi_size_t &tot_sample_number
 			
 			default:
 				ssi_err ("type not supported");
+				return 0;
 			
 		}
 		
@@ -488,6 +513,7 @@ bool FileTools::ReadStreamData (File &file,
 			ssi_char_t string[1024];
 			if (!file.readLine (1024, string)) {
 				ssi_err ("could not read <time> <sample_number>");
+				return false;
 			}
 			sscanf (string, "%lf %u", &data.time, &sample_number);
 
@@ -498,10 +524,12 @@ bool FileTools::ReadStreamData (File &file,
 
 			if (!file.read (&data.time, sizeof (data.time), 1)) {
 				ssi_err ("could not read <time>");
+				return false;
 			}
 
 			if (!file.read (&sample_number, sizeof (sample_number), 1)) {
 				ssi_err ("could not read <sample_number>");
+				return false;
 			}
 
 			break;
@@ -699,6 +727,7 @@ void FileTools::WriteStreamHeader (File &file,
 
 				default:
 					ssi_err ("type not supported");
+					return;
 			}
 
 			break;
@@ -737,6 +766,7 @@ void FileTools::WriteStreamHeader (File &file,
 
 				default:
 					ssi_err ("type not supported");
+					return;
 			}
 
 			break;
@@ -744,6 +774,7 @@ void FileTools::WriteStreamHeader (File &file,
 
 	   default:
 			ssi_err ("version not supported");
+			return;
 	}
 }
 
@@ -793,6 +824,7 @@ void FileTools::WriteStreamData (File &file,
 
 		default:
 			ssi_err ("type not supported");
+			return;
 	}
 }
 
@@ -840,6 +872,7 @@ void FileTools::ConvertStreamV0toV1Binary (const ssi_char_t *filename,
 	ssi_sprint (string, "copy /B %s %s", filename, bakname);
 	if (system (string)) {
 		ssi_err ("could not copy file '%s' -> '%s'", filename, bakname);
+		return;
 	}
 
 	// convert
@@ -871,6 +904,7 @@ void FileTools::ConvertStreamV0toV1Binary (const ssi_char_t *filename,
 		ssi_sprint (string, "del %s", bakname);
 		if (system (string)) {
 			ssi_err ("could not delete file '%s'", bakname);
+			return;
 		}
 	}
 
@@ -889,6 +923,7 @@ void FileTools::ConvertStreamV1toV2Binary (const ssi_char_t *filename,
 	ssi_sprint (string, "copy /B %s %s", filename, bakname);
 	if (system (string)) {
 		ssi_err ("could not copy file '%s' -> '%s'", filename, bakname);
+		return;
 	}
 
 	// convert
@@ -916,6 +951,7 @@ void FileTools::ConvertStreamV1toV2Binary (const ssi_char_t *filename,
 		ssi_sprint (string, "del %s", bakname);
 		if (system (string)) {
 			ssi_err ("could not delete file '%s'", bakname);
+			return;
 		}
 	}
 
@@ -937,6 +973,7 @@ bool FileTools::ReadSampleHeader (File &file,
 			ssi_char_t string[1024];
 			if (!file.readLine (1024, string)) {
 				ssi_err ("could not read <user_id> <class_id> <time> <score> <num>");
+				return false;
 			}
 			sscanf (string, "%u %u %lf %f %u", &data.user_id, &data.class_id, &data.time, &data.score, &data.num);
 
@@ -947,22 +984,27 @@ bool FileTools::ReadSampleHeader (File &file,
 	
 			if (!file.read (&data.user_id, sizeof (data.user_id), 1)) {
 				ssi_err ("could not read <user_id>");
+				return false;
 			}
 
 			if (!file.read (&data.class_id, sizeof (data.class_id), 1)) {
 				ssi_err ("could not read <class_id>");
+				return false;
 			}
 
 			if (!file.read (&data.time, sizeof (data.time), 1)) {
 				ssi_err ("could not read <time>");
+				return false;
 			}
 
 			if (!file.read(&data.score, sizeof(data.score), 1)) {
 				ssi_err ("could not read <score>");
+				return false;
 			}
 
 			if (!file.read (&data.num, sizeof (data.num), 1)) {
 				ssi_err ("could not read <num>");
+				return false;
 			}
 
 			break;
@@ -970,6 +1012,7 @@ bool FileTools::ReadSampleHeader (File &file,
 
 	   default:
 			ssi_err ("type not supported");
+			return false;
 	}
 
 	data.streams = new ssi_stream_t *[data.num];
@@ -1026,6 +1069,7 @@ void FileTools::WriteSampleHeader (File &file,
 
 	   default:
 			ssi_err ("type not supported");
+			return;
 	}
 }
 

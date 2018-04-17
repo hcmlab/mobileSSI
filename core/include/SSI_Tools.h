@@ -120,6 +120,12 @@ typedef struct _SYSTEMTIME {
 #define WAVE_FORMAT_PCM 0x0001
 #define ULONG_PTR uint64_t
 
+
+using std::min;
+using std::max;
+
+
+
 #endif
 
 SSI_INLINE static ssi_size_t ssi_sec2ms(ssi_time_t time) {
@@ -304,6 +310,7 @@ SSI_INLINE static void ssi_cast2type(ssi_size_t n, tin* in, void* out, ssi_type_
 
 	default:
 		ssi_err("unsupported sample type");
+		return;
 	}
 }
 
@@ -537,7 +544,41 @@ SSI_INLINE bool ssi_strcmp (const ssi_char_t *s1, const ssi_char_t *s2, bool cas
 	}
 
 	return true;
+}
 
+SSI_INLINE static char *ssi_strsub(const ssi_char_t *str, ssi_size_t from, ssi_size_t to)
+{
+	if (!str)
+	{		
+		return 0;
+	}
+
+	to = min(ssi_strlen(str), to);
+	from = min(from, to);
+	
+	ssi_char_t *sub = new ssi_char_t[to - from + 1];
+	if (to > from)
+	{
+		memcpy(sub, str + from, to - from);
+	}
+	sub[to - from] = '\0';
+
+	return sub;
+}
+
+SSI_INLINE static int ssi_strfind(const ssi_char_t *str, const ssi_char_t *substr)
+{
+	const ssi_char_t *pos = strstr(str, substr);
+	if (pos)
+	{
+		return (int)(pos - str);
+	}
+	return -1;
+}
+
+SSI_INLINE static bool ssi_strhas(const ssi_char_t *str, const ssi_char_t *substr)
+{
+	return ssi_strfind(str, substr) >= 0;
 }
 
 SSI_INLINE static ssi_size_t ssi_val2str(ssi_type_t type, void *ptr, ssi_size_t n_string, ssi_char_t *string, int32_t precision = -1) {
@@ -611,6 +652,7 @@ SSI_INLINE static ssi_size_t ssi_val2str(ssi_type_t type, void *ptr, ssi_size_t 
 	}
 	default: {
 		ssi_err("sample type not supported");
+		return 0;
 	}
 	}
 
@@ -1029,8 +1071,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			ssi_char_t *ptr = ssi_pcast (ssi_char_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr));
-					ptr++;
+					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr++));
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1040,8 +1081,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			ssi_uchar_t *ptr = ssi_pcast (ssi_uchar_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr));
-					ptr++;
+					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr++));
 				}
 				ssi_fprint (file, "\n");
 				}
@@ -1051,8 +1091,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			int16_t *ptr = ssi_pcast (int16_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr));
-					ptr++;
+					ssi_fprint (file, "%d ", ssi_cast (int32_t, *ptr++));
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1062,8 +1101,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			uint16_t *ptr = ssi_pcast (uint16_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%u ", ssi_cast (uint32_t, *ptr));
-					ptr++;
+					ssi_fprint (file, "%u ", ssi_cast (uint32_t, *ptr++));
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1073,8 +1111,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			int32_t *ptr = ssi_pcast (int32_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%d ", *ptr);
-					ptr++;
+					ssi_fprint (file, "%d ", *ptr++);
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1084,8 +1121,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			uint32_t *ptr = ssi_pcast (uint32_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%u ", *ptr);
-					ptr++;
+					ssi_fprint (file, "%u ", *ptr++);
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1095,8 +1131,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			int64_t *ptr = ssi_pcast (int64_t, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%jd ", *ptr);
-					ptr++;
+					ssi_fprint (file, "%I64d ", *ptr++);
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1107,8 +1142,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
 #if __gnu_linux__
-					ssi_fprint (file, "%llu ", *ptr);
-					ptr++;
+					ssi_fprint (file, "%llu ", *ptr++);
 #else
 					ssi_fprint(file, "%I64u ", *ptr++);
 #endif
@@ -1121,8 +1155,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			float *ptr = ssi_pcast (float, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%f ", *ptr);
-					ptr++;
+					ssi_fprint (file, "%f ", *ptr++);
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1132,8 +1165,7 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			double *ptr = ssi_pcast (double, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%lf ", *ptr);
-					ptr++;
+					ssi_fprint (file, "%lf ", *ptr++);
 				}
 				ssi_fprint (file, "\n");
 			}
@@ -1143,15 +1175,14 @@ SSI_INLINE void ssi_stream_print (const ssi_stream_t &stream, FILE *file) {
 			bool *ptr = ssi_pcast (bool, stream.ptr);
 			for (ssi_size_t i = 0; i < stream.num; i++) {
 				for (ssi_size_t j = 0; j < stream.dim; j++) {
-					ssi_fprint (file, "%s ", *ptr ? "true" : "false");
-					ptr++;
+					ssi_fprint (file, "%s ", *ptr++ ? "true" : "false");
 				}
 				ssi_fprint (file, "\n");
 			}
 			break;
 		}
 		default:
-			ssi_err("sample type not supported");
+			ssi_wrn("sample type not supported");
 	}
 }
 

@@ -65,7 +65,12 @@ public:
 	{
 		_register_fptr = register_fptr;
 	}
-	bool parse (const ssi_char_t *filepath, ssi_size_t n_confs = 0, ssi_char_t **confpaths = 0, bool savepipe = false, bool included = false);
+	bool parse (const ssi_char_t *filepath,
+		const ssi_char_t *confstr = 0,
+		ssi_size_t n_confs = 0, 
+		ssi_char_t **confpaths = 0,
+		bool savepipe = false, 
+		bool included = false);
 	IObject *parseObject (TiXmlElement *element, bool auto_free = true);
 
 	ITransformable *getTransformable (const ssi_char_t *name);
@@ -114,6 +119,7 @@ protected:
 	bool parseExecute(TiXmlElement *element);
 	bool parseJob(TiXmlElement *element);
 	bool parseGate (TiXmlElement *element);
+	bool parseMessage(TiXmlElement *element);	
 
 	bool getChildSize(TiXmlElement *mama, const ssi_char_t *value, ssi_size_t &n_childs);
 

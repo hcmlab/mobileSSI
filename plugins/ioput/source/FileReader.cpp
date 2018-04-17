@@ -47,6 +47,7 @@ FileReader::FileReader (const ssi_char_t *file)
 	_max_steps (0),
 	_timer (0),
 	_event (false, true),
+	_interrupted (false),
 	_is_providing (false),
 	_offset_in_bytes (0),
 	_offset_in_samples (0),
@@ -73,8 +74,7 @@ FileReader::~FileReader () {
 bool FileReader::setProvider (const ssi_char_t *name, IProvider *provider) {
 
 	if (strcmp (name, SSI_FILEREADER_PROVIDER_NAME) == 0) {
-		setProvider (provider);
-		return true;
+		return setProvider (provider);		
 	}
 
 	ssi_wrn ("unkown provider name '%s'", name);
@@ -82,22 +82,24 @@ bool FileReader::setProvider (const ssi_char_t *name, IProvider *provider) {
 	return false;
 }
 
-void FileReader::setProvider (IProvider *provider) {
+bool FileReader::setProvider (IProvider *provider) {
 
 	if (_provider) {
 		ssi_wrn ("provider already set");
-		return;
+		return false;
 	}
 
 	if (!_file_stream_in.open(_stream, _options.path, _n_meta, (void **)&_meta)) 
 	{
 		ssi_err("could not open stream '%s'", _options.path);
+		return false;
 	}
 
 	_sample_number_total = _file_stream_in.getTotalSampleSize();
 	if (_offset_in_samples > _sample_number_total) 
 	{
 		ssi_err("offset exceeds #samples (%u > %u)", _offset_in_samples, _sample_number_total);
+		return false;
 	}
 	
 	_provider = provider;
@@ -107,8 +109,11 @@ void FileReader::setProvider (IProvider *provider) {
 
 	if (!_file_stream_in.close())
 	{
-		ssi_err("could not close stream '%s'", _options.path);
+		ssi_wrn("could not close stream '%s'", _options.path);
+		return false;
 	}
+
+	return true;
 }
 
 bool FileReader::prepare_file () {
@@ -250,6 +255,7 @@ void FileReader::run () {
 		{
 			ssi_msg (SSI_LOG_LEVEL_DETAIL, "release 'path=%s'", _options.path);
 			_stopped = true;
+			_interrupted = false;
 			_event.release ();
 		}
 	
@@ -269,6 +275,31 @@ bool FileReader::disconnect () {
 	{
 		ssi_err("could not close stream '%s'", _options.path);
 	}
+
+	return true;
+}
+
+bool FileReader::wait()
+{
+	if (_options.loop) 
+	{
+		ssi_print("\n");
+		ssi_print_off("press enter to stop\n\n");
+
+		getchar(); 
+	}
+	else 
+	{		
+		_event.wait(); 
+	}
+
+	return !_interrupted;
+}
+
+bool FileReader::cancel()
+{
+	_interrupted = true;
+	_event.release();
 
 	return true;
 }

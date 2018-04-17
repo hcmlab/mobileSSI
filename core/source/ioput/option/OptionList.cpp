@@ -71,6 +71,7 @@ bool OptionList::addOption (const ssi_char_t *name,
 
 	if (ssi_strcmp(name, "option")) {
 		ssi_err("sorry, you are not allowed to have an option with name 'option'");
+		return false;
 	}
 	
 	if (OptionList::getOption (name)) {
@@ -333,11 +334,13 @@ bool OptionList::LoadXML (FILE *file, IOptions *list) {
 			ssi_name2type (item->Attribute ("type"), type);
 			if (o->type != ssi_cast (ssi_type_t, type)) {
 				ssi_err ("incompatible option type ('%s')", name);
+				return false;
 			}
 			int num = 0;
 			item->QueryIntAttribute ("num", &num);
 			if (o->num != ssi_cast (ssi_size_t, num)) {
 				ssi_err ("incompatible option size ('%s')", name);
+				return false;
 			}			
 			OptionList::FromString (item->Attribute ("value"), *o);	
 			bool lock = false;
@@ -445,6 +448,7 @@ bool OptionList::FromString (const ssi_char_t *str, ssi_option_t &option) {
 		while (*token_end != SEPARATOR && *token_end != '\0')
 			++token_end;
 
+		bool is_end = *token_end == '\0';
 		*token_end = '\0';
 		switch (option.type) {
 			case SSI_BOOL: {							
@@ -521,6 +525,11 @@ bool OptionList::FromString (const ssi_char_t *str, ssi_option_t &option) {
 			default:
 				ssi_wrn ("unkown option type '%d'", ssi_cast (int, option.type));
 				return false;
+		}
+		
+		if ((is_end && i != option.num-1) || (i == option.num-1 && !is_end))  {
+			ssi_wrn ("number of tokens does not match '%s'", option.name);
+			return false;
 		}
 
 		++token_end;
@@ -676,6 +685,7 @@ ssi_char_t *OptionList::ToString(ssi_option_t &option,
 		}
 		default:
 			ssi_err ("type not supported");
+			return 0;
 	}
 
 	return string;

@@ -31,7 +31,6 @@
 
 #include "Collector.h"
 #include "Classifier.h"
-#include "OnlineClassifier.h"
 #include "ClassifierT.h"
 #include "SimpleKNN.h"
 #include "KNearestNeighbors.h"
@@ -51,5 +50,6 @@
 #include "Fisher.h"
 #include "HierarchicalModel.h"
 #include "DecisionSmoother.h"
+#include "FrameFusion.h"
 
 #endif

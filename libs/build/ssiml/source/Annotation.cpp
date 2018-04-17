@@ -554,6 +554,23 @@ const ssi_char_t *Annotation::getMetaKey(ssi_size_t index)
 	return 0;
 }
 
+bool Annotation::add(Annotation &annotation)
+{
+	if (!_scheme)
+	{
+		return false;
+	}
+
+	bool result = true;
+	for (Annotation::iterator it = annotation.begin(); it != annotation.end(); it++)
+	{
+		result &= add(*it);
+	}
+
+	return result;
+}
+
+
 bool Annotation::add(const ssi_label_t &label)
 {
 	if (!_scheme)
@@ -748,6 +765,70 @@ bool Annotation::addStream(ssi_stream_t scores, ssi_size_t score_dim, ssi_size_t
 	{
 		add(*(ptr + score_dim), *(ptr + conf_dim));
 		ptr += scores.dim;
+	}
+
+	return true;
+}
+
+bool Annotation::addStream(ssi_stream_t stream, ssi_size_t dim, ssi_real_t thres, ssi_int_t class_id, ssi_real_t conf, ssi_time_t min_duration)
+{
+	if (!check_type(SSI_SCHEME_TYPE::DISCRETE))
+	{
+		return false;
+	}
+
+	if (!hasClassId(class_id))
+	{
+		return false;
+	}
+
+	if (stream.type != SSI_FLOAT)
+	{
+		return false;
+	}
+
+	if (dim >= stream.dim)
+	{
+		return false;
+	}
+
+	ssi_time_t dt = 1.0 / stream.sr;
+	ssi_time_t time = 0;
+	
+	ssi_time_t from = 0.0, to = 0.0;
+	ssi_real_t *ptr = ssi_pcast(ssi_real_t, stream.ptr) + dim;
+	ssi_real_t x = 0;
+	bool activity = *ptr > thres;
+
+	for (ssi_size_t i = 0; i < stream.num; i++)
+	{
+		x = *ptr;
+		if (activity && x <= thres)
+		{
+			to = time;
+			activity = false;
+			if (to - from >= min_duration)
+			{
+				add(from, to, class_id, conf);
+			}
+		}
+		else if (!activity && x > thres)
+		{
+			from = time;
+			activity = true;
+		}
+
+		time += dt;
+		ptr += stream.dim;
+	}
+
+	if (activity)
+	{
+		to = time;
+		if (to - from >= min_duration)
+		{
+			add(from, to, class_id, conf);
+		}
 	}
 
 	return true;
@@ -1373,6 +1454,54 @@ bool Annotation::extractStream(const ssi_stream_t &from, ssi_stream_t &to)
 	return true;
 }
 
+bool Annotation::convertToStream(ssi_stream_t &stream,
+	ssi_time_t sr,
+	ssi_time_t duration_s)
+{
+	if (!_scheme || (_scheme->type != SSI_SCHEME_TYPE::DISCRETE && _scheme->type != SSI_SCHEME_TYPE::CONTINUOUS))
+	{
+		ssi_wrn("not a discrete or continuous scheme");
+		return false;
+	}	
+	
+	if (_scheme->type == SSI_SCHEME_TYPE::CONTINUOUS)
+	{
+		ssi_stream_init(stream, (ssi_size_t)size(), 1, sizeof(ssi_real_t), SSI_REAL, _scheme->continuous.sr);
+		ssi_real_t *ptr = ssi_pcast(ssi_real_t, stream.ptr); 
+		for (iterator it = begin(); it != end(); it++)
+		{
+			*ptr++ = it->continuous.score;
+		}
+	}
+	else 
+	{
+		if (sr <= 0.0)
+		{
+			ssi_wrn("invalid sample rate '%lf'", sr);
+			return false;
+		}
+
+		if (duration_s <= 0.0)
+		{
+			duration_s = this->back().discrete.to;
+		}
+
+		Annotation anno(*this);
+		anno.convertToFrames(1 / sr, SSI_SAMPLE_REST_CLASS_NAME, duration_s);
+		ssi_int_t rest_id = 0;
+		anno.getClassId(SSI_SAMPLE_REST_CLASS_NAME, rest_id);
+
+		ssi_stream_init(stream, (ssi_size_t)anno.size(), 1, sizeof(ssi_real_t), SSI_REAL, sr);
+		ssi_real_t *ptr = ssi_pcast(ssi_real_t, stream.ptr);
+		for (iterator it = anno.begin(); it != anno.end(); it++)
+		{
+			*ptr++ = (ssi_real_t)(it->discrete.id == rest_id ? 0 : (ssi_real_t)it->discrete.id + 1);
+		}
+	}
+
+	return true;
+}
+
 bool Annotation::addClass(const ssi_char_t *name)
 {
 	if (!_scheme || _scheme->type != SSI_SCHEME_TYPE::DISCRETE)
@@ -1483,9 +1612,9 @@ ssi_size_t Annotation::max_class_id()
 
 bool Annotation::addOffset(ssi_time_t offset_left, ssi_time_t offset_right)
 {
-	if (!_scheme || _scheme->type != SSI_SCHEME_TYPE::DISCRETE)
+	if (!_scheme || _scheme->type == SSI_SCHEME_TYPE::CONTINUOUS)
 	{
-		ssi_wrn("not a discrete scheme");
+		ssi_wrn("not a discrete or free scheme");
 		return false;
 	}
 
@@ -1712,8 +1841,11 @@ bool Annotation::extractSamplesFromContinuousScheme(const ssi_stream_t &stream,
 	it += context_left;
 	for (ssi_size_t i = 0; i < n_samples; i++)
 	{
-		sample->score = it->continuous.score;
-		samples->addSample(sample, true);
+        if (!std::isnan(it->continuous.score))
+		{
+			sample->score = it->continuous.score;
+			samples->addSample(sample, true);
+		}
 
 		sample->time += delta;
 		chunk.ptr += stream.dim * stream.byte;

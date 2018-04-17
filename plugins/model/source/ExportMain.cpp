@@ -50,7 +50,6 @@ DLLEXP bool Register (ssi::Factory *factory, FILE *logfile, ssi::IMessage *messa
 	
 	result = ssi::Factory::Register (ssi::Collector::GetCreateName (),ssi::Collector::Create) && result;	
 	result = ssi::Factory::Register (ssi::Classifier::GetCreateName (),ssi::Classifier::Create) && result;	
-    result = ssi::Factory::Register (ssi::OnlineClassifier::GetCreateName (),ssi::OnlineClassifier::Create) && result;
 	result = ssi::Factory::Register (ssi::ClassifierT::GetCreateName (),ssi::ClassifierT::Create) && result;	
 	result = ssi::Factory::Register (ssi::SimpleKNN::GetCreateName (),ssi::SimpleKNN::Create) && result;	
 	result = ssi::Factory::Register (ssi::KNearestNeighbors::GetCreateName (), ssi::KNearestNeighbors::Create) && result;
@@ -58,7 +57,7 @@ DLLEXP bool Register (ssi::Factory *factory, FILE *logfile, ssi::IMessage *messa
 	result = ssi::Factory::Register (ssi::SimpleFusion::GetCreateName (),ssi::SimpleFusion::Create) && result;	
 	result = ssi::Factory::Register (ssi::SVM::GetCreateName (),ssi::SVM::Create) && result;	
 	result = ssi::Factory::Register (ssi::NaiveBayes::GetCreateName (),ssi::NaiveBayes::Create) && result;	
-result = ssi::Factory::Register (ssi::OnlineNaiveBayes::GetCreateName (),ssi::OnlineNaiveBayes::Create) && result;
+	result = ssi::Factory::Register(ssi::OnlineNaiveBayes::GetCreateName(), ssi::OnlineNaiveBayes::Create) && result;
 	result = ssi::Factory::Register (ssi::Relief::GetCreateName (),ssi::Relief::Create) && result;	
 	result = ssi::Factory::Register (ssi::Rank::GetCreateName (),ssi::Rank::Create) && result;	
 	result = ssi::Factory::Register (ssi::FloatingSearch::GetCreateName (),ssi::FloatingSearch::Create) && result;
@@ -70,6 +69,7 @@ result = ssi::Factory::Register (ssi::OnlineNaiveBayes::GetCreateName (),ssi::On
 	result = ssi::Factory::Register (ssi::Fisher::GetCreateName (), ssi::Fisher::Create) && result;
 	result = ssi::Factory::Register (ssi::HierarchicalModel::GetCreateName(), ssi::HierarchicalModel::Create) && result;
 	result = ssi::Factory::Register (ssi::DecisionSmoother::GetCreateName(), ssi::DecisionSmoother::Create) && result;
+	result = ssi::Factory::Register(ssi::FrameFusion::GetCreateName(), ssi::FrameFusion::Create) && result;
 
 	return result;
 }

@@ -107,6 +107,7 @@ public:
 
 	ssi_size_t getSize();
 	ssi_label_t getLabel(ssi_size_t index);
+	bool add(Annotation &annotation);
 	bool add(const ssi_label_t &label);
 	bool add(ssi_time_t from, ssi_time_t to, ssi_int_t class_id, ssi_real_t conf);
 	bool add(ssi_time_t from, ssi_time_t to, const ssi_char_t *name, ssi_real_t conf);
@@ -119,6 +120,7 @@ public:
 
 	bool addStream(ssi_stream_t scores, ssi_size_t score_dim, ssi_real_t conf);
 	bool addStream(ssi_stream_t scores, ssi_size_t score_dim, ssi_size_t conf_dim);
+	bool addStream(ssi_stream_t stream, ssi_size_t dim, ssi_real_t thres, ssi_int_t class_id, ssi_real_t conf, ssi_time_t min_duration = 0);
 
 	bool addCSV(FileCSV &file, ssi_size_t column_from, ssi_size_t column_to, ssi_size_t column_class, ssi_size_t column_conf);
 	bool addCSV(FileCSV &file, ssi_size_t column_score, ssi_size_t column_conf);
@@ -185,9 +187,12 @@ public:
 	// filter	
 	bool filter(double threshold, FILTER_PROPERTY::List prop, FILTER_OPERATOR::List op, const ssi_char_t *class_name = 0);
 
-	// stream
+	// stream and samples
 
 	bool extractStream(const ssi_stream_t &from, ssi_stream_t &to);
+	bool convertToStream(ssi_stream_t &stream,
+		ssi_time_t sr = 0.0, // choose a sr for discrete annotations
+		ssi_time_t duration_s = 0.0); // choose a duration for discrete annotations in seconds (if <= 0 defined by last label)
 	bool extractSamples(const ssi_stream_t &stream, 
 		SampleList *samples,
 		const ssi_char_t *user = SSI_SAMPLE_GARBAGE_USER_NAME);

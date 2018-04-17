@@ -50,13 +50,29 @@ class Evaluation {
 public:
 
 	struct PRINT {
-		enum List {		
-			CONSOLE,			
+		enum List {
+			CONSOLE,
 			CONSOLE_EX,
 			CSV,
 			CSV_EX
 		};
 	};
+
+
+	enum METRIC  {
+		PEARSON_CC,
+		MSE,
+		RMSE,
+		NUM
+
+	};
+
+	char* METRICNAMES[METRIC::NUM]  { 
+		"PEARSON_CC",
+		"MSE", 
+		"RMSE" 
+	};
+
 
 public:
 
@@ -79,31 +95,29 @@ public:
 		_n_streams_refs = n_streams_refs;
 		_stream_refs = stream_refs;
 	}
-
+	
 	// compares two annotations
 	bool eval(Annotation *prediction, Annotation *truth);
 
 	// eval using test set (it is assumed that model has already been trained)
-	void eval(Trainer *trainer, ISamples &samples, IModel::TASK::List task = IModel::TASK::CLASSIFICATION);
-	void eval(IModel &model, ISamples &samples, ssi_size_t stream_index, IModel::TASK::List task = IModel::TASK::CLASSIFICATION);
-	void eval(IFusion &fusion, ssi_size_t n_models, IModel **models, ISamples &samples, IModel::TASK::List task = IModel::TASK::CLASSIFICATION);
+	void eval(Trainer *trainer, ISamples &samples);
+	void eval(IModel &model, ISamples &samples, ssi_size_t stream_index);
+	void eval(IFusion &fusion, ssi_size_t n_models, IModel **models, ISamples &samples);
 
 	// eval using the first split% for training and the rest for testing (split = ]0..1[)
-	void evalSplit(Trainer *trainer, ISamples &samples, ssi_real_t split, IModel::TASK::List task = IModel::TASK::CLASSIFICATION);
+	void evalSplit(Trainer *trainer, ISamples &samples, ssi_real_t split);
 
 	// eval using k-fold (model is re-trained.. you may lose your old model!)
-	void evalKFold(Trainer *trainer, ISamples &samples, ssi_size_t k, IModel::TASK::List task = IModel::TASK::CLASSIFICATION);
+	void evalKFold(Trainer *trainer, ISamples &samples, ssi_size_t k);
 
 	// eval using leave one out (model is re-trained.. you may lose your old model!)
-	void evalLOO(Trainer *trainer, ISamples &samples, IModel::TASK::List task = IModel::TASK::CLASSIFICATION);
+	void evalLOO(Trainer *trainer, ISamples &samples);
 
 	// eval using leave one user out (model is re-trained.. you may lose your old model!)
-	void evalLOUO(Trainer *trainer, ISamples &samples, IModel::TASK::List task = IModel::TASK::CLASSIFICATION);
+	void evalLOUO(Trainer *trainer, ISamples &samples);
 
 	// print evaluation to file
 	void print(FILE *file = stdout, PRINT::List format = PRINT::CONSOLE);
-	//print intermediate evauation results to file (LOUO only)
-	void print_intermediate_louo(FILE *file = stdout, PRINT::List format = PRINT::CONSOLE);
 	void print_result_vec (FILE *file = stdout);
 
 	// reset
@@ -116,18 +130,12 @@ public:
 	// relative mean of class probs
 	ssi_real_t get_accuracy_prob ();
 
-	// mean of class probs (intermediate results, only woks for LOUO)
-	std::vector<ssi_real_t> get_intermediate_louo_classwise_prob();
-	// relative mean of class probs (intermediate results, only woks for LOUO)
-	std::vector<ssi_real_t> get_intermediate_louo_accuracy_prob();
-	ssi_real_t get_intermediate_louo_class_prob(ssi_size_t index, ssi_size_t nuser);
-
 	// get confussion matrix
 	ssi_size_t*const* get_conf_mat ();
-	// get intermediate confusion matrices (LOUO only)
-	std::vector<ssi_size_t*const*> get_intermediate_louo_conf_mat();
 	// get correlation coefficient
 	ssi_real_t get_correlation();
+	ssi_real_t get_metric(METRIC m);
+
 	// get result vector
 	const ssi_size_t *get_result_vec (ssi_size_t &size) { size = _n_total; return _result_vec; };
 	// get result regression vector
@@ -162,9 +170,15 @@ public:
 protected:
 
 	ssi_size_t cutString(const ssi_char_t *str, ssi_size_t n, ssi_char_t *cut);
-	void init(ISamples &samples, Trainer *trainer, IModel::TASK::List task);
+	void init(IModel::TYPE::List type, ISamples &samples, Trainer *trainer);
 	void eval_h(ISamples &samples);
+	//metrics
+	//pearsons correlation coefficient
 	ssi_real_t corrcoef(ssi_size_t n, ssi_real_t *values);
+	//mean squared error
+	ssi_real_t mse(ssi_size_t n, ssi_real_t *values);
+	//root mean square error
+	ssi_real_t rmse(ssi_size_t n, ssi_real_t *values);
 
 	ssi_size_t **_conf_mat_ptr;
 	ssi_size_t *_conf_mat_data;	
@@ -183,7 +197,7 @@ protected:
 	ssi_char_t** _class_names;	
 
 	Trainer *_trainer;	
-	IModel::TASK::List _task;
+	IModel::TYPE::List _type;
 	ISelection *_fselmethod;
 	ISelection *_pre_fselmethod;
 	ssi_size_t _n_pre_feature;

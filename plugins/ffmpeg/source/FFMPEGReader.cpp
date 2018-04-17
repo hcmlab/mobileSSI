@@ -120,7 +120,8 @@ void FFMPEGReader::setAudioProvider(IProvider *provider){
 	if (_options.stream) {
 		_audio_sr = _options.asr;
 	} else {
-		if (!_client->peekAudioFormat (_audio_sr)) {
+		ssi_size_t n_samples = 0;
+		if (!_client->peekAudioFormat (_audio_sr, n_samples)) {
 			ssi_wrn ("could not determine audio format, use default options");
 			_audio_sr = _options.asr;
 		}
@@ -131,8 +132,18 @@ void FFMPEGReader::setAudioProvider(IProvider *provider){
 
 };
 
+bool FFMPEGReader::isStream(const ssi_char_t *url)
+{
+	return ssi_strcmp(url, "udp://", false, 6);
+}
 
 bool FFMPEGReader::connect () {
+
+	if (!isStream(_options.url) && !ssi_exists(_options.url))
+	{
+		ssi_err("file not found '%s'", _options.url);
+		return false;
+	}
 
 	if (!_client)
 	{
@@ -212,7 +223,7 @@ void FFMPEGReader::run () {
 		bool is_old;
 		ssi_real_t *chunk = _audio_buffer->pop(n_samples, is_old);
 
-		if (!_options.bestEffort || !is_old) //in bestEffort mode we only provide new frames
+		if (!_options.bestEffort || !is_old) // in bestEffort mode we only provide new frames
 		{
 			bool result = _audio_provider->provide(ssi_pcast(ssi_byte_t, chunk), n_samples);
 			if (!_options.stream) {
@@ -229,10 +240,26 @@ void FFMPEGReader::run () {
 	}
 
 	if (_client->getState() == FFMPEGReaderClient::STATE::IDLE || _client->getState() == FFMPEGReaderClient::STATE::TERMINATE)
+	{
+
+		if (_audio_provider) // provide remaining samples in buffer
+		{
+			ssi_size_t n_samples;
+			ssi_real_t *chunk = _audio_buffer->pop_all(n_samples);
+			if (n_samples > 0)
+			{
+				_audio_provider->provide(ssi_pcast(ssi_byte_t, chunk), n_samples);
+			}
+		}
+
+		_interrupted = false;
 		_wait_event.release();
+	}
 
 	if (!_options.bestEffort)
-		_timer->wait ();
+	{
+		_timer->wait();
+	}
 }
 
 void FFMPEGReader::flush () {
@@ -262,8 +289,38 @@ bool FFMPEGReader::pushAudioChunk (ssi_size_t n_samples, ssi_real_t *chunk) {
 	return _audio_buffer->push (n_samples, chunk);
 }
 
-void FFMPEGReader::wait() {
+bool FFMPEGReader::wait()
+{
 	_wait_event.wait();
+
+	return !_interrupted;
+}
+
+bool FFMPEGReader::cancel()
+{
+	_interrupted = true;
+	_wait_event.release();
+
+	return true;
+}
+
+bool FFMPEGReader::initAudioStream(const ssi_char_t *path, ssi_stream_t &stream)
+{
+	FFMPEGReaderClient reader(this);
+
+	ssi_time_t sr;
+	ssi_size_t num;
+
+	if (!reader.peekAudioFormat(sr, num))
+	{
+		ssi_wrn("could not determine audio format '%s'", path);
+		return false;
+	}
+
+	ssi_stream_init(stream, num, 1, sizeof(ssi_real_t), SSI_FLOAT, sr);
+	ssi_stream_zero(stream);
+
+	return true;
 }
 
 }

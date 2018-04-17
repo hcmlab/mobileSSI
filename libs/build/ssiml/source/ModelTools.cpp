@@ -695,7 +695,7 @@ namespace ssi {
 	}
 
 	void ModelTools::SaveSampleListArff(ISamples &sample_list,
-		ssi_char_t *filename,
+		const ssi_char_t *filename,
 		const ssi_char_t **feature_names,
 		const ssi_char_t *relation_name,
 		const ssi_char_t *class_attribute_name,
@@ -735,7 +735,7 @@ namespace ssi {
 			if (!first_label_name) {
 				fprintf(file, ",");
 			}
-			fprintf(file,"%s" ,sample_list.getClassName(i));
+			fprintf(file, "%s" ,sample_list.getClassName(i));
 			first_label_name = false;
 		}
 		fprintf(file, "}\n\n");

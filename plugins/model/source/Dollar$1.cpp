@@ -43,8 +43,8 @@ Dollar$1::Dollar$1 (const ssi_char_t *file)
 	_file (0) {
 
 	if (file) {
-		if (!OptionList::LoadXML (file, _options)) {
-			OptionList::SaveXML (file, _options);
+		if (!OptionList::LoadXML(file, &_options)) {
+			OptionList::SaveXML(file, &_options);
 		}
 		_file = ssi_strcpy (file);
 	}
@@ -54,7 +54,7 @@ Dollar$1::~Dollar$1 () {
 
 	release ();
 	if (_file) {
-		OptionList::SaveXML (_file, _options);
+		OptionList::SaveXML(_file, &_options);
 		delete[] _file;
 	}
 }
@@ -65,7 +65,7 @@ void Dollar$1::release () {
 	_n_classes = 0;
 }
 
-bool Dollar$1::train (ISamples &samples, 
+bool Dollar$1::train (ISamples &samples,
 	ssi_size_t stream_index) {
 
 	if (samples.getSize () == 0) {
@@ -116,7 +116,8 @@ void Dollar$1::addToPath (ssi_real_t *ptr,
 
 bool Dollar$1::forward (ssi_stream_t &stream,
 	ssi_size_t n_probs,
-	ssi_real_t *probs) {
+	ssi_real_t *probs,
+	ssi_real_t &confidence) {
 	
 	if (stream.type != SSI_REAL) {
 		ssi_wrn ("stream type not compatible");
@@ -140,6 +141,8 @@ bool Dollar$1::forward (ssi_stream_t &stream,
 			probs[i] /= sum;
 		}
 	}
+
+	ssi_max(n_probs, 1, probs, &confidence);
 
 	return true;
 }

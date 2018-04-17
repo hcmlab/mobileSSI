@@ -62,6 +62,8 @@ struct params_t {
 	int nParallel;
 	ssi_char_t *annoPath;
 	StringList annoList;
+	bool ascii;
+	ssi_char_t *restClassName;
 };
 
 struct FeatureArguments
@@ -96,7 +98,7 @@ bool Parse_and_Run(int argc, char **argv)
 	char info[1024];
 	ssi_sprint(info, "\n%s\n\nbuild version: %s\n\n", SSI_COPYRIGHT, SSI_VERSION);
 
-#if !_DEBUG && defined _MSC_VER && _MSC_VER == 1900	
+#if !_DEBUG && defined _MSC_VER && _MSC_VER >= 1900	
 	const ssi_char_t *default_source = "https://github.com/hcmlab/ssi/raw/master/bin/x64/vc140";
 #else
 	const ssi_char_t *default_source = "";
@@ -119,6 +121,8 @@ bool Parse_and_Run(int argc, char **argv)
 	params.left = 0;
 	params.right = 0;
 	params.annoPath = 0;
+	params.ascii = false;
+	params.restClassName = 0;
 
 	cmd.addText("\nArguments:");
 	cmd.addSCmdArg("chain", &params.chainPath, "path to file defining the processing chain");
@@ -126,14 +130,17 @@ bool Parse_and_Run(int argc, char **argv)
 	cmd.addSCmdArg("out", &params.outPath, "output path (if several separate by ;)");
 
 	cmd.addText("\nOptions:");
+	cmd.addBCmdOption("-ascii", &params.ascii, false, "store output as ASCII");
 	cmd.addBCmdOption("-list", &params.list, false, "read files from list (one file per line)");
 	cmd.addSCmdOption("-step", &params.step, "0", "set frame step (add ms/s for milli/seconds otherwise interpreted as number of samples)");
 	cmd.addSCmdOption("-left", &params.left, "0", "set left context (see step)");
 	cmd.addSCmdOption("-right", &params.right, "0", "set right context (see step)");
 	cmd.addSCmdOption("-anno", &params.annoPath, "", "path to an annotation (features will be extracted over segments and stored as a sample list)");
+	cmd.addSCmdOption("-rest", &params.restClassName, SSI_SAMPLE_REST_CLASS_NAME, "name of restclass (if empty not added)");
 	cmd.addICmdOption("-parallel", &params.nParallel, 1, "number of files processed in parallel (0 = all)");
 	cmd.addSCmdOption("-url", &params.srcUrl, default_source, "override default url for downloading missing dlls and dependencies");
 	cmd.addSCmdOption("-log", &params.logPath, "", "log to a file [""]");
+
 
 	if (!cmd.read(argc, argv))
 	{
@@ -167,6 +174,7 @@ bool Parse_and_Run(int argc, char **argv)
 	delete[] params.right;
 	delete[] params.step;
 	delete[] params.annoPath;
+	delete[] params.restClassName;
 
 	return true;
 }
@@ -185,7 +193,7 @@ void GetDirectories(const ssi_char_t *exePath, params_t &params)
 #if _WIN32|_WIN64
 		params.exeDir = ssi_strcat(workDir, "\\", exepath_fp.getDir());
 #else
-		params.exeDir = ssi_strcat(_workdir, "/", exepath_fp.getDir());
+        params.exeDir = ssi_strcat(workDir, "/", exepath_fp.getDir());
 #endif
 	}
 	else 
@@ -204,7 +212,7 @@ void GetDirectories(const ssi_char_t *exePath, params_t &params)
 #if _WIN32|_WIN64
 		params.chainPathAbsolute = ssi_strcat(workDir, "\\", params.chainPath);
 #else
-		params.chainPathAbsolute = ssi_strcat(_workdir, "/", params.chainPath);
+        params.chainPathAbsolute = ssi_strcat(workDir, "/", params.chainPath);
 #endif
 	}
 	else
@@ -221,10 +229,23 @@ bool IsVideoFile(const ssi_char_t *path)
 		|| ssi_strcmp(fp.getExtension(), ".avi", false));
 }
 
+bool IsAudioFile(const ssi_char_t *path)
+{
+	FilePath fp(path);
+	return (ssi_strcmp(fp.getExtension(), ".wav", false)
+		| ssi_strcmp(fp.getExtension(), ".aac", false)
+		|| ssi_strcmp(fp.getExtension(), ".flac", false)
+		|| ssi_strcmp(fp.getExtension(), ".mp3", false)
+		|| ssi_strcmp(fp.getExtension(), ".ogg", false)
+		|| ssi_strcmp(fp.getExtension(), ".opus", false)
+		|| ssi_strcmp(fp.getExtension(), ".wma", false));
+}
+
 void ResolveDependencies(params_t &params)
 {
 	Factory::RegisterDLL("frame", ssiout, ssimsg);
-	if (IsVideoFile(params.inList[0].str()))
+	if (IsVideoFile(params.inList[0].str())
+		|| IsAudioFile(params.inList[0].str()))
 	{
 		Factory::RegisterDLL("ioput", ssiout, ssimsg);
 		Factory::RegisterDLL("ffmpeg", ssiout, ssimsg);
@@ -242,12 +263,18 @@ void ResolveDependencies(params_t &params)
 				"swscale-4.dll",
 			};
 			for (ssi_size_t i = 0; i < 8; i++)
-			{
-				ssi_char_t *dlldst = ssi_strcat(params.exeDir, "\\", depend[i]);
-				ssi_char_t *dllsrc = ssi_strcat(params.srcUrl, "/", depend[i]);
+            {
+#if _WIN32|_WIN64
+                ssi_char_t *dlldst = ssi_strcat(params.exeDir, "\\", depend[i]);
+#else
+                 ssi_char_t *dlldst = ssi_strcat(params.exeDir, "/", depend[i]);
+#endif
+                ssi_char_t *dllsrc = ssi_strcat(params.srcUrl, "/", depend[i]);
 				if (!ssi_exists(dlldst))
 				{
+#if _WIN32||_WIN64
 					WebTools::DownloadFile(dllsrc, dlldst);
+#endif
 				}
 				delete[] dlldst;
 				delete[] dllsrc;
@@ -404,7 +431,7 @@ String paramsToArgs(params_t *params, ssi_size_t n)
 		"-step " + params->step +
 		" -left " + params->left +
 		" -right " + params->right +
-		" -anno " + (annoPath ? annoPath : "") +
+		" -anno \"" + (annoPath ? annoPath : "") + "\"" +
 		" -url \"\"" +
 		" -log \"" + logPath + "\" " +
 		"\"" + params->chainPath + "\" "
@@ -446,11 +473,14 @@ bool Extract(params_t &params, FilePath *inPath, FilePath *outPath, FilePath *an
 	ssi_stream_t from;
 	bool result = false;
 
-	if (IsVideoFile(inPath->getNameFull()))
+	bool isVideoFile = IsVideoFile(inPath->getNameFull());
+	bool isAudioFile = IsAudioFile(inPath->getNameFull());
+
+	if (isVideoFile)
 	{				
 		if (annoPath)
 		{
-			ssi_wrn("cannot extract video features from an annotation");
+			ssi_wrn("cannot extract video features for an annotation");
 			return false;
 		}
 
@@ -459,6 +489,7 @@ bool Extract(params_t &params, FilePath *inPath, FilePath *outPath, FilePath *an
 		reader->getOptions()->bestEffort = true;
 
 		FileWriter *writer = ssi_create(FileWriter, 0, false);
+		writer->getOptions()->overwrite = true;
 		writer->getOptions()->setPath(toPath);
 		writer->getOptions()->type = File::BINARY;
 		
@@ -474,6 +505,37 @@ bool Extract(params_t &params, FilePath *inPath, FilePath *outPath, FilePath *an
 		delete provider;
 		delete reader;
 		delete writer;
+	}
+	else if (isAudioFile)
+	{
+		FFMPEGReader *reader = ssi_create(FFMPEGReader, 0, false);
+		reader->getOptions()->setUrl(inPath->getPathFull());
+		reader->getOptions()->ablock = 0.05;
+		reader->getOptions()->bestEffort = true;
+
+		if (!reader->initAudioStream(inPath->getPathFull(), from)
+			|| from.num == 0)
+		{			
+			return false;
+		}
+
+		MemoryWriter *writer = ssi_create(MemoryWriter, 0, false);
+		writer->setStream(from);		
+
+		FileProvider *provider = new FileProvider(writer);
+		reader->setProvider(SSI_FFMPEGREADER_AUDIO_PROVIDER_NAME, provider);
+
+		reader->connect();
+		reader->start();
+		reader->wait();
+		reader->stop();
+		reader->disconnect();
+
+		delete provider;
+		delete reader;
+		delete writer;
+
+ 		result = true;
 	}
 	else
 	{
@@ -495,6 +557,36 @@ bool Extract(params_t &params, FilePath *inPath, FilePath *outPath, FilePath *an
 					return false;
 				}
 
+				if (!ssi_strcmp(params.step, "0")) {
+					ssi_size_t step = 0, left = 0, right = 0;
+
+					if (!ssi_parse_samples(params.step, step, from.sr)) {
+						ssi_wrn("could not parse step size '%s'", params.step);
+						return false;
+					}
+
+					if (!ssi_parse_samples(params.left, left, from.sr)) {
+						ssi_wrn("could not parse left size '%s'", params.left);
+						return false;
+					}
+
+					if (!ssi_parse_samples(params.right, right, from.sr)) {
+						ssi_wrn("could not parse right size '%s'", params.right);
+						return false;
+					}
+
+					ssi_time_t step_t = step / from.sr;
+					ssi_time_t left_t = left / from.sr;
+					ssi_time_t right_t = right / from.sr;
+					
+					annotation.convertToFrames(step_t, params.restClassName[0] == '\0' ? 0 : params.restClassName);
+
+					if (left_t > 0.0 || right_t > 0.0)
+					{
+						annotation.addOffset(left_t, right_t);
+					}
+				}
+
 				SampleList samples;
 
 				if (result &= annotation.extractSamples(from, &samples))
@@ -502,7 +594,7 @@ bool Extract(params_t &params, FilePath *inPath, FilePath *outPath, FilePath *an
 					ISTransform samples_t(&samples);
 					samples_t.setTransformer(0, *chain); 
 					samples_t.callEnter();
-					result &= ModelTools::SaveSampleList(samples_t, toPath, File::BINARY);
+					result &= ModelTools::SaveSampleList(samples_t, toPath, params.ascii ? File::ASCII : File::BINARY);
 					samples_t.callFlush();
 				}
 			}			
@@ -518,7 +610,7 @@ bool Extract(params_t &params, FilePath *inPath, FilePath *outPath, FilePath *an
 				SignalTools::Transform(from, to, *chain, params.step, params.left, params.right);
 			}
 
-			result &= FileTools::WriteStreamFile(File::BINARY, toPath, to);
+			result &= FileTools::WriteStreamFile(params.ascii ? File::ASCII : File::BINARY, toPath, to);
 			
 			ssi_stream_destroy(to);
 		}

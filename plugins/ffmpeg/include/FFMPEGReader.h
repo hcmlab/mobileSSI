@@ -43,7 +43,7 @@ namespace ssi {
 
 class FFMPEGReaderClient;
 
-class FFMPEGReader :  public ISensor, public Thread {
+class FFMPEGReader :  public IWaitableSensor, public Thread {
 
 friend class FFMPEGReaderClient;
 
@@ -68,7 +68,8 @@ public:
 
 			setUrl ("");
 
-			addOption ("url", url, SSI_MAX_CHAR, SSI_CHAR, "url (file path or streaming address, e.g. udp://<ip:port>)");
+			addOption ("path", url, SSI_MAX_CHAR, SSI_CHAR, "path of input file");
+			addOption ("url", url, SSI_MAX_CHAR, SSI_CHAR, "streaming address in format udp://<ip:port>");
 			addOption ("stream", &stream, 1, SSI_BOOL, "set this flag for very fast decoding in streaming applications (forces h264/aac codec)");
 			addOption ("buffer", &buffer, 1, SSI_TIME, "internal buffer size in seconds");			
 			addOption ("fps", &fps, 1, SSI_TIME, "default video frame rate in Hz (if not determined from url)");
@@ -126,8 +127,11 @@ public:
 	bool pushAudioChunk (ssi_size_t n_samples, ssi_real_t *chunk);
 	bool disconnect();
 
-	virtual void wait();
+	bool wait();
+	bool cancel();
 		
+	virtual bool initAudioStream(const ssi_char_t *path, ssi_stream_t &stream);
+
 	void setLogLevel (int level) {
 		ssi_log_level = level;
 	};
@@ -156,9 +160,11 @@ protected:
 	FFMPEGVideoBuffer *_video_buffer;
 	FFMPEGAudioBuffer *_audio_buffer;
 
-	bool			_is_running;
-	Event			_wait_event;
-	
+	bool _is_running;
+	Event _wait_event;
+	bool _interrupted;
+
+	bool isStream(const ssi_char_t *url);
 };
 
 };

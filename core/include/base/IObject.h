@@ -33,6 +33,8 @@
 #include "base/IEvents.h"
 #include "base/INotify.h"
 #include "base/IOptions.h"
+#include "base/IRunnable.h"
+#include "base/IWaitable.h"
 
 namespace ssi {
 
@@ -45,10 +47,10 @@ public:
 	typedef IObject * (*create_fptr_t) (const ssi_char_t *file); 
 	virtual ~IObject () {};
 
-	void setEnabled(bool enabled) {
+	virtual void setEnabled(bool enabled) {
 		_enabled = enabled;
 	}
-	bool isEnabled() {
+	virtual bool isEnabled() {
 		return _enabled;
 	}
 
@@ -64,6 +66,10 @@ protected:
 	bool _enabled;
 
 };
+
+class SSI_IRunnableObject : public IObject, public IRunnable {}; // SSI_ added, otherwise conflict with Windows SDK
+class IWaitableObject : public IObject, public IWaitable {};
+class IRunAndWaitableObject : public IObject, public IRunnable, public IWaitable {};
 
 }
 

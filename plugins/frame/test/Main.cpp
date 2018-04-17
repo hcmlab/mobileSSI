@@ -582,7 +582,7 @@ bool ex_msg(void *arg) {
 
 	delete ssimsg; ssimsg = 0;
 
-	ssimsg = new SocketMessage (Socket::UDP, 1111, "localhost");
+	ssimsg = new SocketMessage (Socket::TYPE::UDP, 1111, "localhost");
 
 	ssi_msg(SSI_LOG_LEVEL_DEFAULT, "Debug Message #%d", id);
 	id++;
@@ -631,7 +631,7 @@ bool ex_sync (void *arg) {
 	frame->AddSensor(mouse);
 
 	SocketWriter *writer = ssi_create(SocketWriter, 0, true);
-	writer->getOptions()->type = Socket::UDP;
+	writer->getOptions()->type = Socket::TYPE::UDP;
 	writer->getOptions()->port = 9998;
 	frame->AddConsumer(cursor_p, writer, "1");
 
@@ -745,8 +745,8 @@ bool ex_xml(void *arg) {
 	xmlpipe->SetRegisterXMLFptr(Factory::RegisterXML);
 	xmlpipe->setLogLevel(SSI_LOG_LEVEL_DEBUG);
 	xmlpipe->addVariable("jobtime", "4");
-	ssi_char_t *confs[] = { "global", "global2", "global3", "title=CURSOR" };	
-	xmlpipe->parse("my", 4, confs, true);
+	ssi_char_t *confs[] = { "global", "global2", "global3" };	
+	xmlpipe->parse("my", "title=SET BY CONFIG STRING", 3, confs, true);
 
 	ITheFramework *frame = Factory::GetFramework();
 
@@ -791,7 +791,7 @@ bool ex_export(void *arg) {
 	XMLPipeline *xmlpipe = ssi_create(XMLPipeline, 0, false);
 	ssi_size_t n_confs = 3;
 	ssi_char_t *confs[] = { "global", "global2", "global3" };
-	xmlpipe->parse("my", 3, confs, false);
+	xmlpipe->parse("my", 0, 3, confs, false);
 
 	const ssi_char_t *dir = "dlls";
 	ssi_mkdir(dir);
