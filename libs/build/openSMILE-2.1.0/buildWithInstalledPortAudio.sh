@@ -9,7 +9,7 @@ Pwd=`pwd`;
 if [ "$1" != "" ]; then
   INSTPREFIX=$1;  
 else
-  INSTPREFIX="$Pwd/inst";
+  INSTPREFIX="$Pwd/../../../bin_cmake/Linux/";
 fi
 
 
@@ -44,6 +44,7 @@ fi
 
 
 mv $INSTPREFIX/bin/SMILExtract $INSTPREFIX/bin/SMILExtract.bin
+mv $INSTPREFIX/lib/* $INSTPREFIX
 echo "#!/bin/sh" > $INSTPREFIX/bin/SMILExtract
 echo "export LD_LIBRARY_PATH=\"`dirname \$0`/../lib\" ; \$0.bin \$* " >> $INSTPREFIX/bin/SMILExtract
 chmod +x $INSTPREFIX/bin/SMILExtract

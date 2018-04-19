@@ -35,6 +35,13 @@ add_subdirectory(liblinear-2.1)
 #add_subdirectory(liblinear-incdec-2.01)
 #add_subdirectory(tensorflow/tensorflow/contrib/cmake)
 #add_subdirectory(gloox)
+
+add_custom_command(TARGET ssiml
+        PRE_BUILD
+        COMMAND /bin/sh ${CMAKE_SOURCE_DIR}/mobileSSI/libs/build/OpenSMILE-2.1.0/buildWithInstalledPortAudio.sh
+        )
+
+
 if(ANDROID)
 add_subdirectory(libzip)
 else(ANDROID)
