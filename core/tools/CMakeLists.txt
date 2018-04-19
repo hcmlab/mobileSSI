@@ -35,5 +35,7 @@ add_dependencies(xmlpipe ssi )
 add_subdirectory(xmlchain)
 add_dependencies(xmlchain ssi )
 
+add_subdirectory(vadanno)
+add_dependencies(vadanno ssi )
 
 #install(TARGETS ssi DESTINATION bin)
