@@ -29,6 +29,7 @@
 extern "C"
 {
 #include "ssipy.h"
+#include "ssipylog.h"
 }
 
 namespace ssi {
@@ -49,18 +50,36 @@ PythonManager::~PythonManager()
 {
 }
 
-void PythonManager::Init()
+void PythonManager::log(const char *str)
 {
+	ssi_print("%s", str);	
+}
+
+void PythonManager::Init()
+{	
+	ssi_msg(SSI_LOG_LEVEL_BASIC, "init");
+
+	//PyImport_AppendInittab("ssipylog", PyInit_ssipylog);
 	Py_Initialize();
-	PyEval_InitThreads();
-	//Py_DECREF(PyImport_ImportModule("threading"));
+	//PyImport_ImportModule("ssipylog");
+
+	PyEval_InitThreads();			
+	
 	PyInit_ssipy();
+	PyInit_ssipylog();
+	ssipylog_stdout_set(log);
+
 	_state = PyEval_SaveThread();
 }
 
 void PythonManager::Quit()
 {
+	printf("[pymanager_] quit\n");
+
 	PyEval_RestoreThread(_state);
+
+	ssipylog_stdout_reset();
+
 	Py_Finalize();
 }
 

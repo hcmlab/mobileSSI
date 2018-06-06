@@ -35,7 +35,7 @@ endif(SSI_GUI STREQUAL "SDL")
 
 	IF(UNIX)
 		INCLUDE(FindPkgConfig)
-		pkg_check_modules(PYTHON REQUIRED python-3.5)
+		pkg_check_modules(PYTHON REQUIRED python-3.6)
 	endif(UNIX)
 
 include_directories(
@@ -66,10 +66,12 @@ source/PythonFeature.cpp
 source/PythonFilter.cpp
 source/PythonHelper.cpp
 source/PythonManager.cpp
+source/PythonModel.cpp
 source/PythonObject.cpp
 source/PythonSensor.cpp
 source/PythonTransformer.cpp
 source/ssipy.c
+source/ssipylog.c
 
 
 
