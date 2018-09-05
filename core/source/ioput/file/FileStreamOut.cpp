@@ -251,7 +251,7 @@ namespace ssi {
 #if _WIN32||_WIN64
 					ssi_sprint(_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%I64u\" num=\"%u\"/>", data.time, data.time + data.num * (1.0 / data.sr), _file_data->tell(), data.num);
 #else
-					ssi_sprint(_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%"PRId64"\" num=\"%u\"/>", data.time, data.time + data.num * (1.0 / data.sr), _file_data->tell(), data.num);
+                    ssi_sprint(_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%" PRId64 "\" num=\"%u\"/>", data.time, data.time + data.num * (1.0 / data.sr), _file_data->tell(), data.num);
 #endif
 				}
 				else {
@@ -259,7 +259,7 @@ namespace ssi {
 #if _WIN32||_WIN64
 					ssi_sprint(_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%I64u\" num=\"%u\"/>", _last_time, _last_time + _sample_count * (1.0 / data.sr), _last_byte, _sample_count);
 #else
-					ssi_sprint(_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%"PRId64"\" num=\"%u\"/>", _last_time, _last_time + _sample_count * (1.0 / data.sr), _last_byte, _sample_count);
+                    ssi_sprint(_string, "\t<chunk from=\"%lf\" to=\"%lf\" byte=\"%" PRId64 "\" num=\"%u\"/>", _last_time, _last_time + _sample_count * (1.0 / data.sr), _last_byte, _sample_count);
 #endif
 					_sample_count = 0;
 				}
