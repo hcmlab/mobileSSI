@@ -97,8 +97,8 @@ void AudioPortaudioPlayer::consume_enter (ssi_size_t stream_in_num,
 	_scaled = stream_in[0].type == SSI_FLOAT;	
 
     _format = ssi_create_wfx (ssi_cast (unsigned int, stream_in[0].sr),
-        ssi_cast (unsigned int16_t, stream_in[0].dim),
-        ssi_cast (unsigned int16_t, (_scaled ? sizeof (int16_t) : sizeof (float))));
+        ssi_cast (uint16_t, stream_in[0].dim),
+        ssi_cast (uint16_t, (_scaled ? sizeof (int16_t) : sizeof (float))));
 
 	// init output stream
 
